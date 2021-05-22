@@ -1,0 +1,117 @@
+{
+  "name": "@jahia/sandbox",
+  "version": "1.0.0",
+  "description": "This is the sandbox module for running on a Jahia server.",
+  "husky": {
+    "hooks": {
+      "pre-push": "yarn lint:fix"
+    }
+  },
+  "jest": {
+    "rootDir": "src",
+    "reporters": [
+      "default",
+      "jest-junit"
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|woff|woff2|eot|ttf|svg)$": "<rootDir>/node_modules/@jahia/test-framework/build/js/__mocks__/styleMock.js",
+      "^react-i18next$": "<rootDir>/../node_modules/@jahia/test-framework/build/js/__mocks__/react-i18next.js",
+      "\\.(css|scss)$": "identity-obj-proxy",
+      "~/(.*)": "<rootDir>/src/main/javascript/$1"
+    }
+  },
+  "scripts": {
+    "test": "env-cmd --no-override jest",
+    "testcli": "jest",
+    "build": "yarn lint:fix && yarn webpack",
+    "build:nolint": "yarn webpack",
+    "dev": "yarn webpack --watch",
+    "watch": "yarn webpack --watch",
+    "webpack": "node --max_old_space_size=2048 ./node_modules/webpack/bin/webpack.js",
+    "build:analyze": "yarn build --analyze",
+    "build:production": "yarn build -p && yarn testcli",
+    "build:production-analyze": "yarn build -p --analyze",
+    "clean": "rimraf *.log src/main/resources/javascript/apps",
+    "clean:all": "yarn clean && rimraf node_modules node",
+    "lint": "eslint --ext js,jsx,json . && stylelint \"./src/**/*.scss\"",
+    "lint:fix": "eslint --ext js,jsx,json --fix . && stylelint --fix \"./src/**/*.scss\""
+  },
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "jahia": {
+    "apps": {
+      "jahia": "javascript/apps/jahia.bundle.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jahia/sandbox.git"
+  },
+
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/Jahia/sandbox/issues"
+  },
+  "homepage": "https://github.com/Jahia/sandbox#readme",
+  "devDependencies": {
+    "@apollo/react-testing": "^3.0.0",
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.3.3",
+    "@babel/runtime": "^7.5.4",
+    "@jahia/eslint-config": "^1.1.0",
+    "@jahia/stylelint-config": "^0.0.3",
+    "@jahia/test-framework": "^1.1.5",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.0.4",
+    "apollo-cache-inmemory": "^1.6.6",
+    "babel-jest": "^24.9.0",
+    "babel-loader": "^8.0.6",
+    "case-sensitive-paths-webpack-plugin": "^2.3.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^5.0.4",
+    "css-loader": "^3.2.0",
+    "eslint": "^6.7.2",
+    "eslint-loader": "3.0.3",
+    "eslint-plugin-jest": "^23.8.0",
+    "eslint-plugin-json": "^2.1.0",
+    "eslint-plugin-react": "^7.18.3",
+    "eslint-plugin-react-hooks": "^2.5.0",
+    "husky": "^3.0.9",
+    "jest": "^26.4.2",
+    "jest-junit": "^11.1.0",
+    "node-sass": "^4.12.0",
+    "rimraf": "^3.0.0",
+    "sass-loader": "^8.0.0",
+    "style-loader": "^1.0.0",
+    "stylelint": "^13.2.0",
+    "webpack": "^4.41.0",
+    "webpack-bundle-analyzer": "^3.5.2",
+    "webpack-cli": "^3.3.9"
+  },
+  "resolutions": {
+    "*/**/elliptic": "6.5.4"
+  },  
+  "dependencies": {
+    "@apollo/react-hooks": "^3.1.3",
+    "@date-io/moment": "1.x",
+    "@jahia/moonstone": "^0.16.2",
+    "@jahia/ui-extender": "^0.5.1",
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/pickers": "^3.2.10",
+    "apollo-client": "^2.6.10",
+    "auto": "^10.4.2",
+    "copy-to-clipboard": "^3.3.1",
+    "graphql": "^15.4.0",
+    "graphql-tag": "^2.10.3",
+    "moment": "^2.29.1",
+    "prop-types": "^15.7.2",
+    "react": "^16.13.0",
+    "react-apollo": "^3.1.3",
+    "react-dom": "^16.13.0",
+    "react-i18next": "^11.8.13"
+  }
+}

@@ -1,0 +1,28 @@
+# Eclipse
+/.classpath
+/.project
+/.settings
+
+# Intellij
+.idea
+*.iml
+*.ipr
+
+# Maven
+target
+pom.xml.versionsBackup
+
+.DS_Store
+/node_modules
+/node
+/src/main/resources/javascript/apps
+junit.xml
+
+# Jahia DX Studio
+repository.xml.generated
+
+# Files used by the testing framework
+/tests/.env
+/tests/artifacts
+/tests/build-dependencies
+/tests/node_modules

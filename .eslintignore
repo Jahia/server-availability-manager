@@ -1,0 +1,10 @@
+node
+node_modules
+/tests
+target
+src/main/resources/javascript/apps
+src/main/resources/javascript/locales
+src/main/javascript/__tests__
+src/main/resources/javascript/polyfills.js
+src/main/javascript/publicPath.js
+webpack.config.js

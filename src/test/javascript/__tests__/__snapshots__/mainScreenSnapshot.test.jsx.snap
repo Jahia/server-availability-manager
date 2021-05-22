@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Validate main screen snapshot match snapshot 1`] = `
+<div>
+  <div
+    class="root"
+  >
+    <div
+      class="headerRoot"
+    >
+      <header
+        class="header"
+      >
+        <p
+          class="moonstone-typography moonstone-variant_title moonstone-weight_default"
+        >
+          translated_sandbox:title
+        </p>
+        <div
+          class="actionBar"
+        >
+          <button
+            class="moonstone-button moonstone-size_big moonstone-variant_default moonstone-color_accent moonstone-icon"
+            type="button"
+          >
+            <svg
+              class=" moonstone-icon moonstone-icon_default"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                fill="currentColor"
+              />
+            </svg>
+            <span
+              class="moonstone-typography moonstone-variant_button moonstone-weight_semiBold flexFluid moonstone-nowrap moonstone-upperCase"
+            >
+              translated_sandbox:action.buttonTitle
+            </span>
+          </button>
+        </div>
+      </header>
+    </div>
+    <div
+      class="content"
+    >
+      <span>
+        Some content, connected with: 
+        JohnDoe
+      </span>
+    </div>
+  </div>
+</div>
+`;
