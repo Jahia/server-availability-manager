@@ -69,7 +69,6 @@
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
         <jahia-module-signature>MCwCFCZ0gWkXge/SzSYb19Ts7cl7T6JIAhRzkmdVnYeMQvR8cV/sx3g3uV2Ifg==</jahia-module-signature>
-        <export-package>org.jahia.modules.sandbox</export-package>
         <yarn.arguments>build:production</yarn.arguments>
     </properties>
 
@@ -221,7 +220,7 @@
                         <phase>none</phase>
                     </execution>
                     <execution>
-                        <id>sandbox-source-release-assembly</id>
+                        <id>server-availability-manager-source-release-assembly</id>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
