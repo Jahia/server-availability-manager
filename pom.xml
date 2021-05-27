@@ -65,10 +65,10 @@
     </scm>
 
     <properties>
-        <jahia-depends>default,userDashboard,graphql-dxm-provider</jahia-depends>
+        <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
-        <jahia-module-signature>MCwCFCZ0gWkXge/SzSYb19Ts7cl7T6JIAhRzkmdVnYeMQvR8cV/sx3g3uV2Ifg==</jahia-module-signature>
+        <jahia-module-signature>MCwCFEaYGW3GGtlYIJw30+wj5dOfc5QLAhRm9HqQdoEalm+tChfP2f4YWd/hYw==</jahia-module-signature>
         <yarn.arguments>build:production</yarn.arguments>
     </properties>
 
@@ -154,41 +154,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.11.2</version>
-                <executions>
-                    <execution>
-                        <id>npm install node and yarn</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>install-node-and-yarn</goal>
-                        </goals>
-                        <configuration>
-                            <nodeVersion>v13.8.0</nodeVersion>
-                            <yarnVersion>v1.22.5</yarnVersion>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>yarn install</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>yarn</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>yarn post-install</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>yarn</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>${yarn.arguments}</arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -240,35 +205,6 @@
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.8.0.2131</version>
             </plugin>
-            <plugin>
-                <groupId>de.qaware.maven</groupId>
-                <artifactId>go-offline-maven-plugin</artifactId>
-                <version>1.2.8</version>
-                <configuration>
-                    <dynamicDependencies>
-                        <DynamicDependency>
-                            <groupId>org.apache.maven.surefire</groupId>
-                            <artifactId>surefire-junit4</artifactId>
-                            <version>2.20.1</version>
-                            <repositoryType>PLUGIN</repositoryType>
-                        </DynamicDependency>
-                        <DynamicDependency>
-                            <groupId>org.owasp</groupId>
-                            <artifactId>dependency-check-maven</artifactId>
-                            <version>6.1.0</version>
-                            <repositoryType>PLUGIN</repositoryType>
-                        </DynamicDependency>
-                    </dynamicDependencies>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>dev</id>
-            <properties>
-                <yarn.arguments>build</yarn.arguments>
-            </properties>
-        </profile>
-    </profiles>
 </project>
