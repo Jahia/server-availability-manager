@@ -14,12 +14,16 @@ import org.slf4j.LoggerFactory;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Component(immediate = true, service = TasksIdentificationService.class)
 public class TasksIdentificationServiceImpl implements TasksIdentificationService {
     private static final Logger logger = LoggerFactory.getLogger(TasksIdentificationServiceImpl.class);
+    private static final Pattern THREAD_DUMP_PATTERN = Pattern.compile("importSiteZip|importContent");
 
     private SchedulerService schedulerService;
 
@@ -36,12 +40,11 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
     }
 
     @Override
-    public Stream<TaskDetails> getTasksStream() {
+    public Stream<TaskDetails> getRunningTasksStream() {
         try {
             Stream<TaskDetails> backgroundJobsData = schedulerService.getAllActiveJobs()
                     .stream()
                     .map(jobDetail -> new TaskDetails(jobDetail.getName(), jobDetail.getGroup()));
-            logger.warn(threadDump(true, true));
 
             Stream<TaskDetails> modulesData = templateManagerService.getModuleStates()
                     .entrySet()
@@ -49,21 +52,28 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
                     .filter(entry -> EnumSet.of(ModuleState.State.SPRING_STARTING, ModuleState.State.STARTING, ModuleState.State.STOPPING, ModuleState.State.WAITING_TO_BE_IMPORTED)
                             .contains(entry.getValue().getState()))
                     .map(entry -> new TaskDetails(entry.getKey().getSymbolicName(), entry.getKey().getLocation()));
-            return Stream.concat(backgroundJobsData, modulesData);
+
+            return Stream.of(backgroundJobsData, modulesData, getTasksFromThreadDump())
+                    .reduce(Stream::concat)
+                    .orElseGet(Stream::empty);
         } catch (SchedulerException e) {
-            logger.error("Something went wrong");
+            logger.error("Can't get data from the scheduler service: {}", e.getMessage());
         }
         return null;
     }
 
-    private static String threadDump(boolean lockedMonitors, boolean lockedSynchronizers) {
-        StringBuffer threadDump = new StringBuffer(System.lineSeparator());
+    private Stream<TaskDetails> getTasksFromThreadDump() {
+        List<TaskDetails> tasksToCheck = new ArrayList<>();
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        for(ThreadInfo threadInfo : threadMXBean.dumpAllThreads(lockedMonitors, lockedSynchronizers)) {
-            if (!threadInfo.isSuspended()) {
-                threadDump.append(threadInfo.toString());
+        for(ThreadInfo threadInfo : threadMXBean.dumpAllThreads(true, true)) {
+           StackTraceElement[] stackTraceElements = threadInfo.getStackTrace();
+            for (StackTraceElement stackTraceElement : stackTraceElements) {
+                if (THREAD_DUMP_PATTERN.matcher(stackTraceElement.getMethodName()).find()) {
+                    tasksToCheck.add(new TaskDetails(stackTraceElement.getMethodName(), stackTraceElement.getClassName()));
+                }
             }
+
         }
-        return threadDump.toString();
+        return tasksToCheck.stream();
     }
 }

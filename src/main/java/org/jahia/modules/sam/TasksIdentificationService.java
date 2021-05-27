@@ -5,5 +5,5 @@ import org.jahia.modules.sam.model.TaskDetails;
 import java.util.stream.Stream;
 
 public interface TasksIdentificationService {
-    Stream<TaskDetails> getTasksStream();
+    Stream<TaskDetails> getRunningTasksStream();
 }

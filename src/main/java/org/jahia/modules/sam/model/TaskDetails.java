@@ -1,8 +1,11 @@
 package org.jahia.modules.sam.model;
 
+import java.util.Calendar;
+
 public class TaskDetails {
     private String name;
     private String service;
+    private Calendar started;
 
     public TaskDetails(String name, String service) {
         this.name = name;
@@ -23,5 +26,13 @@ public class TaskDetails {
 
     public void setService(String service) {
         this.service = service;
+    }
+
+    public Calendar getStarted() {
+        return started;
+    }
+
+    public void setStarted(Calendar started) {
+        this.started = started;
     }
 }
