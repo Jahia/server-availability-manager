@@ -21,7 +21,7 @@ public class GqlTasksQuery {
 
     @GraphQLField
     @GraphQLName("tasks")
-    @GraphQLDescription("Server availability manager queries")
+    @GraphQLDescription("Lists tasks running on the Jahia server. A server should not be stopped/restarted when any of these tasks are present. These tasks are specific to the server being queried and are not shared accorss a cluster")
     public List<GqlTask> tasks() {
         return tasksIdentificationService.getRunningTasksStream().map(GqlTask::new).collect(Collectors.toList());
     }

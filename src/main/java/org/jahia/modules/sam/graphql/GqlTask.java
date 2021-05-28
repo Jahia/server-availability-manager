@@ -28,7 +28,7 @@ public class GqlTask {
     }
 
     @GraphQLField
-    @GraphQLDescription("Task start time")
+    @GraphQLDescription("Datetime at which the task was started or registered")
     public String getStarted() {
         return taskDetails.getStarted() != null ? (new DateTime(taskDetails.getStarted().getTime().getTime())).toString() : null;
     }
