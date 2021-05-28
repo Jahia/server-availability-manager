@@ -1,9 +1,9 @@
 package org.jahia.modules.sam.graphql;
 
-import graphql.annotations.annotationTypes.GraphQLDefaultValue;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
+import org.jahia.modules.graphql.provider.dxm.DataFetchingException;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.TasksIdentificationService;
 import org.slf4j.Logger;
@@ -39,21 +39,34 @@ public class ServerAvailabilityMutation {
     @GraphQLDescription("Shutdown the server")
     public boolean shutdown(@GraphQLName("timeout") @GraphQLDescription("Maximum time to wait for server to be ready to shutdown") Integer timeout,
                             @GraphQLName("force") @GraphQLDescription("Force shutdown even if server is busy") boolean force,
-                            @GraphQLName("dryRun") @GraphQLDescription("Do not send the shutdown event") boolean dryRun) throws Exception {
-        if (force) {
-            return doShutdown(dryRun);
-        } else {
-            if (timeout == null) {
-                timeout = 25;
-            }
-            for (int i = timeout; i > 0; i--) {
-                if (!tasksIdentificationService.getRunningTasksStream().findFirst().isPresent()) {
-                    return doShutdown(dryRun);
+                            @GraphQLName("dryRun") @GraphQLDescription("Do not send the shutdown event") boolean dryRun) throws DataFetchingException {
+        try {
+            if (force) {
+                return doShutdown(dryRun);
+            } else {
+                if (timeout == null) {
+                    timeout = 25;
                 }
-                Thread.sleep(1000);
+                long timeoutInstant = System.currentTimeMillis() + (timeout * 1000);
+                while (System.currentTimeMillis() < timeoutInstant) {
+                    if (!tasksIdentificationService.getRunningTasksStream().findFirst().isPresent()) {
+                        return doShutdown(dryRun);
+                    }
+                    sleep();
+                }
             }
+        } catch (Exception e) {
+            throw new DataFetchingException(e);
         }
         return false;
+    }
+
+    private void sleep() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private boolean doShutdown(boolean dryRun) throws MBeanException, AttributeNotFoundException, InstanceNotFoundException, ReflectionException, MalformedObjectNameException, IOException {
