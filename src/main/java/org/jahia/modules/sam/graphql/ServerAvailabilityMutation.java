@@ -38,10 +38,10 @@ public class ServerAvailabilityMutation {
     @GraphQLField
     @GraphQLDescription("Shutdown the server")
     public boolean shutdown(@GraphQLName("timeout") @GraphQLDescription("Maximum time to wait for server to be ready to shutdown") Integer timeout,
-                            @GraphQLName("force") @GraphQLDescription("Force shutdown even if server is busy") boolean force,
-                            @GraphQLName("dryRun") @GraphQLDescription("Do not send the shutdown event") boolean dryRun) throws DataFetchingException {
+                            @GraphQLName("force") @GraphQLDescription("Force shutdown even if server is busy") Boolean force,
+                            @GraphQLName("dryRun") @GraphQLDescription("Do not send the shutdown event") Boolean dryRun) throws DataFetchingException {
         try {
-            if (force) {
+            if (force != null && force) {
                 return doShutdown(dryRun);
             } else {
                 if (timeout == null) {
@@ -50,7 +50,7 @@ public class ServerAvailabilityMutation {
                 long timeoutInstant = System.currentTimeMillis() + (timeout * 1000);
                 while (System.currentTimeMillis() < timeoutInstant) {
                     if (!tasksIdentificationService.getRunningTasksStream().findFirst().isPresent()) {
-                        return doShutdown(dryRun);
+                        return doShutdown(dryRun != null && dryRun);
                     }
                     sleep();
                 }
