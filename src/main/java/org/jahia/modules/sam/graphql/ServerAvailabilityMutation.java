@@ -29,16 +29,16 @@ public class ServerAvailabilityMutation {
 
     /**
      * Shutdown the server
-     * @param timeout Maximum time to wait for server to be ready to shutdown
-     * @param force Force shutdown even if server is busy
+     * @param timeout In seconds, maximum time to wait for server to be ready to shutdown
+     * @param force Force immediate shutdown even if server is busy
      * @param dryRun Do not send the shutdown event
      * @return
      * @throws Exception
      */
     @GraphQLField
     @GraphQLDescription("Shutdown the server")
-    public boolean shutdown(@GraphQLName("timeout") @GraphQLDescription("Maximum time to wait for server to be ready to shutdown") Integer timeout,
-                            @GraphQLName("force") @GraphQLDescription("Force shutdown even if server is busy") Boolean force,
+    public boolean shutdown(@GraphQLName("timeout") @GraphQLDescription("In seconds, maximum time to wait for server to be ready to shutdown") Integer timeout,
+                            @GraphQLName("force") @GraphQLDescription("Force immediate shutdown even if server is busy") Boolean force,
                             @GraphQLName("dryRun") @GraphQLDescription("Do not send the shutdown event") Boolean dryRun) throws DataFetchingException {
         try {
             if (force != null && force) {
