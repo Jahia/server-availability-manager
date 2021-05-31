@@ -1,0 +1,7 @@
+mutation($name: String!) {
+    admin {
+        serverAvailabilityManager {
+            deleteTask(name: $name)
+        }
+    }
+}
