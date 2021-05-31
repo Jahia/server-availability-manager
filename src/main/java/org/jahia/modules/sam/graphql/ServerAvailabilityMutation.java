@@ -3,9 +3,12 @@ package org.jahia.modules.sam.graphql;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
+import graphql.annotations.annotationTypes.GraphQLNonNull;
 import org.jahia.modules.graphql.provider.dxm.DataFetchingException;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
+import org.jahia.modules.sam.TaskRegistryService;
 import org.jahia.modules.sam.TasksIdentificationService;
+import org.jahia.modules.sam.model.TaskDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +18,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.Socket;
+import java.util.Calendar;
 
 /**
  * Server availability mutations
@@ -25,7 +29,59 @@ public class ServerAvailabilityMutation {
 
     @Inject
     @GraphQLOsgiService
+    private TaskRegistryService taskRegistryService;
+
+    @Inject
+    @GraphQLOsgiService
     private TasksIdentificationService tasksIdentificationService;
+
+    /**
+     * Register a task
+     *
+     * @param service Service attached to the task being monitored
+     * @param name The name of the task associated with the service
+     * @throws Exception
+     */
+    @GraphQLField
+    @GraphQLDescription("Create a task")
+    public boolean createTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
+                              @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
+        try {
+
+            //Check if it's alphanumerical with a limited length (100 Chars)
+            if(!service.matches("[a-zA-Z0-9]{1,50}"))
+                throw new Exception("Service is not a alphanumerical with a limited length of 50 characters");
+
+            //Creating task
+            TaskDetails taskDetails = new TaskDetails(service,name);
+            taskDetails.setStarted(Calendar.getInstance()); //Setting started date to the time the task is being created
+            taskRegistryService.registerTask(taskDetails);
+
+            return true;
+        } catch (Exception e) {
+            logger.error("Can't create a task: {}", e.getMessage());
+            throw new DataFetchingException(e);
+        }
+    }
+
+    /**
+     * Delete a task
+     *
+     * @param name The name of the task associated with the service
+     * @throws Exception
+     */
+    @GraphQLField
+    @GraphQLDescription("Delete a task")
+    public boolean deleteTask(@GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
+        try {
+            taskRegistryService.unregisterTask(name);
+
+            return true;
+        } catch (Exception e) {
+            logger.error("Can't delete task: {}", e.getMessage());
+            throw new DataFetchingException(e);
+        }
+    }
 
     /**
      * Shutdown the server

@@ -1,0 +1,7 @@
+mutation($service: String!, $name: String!) {
+    admin {
+        serverAvailabilityManager {
+            createTask(service: $service, name: $name)
+        }
+    }
+}
