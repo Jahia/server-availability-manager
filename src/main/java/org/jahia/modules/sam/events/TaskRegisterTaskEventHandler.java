@@ -20,6 +20,7 @@ public class TaskRegisterTaskEventHandler implements EventHandler {
     private static final String SERVICE_PROPERTY = "service";
     public static final String NAME_PROPERTY = "name";
     private static final String STARTED_PROPERTY = "started";
+    private static final String ACTION_PROPERTY = "action";
 
     private TaskRegistryService taskRegistryService;
 
@@ -32,6 +33,11 @@ public class TaskRegisterTaskEventHandler implements EventHandler {
     public void handleEvent(Event event) {
         TaskDetails taskInfo = new TaskDetails(event.getProperty(SERVICE_PROPERTY).toString(), event.getProperty(NAME_PROPERTY).toString());
         taskInfo.setStarted(event.getProperty(STARTED_PROPERTY) == null ? null : (Calendar) event.getProperty(STARTED_PROPERTY));
+        if ("REGISTER".equals(event.getProperty(ACTION_PROPERTY))) {
+            taskRegistryService.registerTask(taskInfo);
+        } else {
+            taskRegistryService.unregisterTask(taskInfo.getName());
+        }
         taskRegistryService.registerTask(taskInfo);
         logger.info("Task is registered with name: {} and service: {}", event.getProperty(NAME_PROPERTY), event.getProperty(SERVICE_PROPERTY));
     }
