@@ -1,0 +1,11 @@
+query {
+    admin {
+        serverAvailabilityManager{
+            tasks{
+                name
+                service
+                started
+            }
+        }
+    }
+}
