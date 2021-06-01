@@ -9,16 +9,16 @@ import java.util.stream.Stream;
 @Component(immediate = true, service = TaskRegistryService.class)
 public class TaskRegistryImpl implements TaskRegistryService {
 
-    private final ConcurrentHashMap<String, TaskDetails> taskDetailList = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<TaskDetails, TaskDetails> taskDetailList = new ConcurrentHashMap<>();
 
     @Override
     public void registerTask(TaskDetails taskDetails) {
-        taskDetailList.put(taskDetails.getName(), taskDetails);
+        taskDetailList.put(taskDetails, taskDetails);
     }
 
     @Override
-    public void unregisterTask(String name) {
-        taskDetailList.remove(name);
+    public void unregisterTask(TaskDetails taskDetails) {
+        taskDetailList.remove(taskDetails);
     }
 
     @Override

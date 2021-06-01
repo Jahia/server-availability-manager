@@ -32,7 +32,7 @@ public class TaskRegisterTaskEventHandler implements EventHandler {
         TaskDetails taskInfo = new TaskDetails(event.getProperty(SERVICE_PROPERTY).toString(), event.getProperty(NAME_PROPERTY).toString());
         taskInfo.setStarted(event.getProperty(STARTED_PROPERTY) == null ? null : (Calendar) event.getProperty(STARTED_PROPERTY));
         if (event.getTopic().endsWith("UNREGISTER")) {
-            taskRegistryService.unregisterTask(taskInfo.getName());
+            taskRegistryService.unregisterTask(taskInfo);
         } else {
             taskRegistryService.registerTask(taskInfo);
         }

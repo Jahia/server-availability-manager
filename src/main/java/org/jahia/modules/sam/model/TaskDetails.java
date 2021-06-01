@@ -1,6 +1,7 @@
 package org.jahia.modules.sam.model;
 
 import java.util.Calendar;
+import java.util.Objects;
 
 public class TaskDetails {
     private String service;
@@ -34,5 +35,18 @@ public class TaskDetails {
 
     public void setStarted(Calendar started) {
         this.started = started;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TaskDetails that = (TaskDetails) o;
+        return service.equals(that.service) && name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(service, name);
     }
 }

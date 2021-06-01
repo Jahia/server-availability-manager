@@ -8,7 +8,7 @@ public interface TaskRegistryService {
 
     void registerTask(TaskDetails taskDetails);
 
-    void unregisterTask(String name);
+    void unregisterTask(TaskDetails taskDetails);
 
     Stream<TaskDetails> getRegisteredTasks();
 }

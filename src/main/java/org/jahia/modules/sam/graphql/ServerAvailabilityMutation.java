@@ -48,8 +48,8 @@ public class ServerAvailabilityMutation {
                               @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
         try {
 
-            //Check if it's alphanumerical with a limited length (100 Chars)
-            if(!service.matches("[a-zA-Z0-9]{1,50}"))
+            //Check if it's alphanumerical + '-' and '_' with a limited length (100 Chars)
+            if(!service.matches("[a-zA-Z0-9-_]{1,50}"))
                 throw new Exception("Service is not a alphanumerical with a limited length of 50 characters");
 
             //Creating task
@@ -72,9 +72,11 @@ public class ServerAvailabilityMutation {
      */
     @GraphQLField
     @GraphQLDescription("Delete a task")
-    public boolean deleteTask(@GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
+    public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
+                              @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
         try {
-            taskRegistryService.unregisterTask(name);
+            TaskDetails taskDetails = new TaskDetails(service,name);
+            taskRegistryService.unregisterTask(taskDetails);
 
             return true;
         } catch (Exception e) {

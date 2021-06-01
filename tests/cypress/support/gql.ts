@@ -15,10 +15,15 @@ export async function createTask(
     })
 }
 
-export async function deleteTask(name: string, apolloClient: ApolloClient<NormalizedCacheObject>): Promise<any> {
+export async function deleteTask(
+    service: string,
+    name: string,
+    apolloClient: ApolloClient<NormalizedCacheObject>,
+): Promise<any> {
     return await apolloClient.mutate({
         mutation: require(`graphql-tag/loader!../fixtures/deleteTask.graphql`),
         variables: {
+            service,
             name,
         },
     })

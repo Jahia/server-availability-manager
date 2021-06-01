@@ -1,7 +1,7 @@
-mutation($name: String!) {
+mutation($service: String!, $name: String!) {
     admin {
         serverAvailabilityManager {
-            deleteTask(name: $name)
+            deleteTask(service: $service, name: $name)
         }
     }
 }
