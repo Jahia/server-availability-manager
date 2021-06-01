@@ -1,6 +1,7 @@
 package org.jahia.modules.sam.core;
 
 import org.jahia.data.templates.ModuleState;
+import org.jahia.modules.sam.TaskRegistryService;
 import org.jahia.modules.sam.TasksIdentificationService;
 import org.jahia.modules.sam.model.TaskDetails;
 import org.jahia.services.scheduler.SchedulerService;
@@ -29,6 +30,13 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
 
     private JahiaTemplateManagerService templateManagerService;
 
+    private TaskRegistryService taskRegistryService;
+
+    @Reference
+    public void setTaskRegistryService(TaskRegistryService taskRegistryService) {
+        this.taskRegistryService = taskRegistryService;
+    }
+
     @Reference
     public void setSchedulerService(SchedulerService schedulerService) {
         this.schedulerService = schedulerService;
@@ -44,16 +52,16 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
         try {
             Stream<TaskDetails> backgroundJobsData = schedulerService.getAllActiveJobs()
                     .stream()
-                    .map(jobDetail -> new TaskDetails(jobDetail.getName(), jobDetail.getGroup()));
+                    .map(jobDetail -> new TaskDetails("Background job", jobDetail.getName()));
 
             Stream<TaskDetails> modulesData = templateManagerService.getModuleStates()
                     .entrySet()
                     .stream()
                     .filter(entry -> EnumSet.of(ModuleState.State.SPRING_STARTING, ModuleState.State.STARTING, ModuleState.State.STOPPING, ModuleState.State.WAITING_TO_BE_IMPORTED)
                             .contains(entry.getValue().getState()))
-                    .map(entry -> new TaskDetails(entry.getKey().getSymbolicName(), entry.getKey().getLocation()));
+                    .map(entry -> new TaskDetails("Module deployment", entry.getKey().getLocation() + "-" + entry.getValue().getState()));
 
-            return Stream.of(backgroundJobsData, modulesData, getTasksFromThreadDump())
+            return Stream.of(backgroundJobsData, modulesData, getTasksFromThreadDump(), taskRegistryService.getRegisteredTasks())
                     .reduce(Stream::concat)
                     .orElseGet(Stream::empty);
         } catch (SchedulerException e) {
@@ -69,10 +77,9 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
            StackTraceElement[] stackTraceElements = threadInfo.getStackTrace();
             for (StackTraceElement stackTraceElement : stackTraceElements) {
                 if (THREAD_DUMP_PATTERN.matcher(stackTraceElement.getMethodName()).find()) {
-                    tasksToCheck.add(new TaskDetails(stackTraceElement.getMethodName(), stackTraceElement.getClassName()));
+                    tasksToCheck.add(new TaskDetails("Thread dump", stackTraceElement.getMethodName()));
                 }
             }
-
         }
         return tasksToCheck.stream();
     }
