@@ -9,7 +9,7 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
         expect(response.errors).to.be.undefined
 
         //Deleting task later
-        await deleteTask('name1', apollo())
+        await deleteTask('service1', 'name1', apollo())
     })
     it('Should fail creating task with big service name', async function () {
         try {
@@ -20,8 +20,6 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
                 'Service is not a alphanumerical with a limited length of 50 characters',
             )
         }
-        //Deleting task later
-        await deleteTask('name1', apollo())
     })
     it('Should fail creating task with empty service name', async function () {
         try {
@@ -30,7 +28,5 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
             cy.log(JSON.stringify(err))
             expect(err.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
         }
-        //Deleting task later
-        await deleteTask('name1', apollo())
     })
 })
