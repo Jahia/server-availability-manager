@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 @Component(immediate = true, service = TaskRegistryService.class)
 public class TaskRegistryImpl implements TaskRegistryService {
 
-    private ConcurrentHashMap<String, TaskDetails> taskDetailList = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, TaskDetails> taskDetailList = new ConcurrentHashMap<>();
 
     @Override
     public void registerTask(TaskDetails taskDetails) {
