@@ -25,4 +25,11 @@ public class GqlTasksQuery {
     public List<GqlTask> tasks() {
         return tasksIdentificationService.getRunningTasksStream().map(GqlTask::new).collect(Collectors.toList());
     }
+
+
+    @GraphQLField
+    @GraphQLDescription("Healthcheck node")
+    public GqlHealthcheck getHealthCheck(@GraphQLName("severity") GqlProbeSeverity severity) {
+        return new GqlHealthcheck(severity);
+    }
 }
