@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DocumentNode } from 'graphql'
 
 describe('Task creation via API - mutation.admin.serverAvailabilityManager.createTask', () => {

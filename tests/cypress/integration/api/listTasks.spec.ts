@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apollo } from '../../support/apollo'
 import { createTask, deleteTask } from '../../support/gql'
 import { DocumentNode } from 'graphql'
