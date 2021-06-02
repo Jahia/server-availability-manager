@@ -21,7 +21,7 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
                 name: 'name1',
             },
             query: GQL_DELETE_TASK,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.data.admin.serverAvailabilityManager.deleteTask).to.be.true
         })
@@ -37,7 +37,7 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
                 name: null,
             },
             query: GQL_DELETE_TASK,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
         })

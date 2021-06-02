@@ -20,7 +20,7 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
                 name: 'name1',
             },
             query: GQL_CREATE_TASK,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.data.admin.serverAvailabilityManager.createTask).to.be.true
             deleteTask('service1', 'name1', apollo())
@@ -36,7 +36,7 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
                 name: 'name1',
             },
             query: GQL_CREATE_TASK,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.graphQLErrors[0].message).to.contains(
                 'Service is not a alphanumerical with a limited length of 50 characters',
@@ -53,7 +53,7 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
                 name: 'name1',
             },
             query: GQL_CREATE_TASK,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
         })
@@ -68,7 +68,7 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
                 name: null,
             },
             query: GQL_CREATE_TASK,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
         })
@@ -84,7 +84,7 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
     //             name: 'name1',
     //         },
     //         query: GQL_CREATE_TASK,
-    //     }).then(async (response: any) => {
+    //     }).then((response: any) => {
     //         cy.log(JSON.stringify(response))
     //         expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
     //     })

@@ -20,7 +20,7 @@ describe('List Tasks via API - mutation.admin.serverAvailabilityManager.listTask
             baseUrl: Cypress.config().baseUrl,
             authMethod: { username: Cypress.env('JAHIA_USER'), password: Cypress.env('JAHIA_PASSWORD') },
             query: GQL_LIST_TASKS,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.data.admin.serverAvailabilityManager.tasks.length).to.equal(3)
             deleteTask('service1', 'name1', apollo())
@@ -34,7 +34,7 @@ describe('List Tasks via API - mutation.admin.serverAvailabilityManager.listTask
             baseUrl: Cypress.config().baseUrl,
             authMethod: { username: Cypress.env('JAHIA_USER'), password: Cypress.env('JAHIA_PASSWORD') },
             query: GQL_LIST_TASKS,
-        }).then(async (response: any) => {
+        }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.data.admin.serverAvailabilityManager.tasks.length).to.equal(0)
         })

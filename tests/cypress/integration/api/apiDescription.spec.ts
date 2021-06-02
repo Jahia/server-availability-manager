@@ -5,10 +5,13 @@ describe('Test if every type in graphQL API has description', () => {
     it('Check every input for the User Type', async function () {
         const noDesc = new Set()
         await executeTest('adminQuery', noDesc)
+        await executeTest('ServerAvailabilityManagerQuery', noDesc)
+        await executeTest('ServerAvailabilityManagerMutation', noDesc)
         console.log(noDesc)
         expect(JSON.stringify(Array.from(noDesc))).to.equals('[]')
     })
 })
+
 // Test to go down the AST of GraphQL to check for descriptions
 const executeTest = async (typeName, noDesc) => {
     const query = constructQuery(typeName)
