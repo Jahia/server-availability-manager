@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 
-export async function createTask(
+export function createTask(
     service: string,
     name: string,
     apolloClient: ApolloClient<NormalizedCacheObject>,
 ): Promise<any> {
-    return await apolloClient.mutate({
+    return apolloClient.mutate({
         mutation: require(`graphql-tag/loader!../fixtures/createTask.graphql`),
         variables: {
             service,
@@ -15,12 +15,12 @@ export async function createTask(
     })
 }
 
-export async function deleteTask(
+export function deleteTask(
     service: string,
     name: string,
     apolloClient: ApolloClient<NormalizedCacheObject>,
 ): Promise<any> {
-    return await apolloClient.mutate({
+    return apolloClient.mutate({
         mutation: require(`graphql-tag/loader!../fixtures/deleteTask.graphql`),
         variables: {
             service,
