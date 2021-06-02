@@ -1,10 +1,9 @@
 package org.jahia.modules.sam.graphql;
 
-import graphql.annotations.annotationTypes.GraphQLDescription;
-import graphql.annotations.annotationTypes.GraphQLField;
-import graphql.annotations.annotationTypes.GraphQLName;
-import graphql.annotations.annotationTypes.GraphQLNonNull;
+import graphql.annotations.annotationTypes.*;
 import org.jahia.modules.graphql.provider.dxm.DataFetchingException;
+import org.jahia.modules.graphql.provider.dxm.admin.GqlAdminMutation;
+import org.jahia.modules.graphql.provider.dxm.admin.GqlJahiaAdminMutation;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.TaskRegistryService;
 import org.jahia.modules.sam.TasksIdentificationService;
@@ -23,7 +22,7 @@ import java.util.Calendar;
 /**
  * Server availability mutations
  */
-@GraphQLDescription("Server availability mutations")
+@GraphQLTypeExtension(GqlJahiaAdminMutation.class)
 public class ServerAvailabilityMutation {
     private static final Logger logger = LoggerFactory.getLogger(ServerAvailabilityMutation.class);
 
