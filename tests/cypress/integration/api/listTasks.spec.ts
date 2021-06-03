@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { apollo } from '../../support/apollo'
 import { createTask, deleteTask } from '../../support/gql'
 import { DocumentNode } from 'graphql'
 
@@ -11,28 +10,29 @@ describe('List Tasks via API - mutation.admin.serverAvailabilityManager.listTask
     })
 
     it('Get List of tasks', () => {
-        createTask('service1', 'name1', apollo())
-        createTask('service1', 'name2', apollo())
-        createTask('service2', 'name1', apollo())
-        createTask('service2', 'name1', apollo())
+        createTask('service1', 'name1')
+        createTask('service1', 'name2')
+        createTask('service2', 'name1')
+        createTask('service2', 'name1')
         //
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: Cypress.env('JAHIA_USER'), password: Cypress.env('JAHIA_PASSWORD') },
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
             query: GQL_LIST_TASKS,
         }).then((response: any) => {
             cy.log(JSON.stringify(response))
             expect(response.data.admin.serverAvailabilityManager.tasks.length).to.equal(3)
-            deleteTask('service1', 'name1', apollo())
-            deleteTask('service1', 'name2', apollo())
-            deleteTask('service2', 'name1', apollo())
-            deleteTask('service2', 'name1', apollo())
         })
+        deleteTask('service1', 'name1')
+        deleteTask('service1', 'name2')
+        deleteTask('service2', 'name1')
+        deleteTask('service2', 'name1')
     })
+
     it('Get List of tasks empty list', () => {
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: Cypress.env('JAHIA_USER'), password: Cypress.env('JAHIA_PASSWORD') },
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
             query: GQL_LIST_TASKS,
         }).then((response: any) => {
             cy.log(JSON.stringify(response))
