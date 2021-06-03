@@ -10,17 +10,20 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
 
 @Component(service = Probe.class, immediate = true)
 public class DBConnectivityProbe implements Probe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBConnectivityProbe.class);
 
+    // The timeout value is defined in seconds.
+    private int timeout = 20;
+
     @Override
     public ProbeStatus getStatus() {
         try (Connection conn = DatabaseUtils.getDatasource().getConnection()) {
-            // The timeout value is defined in seconds.
-            if (conn.isValid(20)) {
+            if (conn.isValid(timeout)) {
                 return ProbeStatus.GREEN;
             } else {
                 return ProbeStatus.RED;
@@ -45,5 +48,12 @@ public class DBConnectivityProbe implements Probe {
     @Override
     public ProbeSeverity getDefaultSeverity() {
         return ProbeSeverity.CRITICAL;
+    }
+
+    @Override
+    public void setConfig(Map<String, Object> config) {
+        if (config.containsKey("timeout")) {
+            timeout = Integer.parseInt("timeout");
+        }
     }
 }
