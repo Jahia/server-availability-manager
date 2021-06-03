@@ -8,20 +8,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     before('load graphql file and create test dataset', () => {
         GQL_SHUTDOWN = require(`graphql-tag/loader!../../fixtures/shutdown.graphql`)
     })
-    it('Should fail Shutdown wrong timeout format', function () {
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: Cypress.env('JAHIA_USERNAME'), password: Cypress.env('JAHIA_PASSWORD') },
-            mode: 'mutate',
-            variables: {
-                timeout: 'ABC',
-            },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
-        })
-    })
+
     it('Shutdown success', function () {
         //This test must be the last test for obviously reason
         cy.task('apolloNode', {
