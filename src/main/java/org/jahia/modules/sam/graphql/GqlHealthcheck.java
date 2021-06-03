@@ -1,5 +1,6 @@
 package org.jahia.modules.sam.graphql;
 
+import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.healthcheck.ProbesRegistry;
@@ -30,6 +31,7 @@ public class GqlHealthcheck {
     }
 
     @GraphQLField
+    @GraphQLDescription("Highest reported status across all probes")
     public GqlProbeStatus getStatus() {
         return getProbes().stream().map(GqlProbe::getStatus).max(Comparator.comparing(Enum::ordinal)).orElse(GqlProbeStatus.GREEN);
     }

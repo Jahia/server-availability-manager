@@ -100,7 +100,7 @@ public class ServerAvailabilityMutation {
                             @GraphQLName("dryRun") @GraphQLDescription("Do not send the shutdown event") Boolean dryRun) throws DataFetchingException {
         try {
             if (force != null && force) {
-                return doShutdown(dryRun);
+                return doShutdown(dryRun != null && dryRun);
             } else {
                 if (timeout == null) {
                     timeout = 25;

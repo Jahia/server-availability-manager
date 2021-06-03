@@ -1,5 +1,6 @@
 package org.jahia.modules.sam.graphql;
 
+import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.Probe;
@@ -23,21 +24,25 @@ public class GqlProbe {
     }
 
     @GraphQLField
+    @GraphQLDescription("Name of the probe")
     public String getName() {
         return probe.getName();
     }
 
     @GraphQLField
+    @GraphQLDescription("Description specified by the developer of the probe")
     public String getDescription() {
         return probe.getDescription();
     }
 
     @GraphQLField
+    @GraphQLDescription("Severity of the probe (LOW to CRITICAL)")
     public GqlProbeSeverity getSeverity() {
         return GqlProbeSeverity.valueOf(probesRegistry.getProbeSeverity(probe).name());
     }
 
     @GraphQLField
+    @GraphQLDescription("Status reported by the probe (GREEN to RED)")
     public GqlProbeStatus getStatus() {
         return GqlProbeStatus.valueOf(probe.getStatus().name());
     }
