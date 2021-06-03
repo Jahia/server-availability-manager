@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { apollo } from '../../support/apollo'
 import { createTask } from '../../support/gql'
 import { DocumentNode } from 'graphql'
 
@@ -11,10 +10,10 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
     })
 
     it('Delete task success path', () => {
-        createTask('service1', 'name1', apollo())
+        createTask('service1', 'name1')
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: Cypress.env('JAHIA_USERNAME'), password: Cypress.env('JAHIA_PASSWORD') },
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
             mode: 'mutate',
             variables: {
                 service: 'service1',
@@ -27,10 +26,10 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
         })
     })
     it('Should fail deleting task with wrong name and service', () => {
-        createTask('service1', 'name1', apollo())
+        createTask('service1', 'name1')
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: Cypress.env('JAHIA_USERNAME'), password: Cypress.env('JAHIA_PASSWORD') },
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
             mode: 'mutate',
             variables: {
                 service: null,

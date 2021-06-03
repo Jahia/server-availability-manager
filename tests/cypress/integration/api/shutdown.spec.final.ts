@@ -13,7 +13,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
         //This test must be the last test for obviously reason
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: Cypress.env('JAHIA_USERNAME'), password: Cypress.env('JAHIA_PASSWORD') },
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
             mode: 'mutate',
             variables: {
                 timeout: 100,
