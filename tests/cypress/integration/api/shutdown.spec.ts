@@ -1,14 +1,51 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DocumentNode } from 'graphql'
-import { createTask, deleteTask } from '../../support/gql'
 import { apollo } from '../../support/apollo'
 
 describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown', () => {
     let GQL_SHUTDOWN: DocumentNode
+    let GQL_CREATE_TASK: DocumentNode
+    let GQL_DELETE_TASK: DocumentNode
 
     before('load graphql file and create test dataset', () => {
         GQL_SHUTDOWN = require(`graphql-tag/loader!../../fixtures/shutdown.graphql`)
+        GQL_CREATE_TASK = require(`graphql-tag/loader!../../fixtures/createTask.graphql`)
+        GQL_DELETE_TASK = require(`graphql-tag/loader!../../fixtures/deleteTask.graphql`)
     })
+
+    const createTask = () => {
+        cy.task('apolloNode', {
+            baseUrl: Cypress.config().baseUrl,
+            authMethod: { username: Cypress.env('JAHIA_USERNAME'), password: Cypress.env('JAHIA_PASSWORD') },
+            mode: 'mutate',
+            variables: {
+                service: 'service1',
+                name: 'name1',
+            },
+            query: GQL_CREATE_TASK,
+        }).then((response: any) => {
+            cy.log(JSON.stringify(response))
+            cy.log('Task created')
+            expect(response.data.admin.serverAvailabilityManager.createTask).to.be.true
+        })
+    }
+
+    const deleteTask = () => {
+        cy.task('apolloNode', {
+            baseUrl: Cypress.config().baseUrl,
+            authMethod: { username: Cypress.env('JAHIA_USERNAME'), password: Cypress.env('JAHIA_PASSWORD') },
+            mode: 'mutate',
+            variables: {
+                service: 'service1',
+                name: 'name1',
+            },
+            query: GQL_DELETE_TASK,
+        }).then((response: any) => {
+            cy.log(JSON.stringify(response))
+            cy.log('Deleted task')
+            expect(response.data.admin.serverAvailabilityManager.deleteTask).to.be.true
+        })
+    }
 
     it('Shutdown with no tasks running (dryRun)', function () {
         cy.task('apolloNode', {
@@ -26,7 +63,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     })
 
     it('Shutdown impossible with tasks running (dryRun) - should exhaust default timeout (25s)', function () {
-        cy.wrap(createTask('service1', 'name1', apollo()))
+        createTask()
         const startShutdown = new Date().getTime()
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
@@ -46,11 +83,11 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             expect(executionTime).to.be.greaterThan(25000)
             expect(executionTime).not.to.be.greaterThan(28000)
         })
-        cy.wrap(deleteTask('service1', 'name1', apollo()))
+        deleteTask()
     })
 
     it('Shutdown impossible with tasks running (dryRun) - shorter timeout (2s)', function () {
-        cy.wrap(createTask('service1', 'name1', apollo()))
+        createTask()
         const startShutdown = new Date().getTime()
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
@@ -71,7 +108,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             expect(executionTime).to.be.greaterThan(2000)
             expect(executionTime).not.to.be.greaterThan(5000)
         })
-        cy.wrap(deleteTask('service1', 'name1', apollo()))
+        deleteTask()
     })
 
     it('Force shutdown without tasks running (dryRun)', function () {
@@ -96,7 +133,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     })
 
     it('Force shutdown with tasks running (dryRun)', function () {
-        cy.wrap(createTask('service1', 'name1', apollo()))
+        createTask()
         const startShutdown = new Date().getTime()
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
@@ -116,7 +153,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             cy.log(`Execution time: ${executionTime}`)
             expect(executionTime).not.to.be.greaterThan(2000)
         })
-        cy.wrap(deleteTask('service1', 'name1', apollo()))
+        deleteTask()
     })
 
     it('Should fail Shutdown wrong timeout format', function () {
