@@ -1,0 +1,15 @@
+query($severity: GqlProbeSeverity) {
+    admin {
+        serverAvailabilityManager {
+            healthCheck(severity: $severity) {
+                status
+                probes {
+                    name
+                    severity
+                    status
+                }
+            }
+        }
+    }
+}
+

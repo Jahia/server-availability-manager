@@ -10,7 +10,7 @@ interface authMethod {
 export const apollo = (authMethod?: authMethod): ApolloClient<NormalizedCacheObject> => {
     const headers: { authorization?: string } = {}
     if (authMethod === undefined) {
-        headers.authorization = `Basic ${btoa(Cypress.env('JAHIA_USERNAME') + ':' + Cypress.env('JAHIA_PASSWORD'))}`
+        headers.authorization = `Basic ${btoa('root:' + Cypress.env('SUPER_USER_PASSWORD'))}`
     } else if (authMethod.token !== undefined) {
         headers.authorization = `APIToken ${authMethod.token}`
     } else if (authMethod.username !== undefined && authMethod.password !== undefined) {
