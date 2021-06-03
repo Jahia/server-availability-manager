@@ -1,4 +1,4 @@
-mutation($timeout: Int,$force: Boolean,$dryRun: Boolean) {
+mutation($timeout: Int, $force: Boolean, $dryRun: Boolean) {
     admin {
         serverAvailabilityManager{
             shutdown(timeout:$timeout, force:$force, dryRun:$dryRun)
