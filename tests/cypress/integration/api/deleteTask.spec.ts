@@ -41,4 +41,19 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
             expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
         })
     })
+    it('Should fail deleting non existent task', () => {
+        cy.task('apolloNode', {
+            baseUrl: Cypress.config().baseUrl,
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
+            mode: 'mutate',
+            variables: {
+                service: 'anyService',
+                name: 'anyName',
+            },
+            query: GQL_DELETE_TASK,
+        }).then((response: any) => {
+            cy.log(JSON.stringify(response))
+            expect(response.graphQLErrors[0].message).to.contain('Task not found')
+        })
+    })
 })

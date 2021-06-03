@@ -25,7 +25,7 @@ import java.util.Calendar;
  */
 @GraphQLDescription("Server availability mutations")
 public class ServerAvailabilityMutation {
-    private static Logger logger = LoggerFactory.getLogger(ServerAvailabilityMutation.class);
+    private static final Logger logger = LoggerFactory.getLogger(ServerAvailabilityMutation.class);
 
     @Inject
     @GraphQLOsgiService
@@ -75,6 +75,10 @@ public class ServerAvailabilityMutation {
     public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
                               @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
         try {
+            //Check if taskDetail is registered
+            if(taskRegistryService.getRegisteredTasks().noneMatch(task -> task.equals(new TaskDetails(service, name))))
+                throw new Exception("Task not found");
+
             TaskDetails taskDetails = new TaskDetails(service,name);
             taskRegistryService.unregisterTask(taskDetails);
 
