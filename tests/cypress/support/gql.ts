@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {ApolloClient, NormalizedCacheObject} from "@apollo/client/core";
-import Chainable = Cypress.Chainable;
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
+import Chainable = Cypress.Chainable
 
 export const createTask = (taskService: string, taskName: string): void => {
     cy.task('apolloNode', {
@@ -38,14 +38,11 @@ export const deleteTask = (taskService: string, taskName: string): void => {
     return
 }
 
-export function healthCheck(
-    severity: string,
-    apolloClient: ApolloClient<NormalizedCacheObject>,
-): Chainable<any> {
+export function healthCheck(severity: string, apolloClient: ApolloClient<NormalizedCacheObject>): Chainable<any> {
     return cy.apolloQuery(apolloClient, {
         query: require(`graphql-tag/loader!../fixtures/healthcheck.graphql`),
         variables: {
-            severity
+            severity,
         },
     })
 }

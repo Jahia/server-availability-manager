@@ -59,7 +59,7 @@ export const apolloClient = (baseUrl: string, authMethod?: authMethod): ApolloCl
 
     return new ApolloClient({
         cache: new InMemoryCache(),
-        link: from([authLink as unknown as ApolloLink, errorLink, httpLink]),
+        link: from([(authLink as unknown) as ApolloLink, errorLink, httpLink]),
         defaultOptions: {
             query: {
                 fetchPolicy: 'network-only',

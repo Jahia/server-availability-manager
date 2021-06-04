@@ -2,9 +2,6 @@
 /// <reference types="cypress" />
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
-// import {apollo} from "./apollo";
-// import {QueryOptions} from "@apollo/client/core";
-
 declare namespace Cypress {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interface Chainable<Subject> {
@@ -12,11 +9,11 @@ declare namespace Cypress {
          * Custom command to navigate to url with default authentication
          * @example cy.goTo('/start')
          */
-        goTo(value: string): Chainable<Element>;
+        goTo(value: string): Chainable<Element>
 
-        apolloQuery(apollo:any, options: any): Chainable<object>;
+        apolloQuery(apollo: any, options: any): Chainable<any>
 
-        apolloMutate(apollo:any, options: any): Chainable<object>;
+        apolloMutate(apollo: any, options: any): Chainable<any>
     }
 }
 
