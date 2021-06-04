@@ -13,15 +13,11 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
     })
 
     it('Should fail creating task with empty service name', function () {
-        createTask(null, 'name1')
-            .its('errors.0.message')
-            .should('contains', 'Internal Server Error(s) while executing query')
+        createTask(null, 'name1').its('errors.0.message').should('contains', 'Service name not provided')
     })
 
     it('Should fail creating task with empty name', function () {
-        createTask('service1', null)
-            .its('errors.0.message')
-            .should('contains', 'Internal Server Error(s) while executing query')
+        createTask('service1', null).its('errors.0.message').should('contains', 'Task name not provided')
     })
 
     //TODO Fix - Something wrong with users (looks like it is not taking username in consideration)
