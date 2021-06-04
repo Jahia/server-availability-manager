@@ -1,0 +1,9 @@
+[
+  {
+    "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
+    "properties": {
+      "probes.testProbe.severity": "HIGH",
+      "probes.testProbe.status": "RED"
+    }
+  }
+]

@@ -3,6 +3,7 @@ package org.jahia.modules.sam.graphql;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
+import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.healthcheck.ProbesRegistry;
 
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ public class GqlHealthcheck {
     @GraphQLField
     public List<GqlProbe> getProbes() {
         return probesRegistry.getProbes().stream()
-                .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= severityThreshold.ordinal())
+                .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= ProbeSeverity.valueOf(severityThreshold.name()).ordinal())
                 .map(GqlProbe::new).collect(Collectors.toList());
     }
 }

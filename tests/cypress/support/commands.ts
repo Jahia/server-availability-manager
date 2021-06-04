@@ -19,6 +19,8 @@ declare global {
             apolloQuery(apollo: ApolloClient<any>, options: QueryOptions): Chainable<any>
 
             apolloMutate(apollo: ApolloClient<any>, options: MutationOptions): Chainable<any>
+
+            runProvisioningScript(body: string, type?: string): Chainable<Response>
         }
     }
 }
@@ -50,4 +52,20 @@ Cypress.Commands.add('apolloMutate', function (apollo: ApolloClient<any>, option
             cy.log('Result', JSON.stringify(result))
             return result
         })
+})
+
+Cypress.Commands.add('runProvisioningScript', function (body: string, type = 'application/json') {
+    return cy.request({
+        url: `${Cypress.config().baseUrl}/modules/api/provisioning`,
+        method: 'POST',
+        auth: {
+            user: 'root',
+            pass: Cypress.env('SUPER_USER_PASSWORD'),
+            sendImmediately: true,
+        },
+        headers: {
+            'content-type': type,
+        },
+        body,
+    })
 })
