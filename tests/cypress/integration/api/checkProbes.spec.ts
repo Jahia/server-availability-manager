@@ -10,6 +10,10 @@ describe('Health check', () => {
         disableProbe = require('../../fixtures/test-disable.json')
     })
 
+    afterEach(() => {
+        cy.runProvisioningScript(disableProbe)
+    })
+
     it('Check healthcheck when everything is fine', () => {
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
@@ -23,7 +27,6 @@ describe('Health check', () => {
             expect(r.status).to.eq('RED')
             expect(r.probes.length).to.eq(2)
         })
-        cy.runProvisioningScript(disableProbe)
     })
 
     it('Check healthcheck with one HIGH probe RED, asking critical', () => {
@@ -32,6 +35,50 @@ describe('Health check', () => {
             expect(r.status).to.eq('GREEN')
             expect(r.probes.length).to.eq(1)
         })
-        cy.runProvisioningScript(disableProbe)
+    })
+
+    it('Check healthcheck servlet when everything is fine', () => {
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/healthcheck`,
+            auth: {
+                user: 'root',
+                pass: Cypress.env('SUPER_USER_PASSWORD'),
+                sendImmediately: true,
+            },
+        }).should((response) => {
+            expect(response.body.status).to.eq('GREEN')
+            expect(response.status).to.eq(200)
+        })
+    })
+
+    it('Check healthcheck servlet with one HIGH probe RED, default severity, should return 503', () => {
+        cy.runProvisioningScript(enableProbe)
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/healthcheck`,
+            auth: {
+                user: 'root',
+                pass: Cypress.env('SUPER_USER_PASSWORD'),
+                sendImmediately: true,
+            },
+            failOnStatusCode: false,
+        }).should((response) => {
+            expect(response.body.status).to.eq('RED')
+            expect(response.status).to.eq(503)
+        })
+    })
+
+    it('Check healthcheck servlet with one HIGH probe RED, asking critical', () => {
+        cy.runProvisioningScript(enableProbe)
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
+            auth: {
+                user: 'root',
+                pass: Cypress.env('SUPER_USER_PASSWORD'),
+                sendImmediately: true,
+            },
+        }).should((response) => {
+            expect(response.body.status).to.eq('GREEN')
+            expect(response.status).to.eq(200)
+        })
     })
 })

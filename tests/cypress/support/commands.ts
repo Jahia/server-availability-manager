@@ -55,7 +55,7 @@ Cypress.Commands.add('apolloMutate', function (apollo: ApolloClient<any>, option
 })
 
 Cypress.Commands.add('runProvisioningScript', function (body: string, type = 'application/json') {
-    return cy.request({
+    cy.request({
         url: `${Cypress.config().baseUrl}/modules/api/provisioning`,
         method: 'POST',
         auth: {
@@ -68,4 +68,6 @@ Cypress.Commands.add('runProvisioningScript', function (body: string, type = 'ap
         },
         body,
     })
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100)
 })
