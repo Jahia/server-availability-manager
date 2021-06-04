@@ -10,8 +10,5 @@
         "prettier/@typescript-eslint",
         "plugin:prettier/recommended"
     ],
-    "rules": {
-        "cypress/no-async-tests": "off"
-    },    
     "root": true
 }
