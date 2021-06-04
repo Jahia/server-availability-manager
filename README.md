@@ -27,5 +27,18 @@
 
 Jahia Server Availability Manager is a module extending our GraphQL API to provide additional functionalities associated with server management and server health.
 
+# Register tasks that prevent server from stopping
+ To register long-running tasks we use OSGi `EventAdmin` and `TaskRegisterEventHandler` of server availability manager.
+ It's done by three steps: 
+ 1) Instantiate EventAdmin service: `private final EventAdmin eventAdmin = BundleUtils.getOsgiService(EventAdmin.class.getName());`
+ 2) Before registering the task it is advised to unregister it first just in case it wasn't cleaned up due to the failure:
+`eventAdmin.sendEvent(new Event(UNREGISTER_EVENT, constructTaskDetailsEvent(workspace, WORKSPACE_INDEXATION)));`, where `UNREGISTER_EVENT` represents
+    event topic - `org/jahia/modules/sam/TaskRegistryService/UNREGISTER`, and `constructTaskDetailsEvent` creates a map with three event properties: 
+    - name
+    - service
+    - started, in this example we register workspace indexation of augmented search, example can be seen in `ESService.java` class
+    
+ 3) Register the task when starting, same approach as unregister, just `REGISTER` instead of `UNREGISTER`
+ 4) Unregister the task when ended
 
-
+Important information: tasks are distinguished using combination of name and service, so this combination should be unique
