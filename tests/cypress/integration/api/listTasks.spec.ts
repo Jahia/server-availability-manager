@@ -13,8 +13,6 @@ describe('List Tasks via API - mutation.admin.serverAvailabilityManager.listTask
         createTask('service1', 'name1')
         createTask('service1', 'name2')
         createTask('service2', 'name1')
-        createTask('service2', 'name1')
-        //
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
             authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
@@ -25,7 +23,6 @@ describe('List Tasks via API - mutation.admin.serverAvailabilityManager.listTask
         })
         deleteTask('service1', 'name1')
         deleteTask('service1', 'name2')
-        deleteTask('service2', 'name1')
         deleteTask('service2', 'name1')
     })
 

@@ -25,20 +25,38 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
             expect(response.data.admin.serverAvailabilityManager.deleteTask).to.be.true
         })
     })
-    it('Should fail deleting task with wrong name and service', () => {
-        createTask('service1', 'name1')
+    it('Should fail deleting task with empty service', () => {
         cy.task('apolloNode', {
             baseUrl: Cypress.config().baseUrl,
             authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
             mode: 'mutate',
             variables: {
                 service: null,
+                name: 'name1',
+            },
+            query: GQL_DELETE_TASK,
+        }).then((response: any) => {
+            cy.log(JSON.stringify(response))
+            expect(response.graphQLErrors[0].message).to.contains(
+                'Service name not provided',
+            )
+        })
+    })
+    it('Should fail deleting task with empty name', () => {
+        cy.task('apolloNode', {
+            baseUrl: Cypress.config().baseUrl,
+            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
+            mode: 'mutate',
+            variables: {
+                service: 'service1',
                 name: null,
             },
             query: GQL_DELETE_TASK,
         }).then((response: any) => {
             cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
+            expect(response.graphQLErrors[0].message).to.contains(
+                'Task name not provided',
+            )
         })
     })
     it('Should fail deleting non existent task', () => {
@@ -53,7 +71,7 @@ describe('Task deletion Task via API - mutation.admin.serverAvailabilityManager.
             query: GQL_DELETE_TASK,
         }).then((response: any) => {
             cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Task not found')
+            expect(response.data.admin.serverAvailabilityManager.deleteTask).to.be.false
         })
     })
 })

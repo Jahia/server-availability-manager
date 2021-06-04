@@ -44,9 +44,17 @@ public class ServerAvailabilityMutation {
      */
     @GraphQLField
     @GraphQLDescription("Create a task")
-    public boolean createTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
-                              @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
+    public boolean createTask(@GraphQLName("service") @GraphQLDescription("Service name") String service,
+                              @GraphQLName("name") @GraphQLDescription("Task name") String name) {
         try {
+
+            //Check if Service name was provided
+            if(service==null || service.isEmpty())
+                throw new Exception("Service name not provided");
+
+            //Check if Service name was provided
+            if(name==null || name.isEmpty())
+                throw new Exception("Task name not provided");
 
             //Check if it's alphanumerical + '-' and '_' with a limited length (100 Chars)
             if(!service.matches("[a-zA-Z0-9-_]{1,50}"))
@@ -68,16 +76,25 @@ public class ServerAvailabilityMutation {
      * Delete a task
      *
      * @param name The name of the task associated with the service
+     * @return false return means the task was not found
      * @throws Exception
      */
     @GraphQLField
     @GraphQLDescription("Delete a task")
-    public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
-                              @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
+    public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") String service,
+                              @GraphQLName("name") @GraphQLDescription("Task name") String name) {
         try {
+            //Check if Service name was provided
+            if(service==null || service.isEmpty())
+                throw new Exception("Service name not provided");
+
+            //Check if Service name was provided
+            if(name==null || name.isEmpty())
+                throw new Exception("Task name not provided");
+
             //Check if taskDetail is registered
             if(taskRegistryService.getRegisteredTasks().noneMatch(task -> task.equals(new TaskDetails(service, name))))
-                throw new Exception("Task not found");
+                return false;
 
             TaskDetails taskDetails = new TaskDetails(service,name);
             taskRegistryService.unregisterTask(taskDetails);
@@ -117,7 +134,7 @@ public class ServerAvailabilityMutation {
                     sleep();
                 }
             }
-        } catch (Exception e) {
+        }catch (Exception e) {
             throw new DataFetchingException(e);
         }
         return false;

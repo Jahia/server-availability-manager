@@ -117,19 +117,4 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
         })
         deleteTask('service1', 'name1')
     })
-
-    it('Should fail Shutdown wrong timeout format', function () {
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
-            variables: {
-                timeout: 'ABC',
-            },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
-        })
-    })
 })

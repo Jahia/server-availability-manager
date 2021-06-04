@@ -54,7 +54,9 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
             query: GQL_CREATE_TASK,
         }).then((response: any) => {
             cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
+            expect(response.graphQLErrors[0].message).to.contains(
+                'Service name not provided',
+            )
         })
     })
     it('Should fail creating task with empty name', function () {
@@ -69,7 +71,9 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
             query: GQL_CREATE_TASK,
         }).then((response: any) => {
             cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
+            expect(response.graphQLErrors[0].message).to.contains(
+                'Task name not provided',
+            )
         })
     })
     //TODO Fix - Something wrong with users (looks like it is not taking username in consideration)
