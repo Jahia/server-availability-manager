@@ -28,7 +28,7 @@ public interface Probe {
      * @return severity
      */
     default ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.LOW;
+        return ProbeSeverity.IGNORED;
     }
 
     /**
