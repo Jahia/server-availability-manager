@@ -2,12 +2,13 @@ import { apollo } from '../../support/apollo'
 import gql from 'graphql-tag'
 
 describe('Test if every type in graphQL API has description', () => {
-    it('Check every input for the User Type', async function () {
+    it('Check every input for the User Type', function () {
         const noDesc = new Set()
-        await executeTest('ServerAvailabilityManagerQuery', noDesc)
-        await executeTest('ServerAvailabilityManagerMutation', noDesc)
-        console.log(noDesc)
-        expect(JSON.stringify(Array.from(noDesc))).to.equals('[]')
+        cy.wrap({}).then(async () => {
+            await executeTest('ServerAvailabilityManagerQuery', noDesc)
+            await executeTest('ServerAvailabilityManagerMutation', noDesc)
+            expect(JSON.stringify(Array.from(noDesc))).to.equals('[]')
+        })
     })
 })
 

@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// import { apollo } from '../../support/apollo'
 import { DocumentNode } from 'graphql'
+import { apollo } from '../../support/apollo'
 
 describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown', () => {
     let GQL_SHUTDOWN: DocumentNode
@@ -11,17 +10,13 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
 
     it('Shutdown success', function () {
         //This test must be the last test for obviously reason
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 timeout: 100,
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
-            expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
+            mutation: GQL_SHUTDOWN,
         })
+            .its('data.admin.serverAvailabilityManager.shutdown')
+            .should('eq', true)
     })
 })
