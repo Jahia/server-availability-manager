@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DocumentNode } from 'graphql'
 import { createTask, deleteTask } from '../../support/gql'
 import { apollo } from '../../support/apollo'
@@ -29,7 +28,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
                 dryRun: true,
             },
             mutation: GQL_SHUTDOWN,
-        }).should((response: any) => {
+        }).should((response) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.false
             const completeShutdown = new Date().getTime()
@@ -50,7 +49,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
                 timeout: 2,
             },
             mutation: GQL_SHUTDOWN,
-        }).should((response: any) => {
+        }).should((response) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.false
             const completeShutdown = new Date().getTime()
@@ -70,7 +69,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
                 force: true,
             },
             mutation: GQL_SHUTDOWN,
-        }).should((response: any) => {
+        }).should((response) => {
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
             const completeShutdown = new Date().getTime()
             const executionTime = completeShutdown - startShutdown
@@ -88,7 +87,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
                 force: true,
             },
             mutation: GQL_SHUTDOWN,
-        }).should((response: any) => {
+        }).should((response) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
             const completeShutdown = new Date().getTime()

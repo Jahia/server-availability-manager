@@ -1,6 +1,6 @@
 // cross-fetch is needed to support request executed by the browser or by node
 import fetch from 'cross-fetch'
-import { ApolloClient, InMemoryCache, ApolloLink, from, NormalizedCacheObject } from '@apollo/client/core'
+import { ApolloClient, from, InMemoryCache, NormalizedCacheObject } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { onError } from '@apollo/client/link/error'
 import { HttpLink } from '@apollo/client/link/http'
@@ -59,7 +59,7 @@ export const apolloClient = (baseUrl: string, authMethod?: authMethod): ApolloCl
 
     return new ApolloClient({
         cache: new InMemoryCache(),
-        link: from([(authLink as unknown) as ApolloLink, errorLink, httpLink]),
+        link: from([authLink, errorLink, httpLink]),
         defaultOptions: {
             query: {
                 fetchPolicy: 'network-only',

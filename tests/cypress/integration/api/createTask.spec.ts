@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { DocumentNode } from 'graphql'
 import { createTask, deleteTask } from '../../support/gql'
-import { apollo } from '../../support/apollo'
 
 describe('Task creation via API - mutation.admin.serverAvailabilityManager.createTask', () => {
     it('Create task by providing service, name', () => {

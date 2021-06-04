@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// import { apollo } from '../../support/apollo'
 import { DocumentNode } from 'graphql'
 import { apollo } from '../../support/apollo'
 

@@ -1,5 +1,4 @@
 import { apollo } from '../../support/apollo'
-import gql from 'graphql-tag'
 import { healthCheck } from '../../support/gql'
 
 describe('xxx', () => {
