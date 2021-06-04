@@ -4,6 +4,6 @@ import { healthCheck } from '../../support/gql'
 
 describe('xxx', () => {
     it('Check healthcheck', () => {
-        healthCheck('LOW', apollo()).its('data.admin.serverAvailabilityManager.healthCheck.status').should('eq', 'RED')
+        healthCheck('LOW', apollo()).its('status').should('eq', 'RED')
     })
 })

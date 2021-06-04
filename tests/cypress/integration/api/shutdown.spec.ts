@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DocumentNode } from 'graphql'
 import { createTask, deleteTask } from '../../support/gql'
+import { apollo } from '../../support/apollo'
 
 describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown', () => {
     let GQL_SHUTDOWN: DocumentNode
@@ -10,33 +11,25 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     })
 
     it('Shutdown with no tasks running (dryRun)', function () {
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 dryRun: true,
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
-            expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
+            mutation: GQL_SHUTDOWN,
         })
+            .its('data.admin.serverAvailabilityManager.shutdown')
+            .should('eq', true)
     })
 
     it('Shutdown impossible with tasks running (dryRun) - should exhaust default timeout (25s)', function () {
         createTask('service1', 'name1')
         const startShutdown = new Date().getTime()
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 dryRun: true,
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
+            mutation: GQL_SHUTDOWN,
+        }).should((response: any) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.false
             const completeShutdown = new Date().getTime()
@@ -51,17 +44,13 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     it('Shutdown impossible with tasks running (dryRun) - shorter timeout (2s)', function () {
         createTask('service1', 'name1')
         const startShutdown = new Date().getTime()
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 dryRun: true,
                 timeout: 2,
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
+            mutation: GQL_SHUTDOWN,
+        }).should((response: any) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.false
             const completeShutdown = new Date().getTime()
@@ -75,17 +64,13 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
 
     it('Force shutdown without tasks running (dryRun)', function () {
         const startShutdown = new Date().getTime()
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 dryRun: true,
                 force: true,
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
+            mutation: GQL_SHUTDOWN,
+        }).should((response: any) => {
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
             const completeShutdown = new Date().getTime()
             const executionTime = completeShutdown - startShutdown
@@ -97,17 +82,13 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     it('Force shutdown with tasks running (dryRun)', function () {
         createTask('service1', 'name1')
         const startShutdown = new Date().getTime()
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 dryRun: true,
                 force: true,
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
+            mutation: GQL_SHUTDOWN,
+        }).should((response: any) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
             const completeShutdown = new Date().getTime()
@@ -119,17 +100,14 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
     })
 
     it('Should fail Shutdown wrong timeout format', function () {
-        cy.task('apolloNode', {
-            baseUrl: Cypress.config().baseUrl,
-            authMethod: { username: 'root', password: Cypress.env('SUPER_USER_PASSWORD') },
-            mode: 'mutate',
+        cy.apolloMutate(apollo(), {
             variables: {
                 timeout: 'ABC',
             },
-            query: GQL_SHUTDOWN,
-        }).then((response: any) => {
-            cy.log(JSON.stringify(response))
-            expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
+            mutation: GQL_SHUTDOWN,
+            errorPolicy: 'all',
         })
+            .its('errors.0.message')
+            .should('contain', 'Internal Server Error(s) while executing query')
     })
 })

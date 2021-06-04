@@ -27,9 +27,21 @@ Cypress.Commands.add('goTo', function (url: string) {
 })
 
 Cypress.Commands.add('apolloQuery', function (apollo: any, options: any) {
-    cy.wrap({}).then(() => apollo.query(options))
+    cy.log('GQL Query', options.query.loc.source.body)
+    cy.wrap({}, { log: false })
+        .then(() => apollo.query(options))
+        .then(async (result) => {
+            cy.log('Result', JSON.stringify(result))
+            return result
+        })
 })
 
 Cypress.Commands.add('apolloMutate', function (apollo: any, options: any) {
-    cy.wrap({}).then(() => apollo.mutate(options))
+    cy.log('GQL Mutation', options.mutation.loc.source.body)
+    cy.wrap({}, { log: false })
+        .then(() => apollo.mutate(options))
+        .then(async (result) => {
+            cy.log('Result', JSON.stringify(result))
+            return result
+        })
 })
