@@ -17,7 +17,7 @@ describe('Health check', () => {
     it('Check healthcheck when everything is fine', () => {
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
-            expect(r.probes.length).to.eq(1)
+            expect(r.probes.length).to.eq(2)
         })
     })
 
@@ -25,7 +25,7 @@ describe('Health check', () => {
         cy.runProvisioningScript(enableProbe)
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('RED')
-            expect(r.probes.length).to.eq(2)
+            expect(r.probes.length).to.eq(3)
         })
     })
 
@@ -33,7 +33,7 @@ describe('Health check', () => {
         cy.runProvisioningScript(enableProbe)
         healthCheck('CRITICAL', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
-            expect(r.probes.length).to.eq(1)
+            expect(r.probes.length).to.eq(2)
         })
     })
 
