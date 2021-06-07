@@ -25,9 +25,34 @@
  
 # Server Availability Manager
 
-Jahia Server Availability Manager is a module extending our GraphQL API to provide additional functionalities associated with server management and server health.
+Jahia Server Availability Manager is a module extending our GraphQL API to provide additional functionalities associated with server management and server health. 
 
-# Register tasks that prevent server from stopping
+## Monitoring running tasks
+
+During its regular lifecycle Jahia will be performing actions that shouldn't be interrupted by maintenance activities (server shutdown, database maintenance, ...). By exposing such tasks, Jahia makes third party platforms (or individual) aware of when interruptions should be avoided.
+
+The following query returns the list of critical tasks currently running on the server.
+
+```graphql
+query {
+  admin {
+    jahia {
+      tasks {
+        service # Name of the service holding the task
+        name    # Name of the tasks that should not be interrupted
+        started # Datetime at which the task started (if available)
+      }
+    }
+  }
+}
+```
+
+### Registry
+
+The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to delcare their own tasks. 
+
+#### Registry tasks from a Java module
+
  To register long-running tasks we use Jahia `FrameworkService` and `TaskRegisterEventHandler` of server availability manager.
  It's done by three steps: 
  1) Before registering the task it is advised to unregister it first just in case it wasn't cleaned up due to the failure:
@@ -41,3 +66,12 @@ Jahia Server Availability Manager is a module extending our GraphQL API to provi
  3) Unregister the task when ended
 
 Important information: tasks are distinguished using combination of name and service, so this combination should be unique
+
+#### Registry tasks via GraphQL API
+
+
+## Monitoring health
+
+
+
+
