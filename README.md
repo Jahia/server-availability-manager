@@ -25,7 +25,13 @@
  
 # Server Availability Manager
 
-Jahia Server Availability Manager is a module extending our GraphQL API to provide additional functionalities associated with server management and server health. 
+Jahia Server Availability Manager is a module extending our GraphQL API to provide additional functionalities associated with server management and server health.
+
+The following core features are part of the module:
+
+* List critical background tasks currently running
+* Shutdown the server
+* List status of healthcheck probes
 
 ## Monitoring running tasks
 
@@ -49,9 +55,9 @@ query {
 
 ### Registry
 
-The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to delcare their own tasks. 
+The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to declare their own tasks. This can also be extended to external infrastructure willing to prevent a server from being restarted
 
-#### Registry tasks from a Java module
+#### Register tasks from a Java module
 
  To register long-running tasks we use Jahia `FrameworkService` and `TaskRegisterEventHandler` of server availability manager.
  It's done by three steps: 
@@ -67,7 +73,21 @@ The module is equipped with a registry of running tasks allowing modules, not pa
 
 Important information: tasks are distinguished using combination of name and service, so this combination should be unique
 
-#### Registry tasks via GraphQL API
+#### Register tasks via GraphQL API
+
+When external services (nor directly running on a Jahia server) need to let this server know that it shouldn't be restarted, the GraphQL API can be used to create and delete tasks.
+
+```graphql
+mutation {
+  admin {
+    jahia {
+      createTask(service: "DevOps Team" name: "Network maintenance on Core VPC")
+    }
+  }
+}
+```
+
+Using `deleteTask` with the same parameters will delete that particular task. The registry is shared between GraphQL and Java modules, so you can very well create a task in a Java module and delete it via the GraphQL API.
 
 
 ## Monitoring health
