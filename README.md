@@ -155,7 +155,7 @@ status.threshold=RED
 status.code=503
 ```
 
-### (Un)Register and configure probes
+### Develop, (un)register and configure probes
 
 Probes are declared in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg), allowing their severity and status to be adjusted based on need.
 
@@ -163,5 +163,7 @@ Probes are declared in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegist
 probes.testProbe.severity=HIGH
 probes.testProbe.status=RED
 ```
+
+Additional can easily be added by looking at the [source code of existing probes](src/main/java/org/jahia/modules/sam/healthcheck/probes).
 
 
