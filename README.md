@@ -123,7 +123,7 @@ The module also provides health information about the server, in replacement of 
 query {
   admin {
     jahia {
-      healthCheck {
+      healthCheck(severity: LOW) {  # You can specify the minimum severity to return
         status          # Highest reported status across all probes
         probes {
           name          # Name of the probe
@@ -137,7 +137,11 @@ query {
 }
 ```
 
+The module comes with a set of preconfigured probes but additional probes can easily be added.
+
 ### (Un)Register and configure probes
 
-Probes are configured in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg)
+Probes are declared in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg), allowing their severity and status to be adjusted based on need.
+
+
 
