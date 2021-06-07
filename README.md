@@ -128,7 +128,7 @@ query {
         probes {
           name          # Name of the probe
           status        # Status reported by the probe (GREEN to RED)
-          severity          # Severity of the probe (LOW to CRITICAL)
+          severity      # Severity of the probe (LOW to CRITICAL)
           description   # Description specified by the developer of the probe
         }
       }
@@ -146,9 +146,12 @@ The list of probes are also available via a REST API call (GET) at the following
 Configuration is available in [karaf/etc/org.jahia.modules.sam.healthcheck.HealthCheckServlet.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.HealthCheckServlet.cfg)
 
 ```cfg
+# default severity level with "?severity=LEVEL" is not provided
 severity.default=MEDIUM
 
+# Threshold above which an HTTP error code will be returned
 status.threshold=RED
+# Error code to be returned if above threshold
 status.code=503
 ```
 
