@@ -100,7 +100,7 @@ This API node should be used with care since it actually shutdowns the Jahia ser
 ```graphql
 mutation {
   admin {
-    serverAvailabilityManager {
+    jahia {
       shutdown(
         # When dryRun is provided, the server will not be shutdown but 
         # still return the expected API response (true or false) 
@@ -117,6 +117,23 @@ The above query is provided as an example, `timeout` and `force` shouldn't be us
 
 ## Monitoring health
 
+The module also provides health information about the server, in replacement of the [previous healthcheck module](https://github.com/Jahia/healthcheck). 
 
-
+```graphql
+query {
+  admin {
+    jahia {
+      healthCheck {
+        status          # Highest reported status across all probes
+        probes {
+          name          # Name of the probe
+          status        # Status reported by the probe (GREEN to RED)
+      severity          # Severity of the probe (LOW to CRITICAL)
+          description   # Description specified by the developer of the probe
+        }
+      }
+    }
+  }
+}
+```
 
