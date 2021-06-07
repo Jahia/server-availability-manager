@@ -20,7 +20,7 @@ import java.io.File;
 @Component(service = Probe.class, immediate = true)
 public class DatastoreProbe implements Probe {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DatastoreProbe.class);
+    private static final Logger logger = LoggerFactory.getLogger(DatastoreProbe.class);
 
     @Override
     public ProbeStatus getStatus() {
@@ -42,13 +42,13 @@ public class DatastoreProbe implements Probe {
                 } else if (vm instanceof InternalXAVersionManager) {
                     pm = ((InternalXAVersionManager) vm).getPersistenceManager();
                 } else {
-                    LOGGER.warn("Unknown implementation of the InternalVersionManager: {}.", vm.getClass().getName());
+                    logger.warn("Unknown implementation of the InternalVersionManager: {}.", vm.getClass().getName());
                     return false;
                 }
                 return pm instanceof BundleDbPersistenceManager;
             });
         } catch (RepositoryException e) {
-            LOGGER.error("", e);
+            logger.error("", e);
             return false;
         }
     }
