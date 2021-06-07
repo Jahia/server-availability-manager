@@ -117,6 +117,16 @@ The above query is provided as an example, `timeout` and `force` shouldn't be us
 
 ## Monitoring health
 
+The module also provides insights about a platform's health and can help trigger alerts or pay attention to key components that might need close attention. 
+
+Available via GraphQL or REST, the module can be triggered at will with minimal impact on the platform load, additional probes can be developed to provide more information to the monitoring systems.
+
+Probes are categorized by severity and report a status:
+* GREEN (Nominal status)
+* YELLOW (Non critical problem)
+* RED (Critical issue)
+
+
 The module also provides health information about the server, in replacement of the [previous healthcheck module](https://github.com/Jahia/healthcheck). 
 
 ```graphql
