@@ -159,5 +159,9 @@ status.code=503
 
 Probes are declared in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg), allowing their severity and status to be adjusted based on need.
 
+```cfg
+probes.testProbe.severity=HIGH
+probes.testProbe.status=RED
+```
 
 
