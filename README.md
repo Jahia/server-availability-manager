@@ -105,7 +105,7 @@ mutation {
         # When dryRun is provided, the server will not be shutdown but 
         # still return the expected API response (true or false) 
         dryRun: true,   
-        timeout: 25,    # In seconds, maximum time to wait for server to be ready to shutdown 
+        timeout: 25,    # In seconds, maximum time to wait for server to be ready (empty list of tasks) to shutdown 
         force: true     # Force immediate shutdown even tasks are running
       )
     }
