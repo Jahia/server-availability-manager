@@ -53,6 +53,8 @@ query {
 }
 ```
 
+This query returns the tasks running at the time the query was made, the server availability manager does not keep a log of previously running tasks.
+
 ### Registry
 
 The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to declare their own tasks. This can also be extended to external infrastructure willing to prevent a server from being restarted
@@ -89,6 +91,10 @@ mutation {
 
 Using `deleteTask` with the same parameters will delete that particular task. The registry is shared between GraphQL and Java modules, so you can very well create a task in a Java module and delete it via the GraphQL API.
 
+## Monitoring health
+
+
+## Monitoring health
 
 ## Monitoring health
 
