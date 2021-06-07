@@ -137,3 +137,7 @@ query {
 }
 ```
 
+### (Un)Register and configure probes
+
+Probes are configured in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg)
+
