@@ -91,10 +91,27 @@ mutation {
 
 Using `deleteTask` with the same parameters will delete that particular task. The registry is shared between GraphQL and Java modules, so you can very well create a task in a Java module and delete it via the GraphQL API.
 
-## Monitoring health
+## Server shutdown
 
+Working jointly with the tasks registry, a shutdown service is exposed via the GraphQL API. 
 
-## Monitoring health
+This API node should be used with care since it actually shutdowns the Jahia server.
+
+```graphql
+mutation {
+  admin {
+    serverAvailabilityManager {
+      shutdown(
+        dryRun: true,   # When dryRun is provided, the server will not be shutdown but still return the expected API response (true or false) 
+        timeout: 25,    # In seconds, maximum time to wait for server to be ready to shutdown 
+        force: true     # Force immediate shutdown even tasks are running
+      )
+    }
+  }
+}
+```
+
+The above query is provided as an example, `timeout` and `force` shouldn't be used together since `force` will trigger immediate shutdown without consideration for the `timeout` value.
 
 ## Monitoring health
 
