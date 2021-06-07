@@ -127,7 +127,7 @@ Probes are categorized by severity and report a status:
 * RED (Critical issue)
 
 
-The module also provides health information about the server, in replacement of the [previous healthcheck module](https://github.com/Jahia/healthcheck). 
+This module comes in replacement of the [previous healthcheck module](https://github.com/Jahia/healthcheck).
 
 ```graphql
 query {
