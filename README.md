@@ -137,7 +137,20 @@ query {
 }
 ```
 
-The module comes with a set of preconfigured probes but additional probes can easily be added.
+Although the module comes with a set of preconfigured probes, additional probes can easily be added.
+
+### REST API
+
+The list of probes are also available via a REST API call (GET) at the following url: {YOUR_JAHIA_HOST}/modules/healthcheck?severity=low
+
+Configuration is available in [karaf/etc/org.jahia.modules.sam.healthcheck.HealthCheckServlet.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.HealthCheckServlet.cfg)
+
+```cfg
+severity.default=MEDIUM
+
+status.threshold=RED
+status.code=503
+```
 
 ### (Un)Register and configure probes
 
