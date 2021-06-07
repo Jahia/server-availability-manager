@@ -128,7 +128,7 @@ query {
         probes {
           name          # Name of the probe
           status        # Status reported by the probe (GREEN to RED)
-      severity          # Severity of the probe (LOW to CRITICAL)
+          severity          # Severity of the probe (LOW to CRITICAL)
           description   # Description specified by the developer of the probe
         }
       }
