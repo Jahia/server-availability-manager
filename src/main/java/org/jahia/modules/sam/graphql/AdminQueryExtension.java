@@ -12,7 +12,7 @@ public class AdminQueryExtension {
     @GraphQLField
     @GraphQLName("serverAvailabilityManager")
     @GraphQLDescription("SAM queries for the tasks")
-    public static GqlTasksQuery serverAvailabilityManager() {
-        return new GqlTasksQuery();
+    public static ServerAvailabilityQuery serverAvailabilityManager() {
+        return new ServerAvailabilityQuery();
     }
 }
