@@ -176,4 +176,28 @@ probes.testProbe.status=RED
 
 Additional can easily be added by looking at the [source code of existing probes](src/main/java/org/jahia/modules/sam/healthcheck/probes).
 
+## Server load metrics
+
+Finally, the module also provides jahia load metrics.
+
+```graphql
+query {
+  admin {
+    serverAvailabilityManager {
+      load {
+        requests {
+          count
+          # Interval can be ONE, FIVE, or FIFTEEN minutes
+          average(interval: ONE)
+        }
+        sessions {
+          count
+          average(interval: FIVE)
+        }
+      }
+    }
+  }
+}
+```
+
 
