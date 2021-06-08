@@ -27,7 +27,40 @@
 
 Jahia Server Availability Manager is a module extending our GraphQL API to provide additional functionalities associated with server management and server health.
 
-# Register tasks that prevent server from stopping
+The following core features are part of the module:
+
+* List critical background tasks currently running
+* Shutdown the server
+* List status of healthcheck probes
+
+## Monitoring running tasks
+
+During its regular lifecycle Jahia will be performing actions that shouldn't be interrupted by maintenance activities (server shutdown, database maintenance, ...). By exposing such tasks, Jahia makes third party platforms (or individual) aware of when interruptions should be avoided.
+
+The following query returns the list of critical tasks currently running on the server.
+
+```graphql
+query {
+  admin {
+    jahia {
+      tasks {
+        service # Name of the service holding the task
+        name    # Name of the tasks that should not be interrupted
+        started # Datetime at which the task started (if available)
+      }
+    }
+  }
+}
+```
+
+This query returns the tasks running at the time the query was made, the server availability manager does not keep a log of previously running tasks.
+
+### Registry
+
+The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to declare their own tasks. This can also be extended to external infrastructure willing to prevent a server from being restarted
+
+#### Register tasks from a Java module
+
  To register long-running tasks we use Jahia `FrameworkService` and `TaskRegisterEventHandler` of server availability manager.
  It's done by three steps: 
  1) Before registering the task it is advised to unregister it first just in case it wasn't cleaned up due to the failure:
@@ -41,3 +74,106 @@ Jahia Server Availability Manager is a module extending our GraphQL API to provi
  3) Unregister the task when ended
 
 Important information: tasks are distinguished using combination of name and service, so this combination should be unique
+
+#### Register tasks via GraphQL API
+
+When external services (nor directly running on a Jahia server) need to let this server know that it shouldn't be restarted, the GraphQL API can be used to create and delete tasks.
+
+```graphql
+mutation {
+  admin {
+    jahia {
+      createTask(service: "DevOps Team" name: "Network maintenance on Core VPC")
+    }
+  }
+}
+```
+
+Using `deleteTask` with the same parameters will delete that particular task. The registry is shared between GraphQL and Java modules, so you can very well create a task in a Java module and delete it via the GraphQL API.
+
+## Server shutdown
+
+Working jointly with the tasks registry, a shutdown service is exposed via the GraphQL API. 
+
+This API node should be used with care since it actually shutdowns the Jahia server.
+
+```graphql
+mutation {
+  admin {
+    jahia {
+      shutdown(
+        # When dryRun is provided, the server will not be shutdown but 
+        # still return the expected API response (true or false) 
+        dryRun: true,   
+        timeout: 25,    # In seconds, maximum time to wait for server to be ready (empty list of tasks) to shutdown 
+        force: true     # Force immediate shutdown even tasks are running
+      )
+    }
+  }
+}
+```
+
+The above query is provided as an example, `timeout` and `force` shouldn't be used together since `force` will trigger immediate shutdown without consideration for the `timeout` value.
+
+## Monitoring health
+
+The module also provides insights about a platform's health and can help trigger alerts or pay attention to key components that might need close attention. 
+
+Available via GraphQL or REST, the module can be triggered at will with minimal impact on the platform load, additional probes can be developed to provide more information to the monitoring systems.
+
+Probes are categorized by severity and report a status:
+* GREEN (Nominal status)
+* YELLOW (Non critical problem)
+* RED (Critical issue)
+
+
+This module comes in replacement of the [previous healthcheck module](https://github.com/Jahia/healthcheck).
+
+```graphql
+query {
+  admin {
+    jahia {
+      healthCheck(severity: LOW) {  # You can specify the minimum severity to return
+        status          # Highest reported status across all probes
+        probes {
+          name          # Name of the probe
+          status        # Status reported by the probe (GREEN to RED)
+          severity      # Severity of the probe (LOW to CRITICAL)
+          description   # Description specified by the developer of the probe
+        }
+      }
+    }
+  }
+}
+```
+
+Although the module comes with a set of preconfigured probes, additional probes can easily be added.
+
+### REST API
+
+The list of probes are also available via a REST API call (GET) at the following url: [https://{YOUR_JAHIA_HOST}/modules/healthcheck?severity=low](https://{YOUR_JAHIA_HOST}/modules/healthcheck?severity=low)
+
+Configuration is available in [karaf/etc/org.jahia.modules.sam.healthcheck.HealthCheckServlet.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.HealthCheckServlet.cfg)
+
+```cfg
+# default severity level with "?severity=LEVEL" is not provided
+severity.default=MEDIUM
+
+# Threshold above which an HTTP error code will be returned
+status.threshold=RED
+# Error code to be returned if above threshold
+status.code=503
+```
+
+### Develop, (un)register and configure probes
+
+Probes are declared in [karaf/etc/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg](./src/main/resources/META-INF/configurations/org.jahia.modules.sam.healthcheck.ProbesRegistry.cfg), allowing their severity and status to be adjusted based on need.
+
+```cfg
+probes.testProbe.severity=HIGH
+probes.testProbe.status=RED
+```
+
+Additional can easily be added by looking at the [source code of existing probes](src/main/java/org/jahia/modules/sam/healthcheck/probes).
+
+
