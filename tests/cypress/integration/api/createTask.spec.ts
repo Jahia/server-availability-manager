@@ -12,18 +12,6 @@ describe('Task creation via API - mutation.admin.serverAvailabilityManager.creat
             .should('contains', 'Service is not a alphanumerical with a limited length of 50 characters')
     })
 
-    it('Should fail creating task with empty service name', function () {
-        createTask(null, 'name1')
-            .its('errors.0.message')
-            .should('contains', 'Internal Server Error(s) while executing query')
-    })
-
-    it('Should fail creating task with empty name', function () {
-        createTask('service1', null)
-            .its('errors.0.message')
-            .should('contains', 'Internal Server Error(s) while executing query')
-    })
-
     //TODO Fix - Something wrong with users (looks like it is not taking username in consideration)
     // it('Should fail creating task with guess user', function () {
     //     cy.task('apolloNode', {

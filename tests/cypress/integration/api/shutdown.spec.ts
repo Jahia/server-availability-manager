@@ -97,16 +97,4 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
         })
         deleteTask('service1', 'name1')
     })
-
-    it('Should fail Shutdown wrong timeout format', function () {
-        cy.apolloMutate(apollo(), {
-            variables: {
-                timeout: 'ABC',
-            },
-            mutation: GQL_SHUTDOWN,
-            errorPolicy: 'all',
-        })
-            .its('errors.0.message')
-            .should('contain', 'Internal Server Error(s) while executing query')
-    })
 })

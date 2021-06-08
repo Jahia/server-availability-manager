@@ -25,7 +25,7 @@ import java.util.Calendar;
  */
 @GraphQLDescription("Server availability mutations")
 public class ServerAvailabilityMutation {
-    private static Logger logger = LoggerFactory.getLogger(ServerAvailabilityMutation.class);
+    private static final Logger logger = LoggerFactory.getLogger(ServerAvailabilityMutation.class);
 
     @Inject
     @GraphQLOsgiService
@@ -49,8 +49,9 @@ public class ServerAvailabilityMutation {
         try {
 
             //Check if it's alphanumerical + '-' and '_' with a limited length (100 Chars)
-            if(!service.matches("[a-zA-Z0-9-_]{1,50}"))
-                throw new Exception("Service is not a alphanumerical with a limited length of 50 characters");
+            if(!service.matches("[a-zA-Z0-9-_]{1,50}")) {
+                throw new DataFetchingException("Service is not a alphanumerical with a limited length of 50 characters");
+            }
 
             //Creating task
             TaskDetails taskDetails = new TaskDetails(service,name);
@@ -68,6 +69,7 @@ public class ServerAvailabilityMutation {
      * Delete a task
      *
      * @param name The name of the task associated with the service
+     * @return false return means the task was not found
      * @throws Exception
      */
     @GraphQLField
@@ -75,7 +77,13 @@ public class ServerAvailabilityMutation {
     public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
                               @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
         try {
-            TaskDetails taskDetails = new TaskDetails(service,name);
+
+            //Check if taskDetail is registered
+            if (taskRegistryService.getRegisteredTasks().noneMatch(task -> task.equals(new TaskDetails(service, name)))) {
+                return false;
+            }
+
+            TaskDetails taskDetails = new TaskDetails(service, name);
             taskRegistryService.unregisterTask(taskDetails);
 
             return true;

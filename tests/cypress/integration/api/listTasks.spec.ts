@@ -13,13 +13,11 @@ describe('List Tasks via API - mutation.admin.serverAvailabilityManager.listTask
         createTask('service1', 'name1')
         createTask('service1', 'name2')
         createTask('service2', 'name1')
-        createTask('service2', 'name1')
         cy.apolloQuery(apollo(), { query: GQL_LIST_TASKS })
             .its('data.admin.serverAvailabilityManager.tasks.length')
             .should('equals', 3)
         deleteTask('service1', 'name1')
         deleteTask('service1', 'name2')
-        deleteTask('service2', 'name1')
         deleteTask('service2', 'name1')
     })
 
