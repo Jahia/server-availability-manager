@@ -44,21 +44,14 @@ public class ServerAvailabilityMutation {
      */
     @GraphQLField
     @GraphQLDescription("Create a task")
-    public boolean createTask(@GraphQLName("service") @GraphQLDescription("Service name") String service,
-                              @GraphQLName("name") @GraphQLDescription("Task name") String name) {
+    public boolean createTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
+                              @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
         try {
 
-            //Check if Service name was provided
-            if(service==null || service.isEmpty())
-                throw new Exception("Service name not provided");
-
-            //Check if Service name was provided
-            if(name==null || name.isEmpty())
-                throw new Exception("Task name not provided");
-
             //Check if it's alphanumerical + '-' and '_' with a limited length (100 Chars)
-            if(!service.matches("[a-zA-Z0-9-_]{1,50}"))
-                throw new Exception("Service is not a alphanumerical with a limited length of 50 characters");
+            if(!service.matches("[a-zA-Z0-9-_]{1,50}")) {
+                throw new DataFetchingException("Service is not a alphanumerical with a limited length of 50 characters");
+            }
 
             //Creating task
             TaskDetails taskDetails = new TaskDetails(service,name);
@@ -81,21 +74,14 @@ public class ServerAvailabilityMutation {
      */
     @GraphQLField
     @GraphQLDescription("Delete a task")
-    public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") String service,
-                              @GraphQLName("name") @GraphQLDescription("Task name") String name) {
+    public boolean deleteTask(@GraphQLName("service") @GraphQLDescription("Service name") @GraphQLNonNull String service,
+                              @GraphQLName("name") @GraphQLDescription("Task name") @GraphQLNonNull String name) {
         try {
 
-            //Check if Service name was provided
-            if (service == null || service.isEmpty())
-                throw new Exception("Service name not provided");
-
-            //Check if Service name was provided
-            if (name == null || name.isEmpty())
-                throw new Exception("Task name not provided");
-
             //Check if taskDetail is registered
-            if (taskRegistryService.getRegisteredTasks().noneMatch(task -> task.equals(new TaskDetails(service, name))))
+            if (taskRegistryService.getRegisteredTasks().noneMatch(task -> task.equals(new TaskDetails(service, name)))) {
                 return false;
+            }
 
             TaskDetails taskDetails = new TaskDetails(service, name);
             taskRegistryService.unregisterTask(taskDetails);
