@@ -62,8 +62,8 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
     }
 
     private void processStackTrace(List<TaskDetails> tasksToCheck, StackTraceElement[] stackTraceElements) {
-        for (StackTraceElement stackTraceElement : stackTraceElements) {
-            String fullSignature = stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName();
+        for (int i = stackTraceElements.length - 1; i >= 0; i--) {
+            String fullSignature = stackTraceElements[i].getClassName() + "." + stackTraceElements[i].getMethodName();
             if (taskSignatures.containsKey(fullSignature)) {
                 tasksToCheck.add(new TaskDetails("core", taskSignatures.get(fullSignature).toString()));
                 break;
