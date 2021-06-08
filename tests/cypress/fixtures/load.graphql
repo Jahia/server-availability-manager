@@ -1,0 +1,17 @@
+query($interval: LoadInterval) {
+    admin {
+        serverAvailabilityManager {
+            load {
+                requests {
+                    count
+                    average(interval: $interval)
+                }
+                sessions {
+                    count
+                    average(interval: $interval)
+                }
+            }
+        }
+    }
+}
+
