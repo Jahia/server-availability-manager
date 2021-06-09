@@ -8,11 +8,10 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
@@ -50,24 +49,21 @@ public class TasksIdentificationServiceImpl implements TasksIdentificationServic
 
     @Override
     public Stream<TaskDetails> getRunningTasksStream() {
-        List<TaskDetails> runningTasksStream = new ArrayList<>();
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        for(ThreadInfo threadInfo : threadMXBean.dumpAllThreads(true, true)) {
-            StackTraceElement[] stackTraceElements = threadInfo.getStackTrace();
-            processStackTrace(runningTasksStream, stackTraceElements);
-        }
-        return Stream.of(runningTasksStream.stream(), taskRegistryService.getRegisteredTasks())
+        return Stream.of(getDetectedTasks(), taskRegistryService.getRegisteredTasks())
                 .reduce(Stream::concat)
                 .orElseGet(Stream::empty);
     }
 
-    private void processStackTrace(List<TaskDetails> tasksToCheck, StackTraceElement[] stackTraceElements) {
-        for (int i = stackTraceElements.length - 1; i >= 0; i--) {
-            String fullSignature = stackTraceElements[i].getClassName() + "." + stackTraceElements[i].getMethodName();
-            if (taskSignatures.containsKey(fullSignature)) {
-                tasksToCheck.add(new TaskDetails("core", taskSignatures.get(fullSignature).toString()));
-                break;
-            }
-        }
+    private Stream<TaskDetails> getDetectedTasks() {
+        return Arrays.stream(ManagementFactory.getThreadMXBean().dumpAllThreads(false, false))
+                .map(ThreadInfo::getStackTrace)
+                .flatMap(this::processStackTrace);
+    }
+
+    private Stream<TaskDetails> processStackTrace(StackTraceElement[] stackTraceElements) {
+        return IntStream.rangeClosed(1, stackTraceElements.length).mapToObj(i -> stackTraceElements[stackTraceElements.length - i])
+                .map(element -> element.getClassName() + "." + element.getMethodName())
+                .filter(taskSignatures::containsKey).limit(1)
+                .map(key -> new TaskDetails("core", taskSignatures.get(key).toString()));
     }
 }
