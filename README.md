@@ -55,9 +55,23 @@ query {
 
 This query returns the tasks running at the time the query was made, the server availability manager does not keep a log of previously running tasks.
 
+### Core
+
+To provide backward compatibility with older versions of Jahia, the module implements a bi-fold approach when it comes to identifying running tasks: 
+
+* For tasks triggered by modules (or Jahia versions) released prior to the availability of Server Availability Manager (SAM), SAM uses pattern matching on the running threads to identify critical tasks. When listing tasks, those will appeared grouped under the "core" service. 
+* For future releases of Jahia and its modules, a registry is made available to allow such tasks to be registered when starting and unregistered once completed.
+
+At the time of writing this documentation, the following task are monitored under the "core" service:
+* IMPORT_ZIP
+* IMPORT_XML
+* BACKGROUND_JOB
+* BUNDLE_START
+* BUNDLE_INSTALL
+
 ### Registry
 
-The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to declare their own tasks. This can also be extended to external infrastructure willing to prevent a server from being restarted
+The module is equipped with a registry of running tasks allowing modules, not part of Jahia default distribution, to declare their own tasks. This can also be extended to external services willing to prevent a server from being restarted
 
 #### Register tasks from a Java module
 
@@ -73,11 +87,11 @@ The module is equipped with a registry of running tasks allowing modules, not pa
  2) Register the task when starting, same approach as unregister, just `REGISTER` instead of `UNREGISTER`
  3) Unregister the task when ended
 
-Important information: tasks are distinguished using combination of name and service, so this combination should be unique
+Important: tasks are distinguished using combination of name and service, so this combination should be unique
 
 #### Register tasks via GraphQL API
 
-When external services (nor directly running on a Jahia server) need to let this server know that it shouldn't be restarted, the GraphQL API can be used to create and delete tasks.
+The GraphQL API can be used to create and delete tasks when external services need to inform a server that it shouldn't be restarted
 
 ```graphql
 mutation {
@@ -89,7 +103,9 @@ mutation {
 }
 ```
 
-Using `deleteTask` with the same parameters will delete that particular task. The registry is shared between GraphQL and Java modules, so you can very well create a task in a Java module and delete it via the GraphQL API.
+Using `deleteTask` with the same parameters deletes that particular task. 
+
+The registry is shared between GraphQL and Java modules, so you can very well create a task in a Java module and delete it via the GraphQL API.
 
 ## Server shutdown
 
@@ -117,7 +133,7 @@ The above query is provided as an example, `timeout` and `force` shouldn't be us
 
 ## Monitoring health
 
-The module also provides insights about a platform's health and can help trigger alerts or pay attention to key components that might need close attention. 
+The module also provides insights about a platform's health and can help trigger alerts when key components need some attention. 
 
 Available via GraphQL or REST, the module can be triggered at will with minimal impact on the platform load, additional probes can be developed to provide more information to the monitoring systems.
 
