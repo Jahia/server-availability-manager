@@ -26,9 +26,10 @@ public class HealthCheckServlet extends HttpServlet {
 
     @Activate
     public void activate(Map<String, Object> config) {
-        defaultSeverity = ProbeSeverity.valueOf((String)config.get("severity.default"));
-        statusThreshold = ProbeStatus.valueOf((String)config.get("status.threshold"));
-        statusCode = Integer.parseInt((String) config.get("status.code"));
+        //setting default values for probes
+        defaultSeverity = (config.get("severity.default")!=null ? ProbeSeverity.valueOf((String) config.get("severity.default")) : ProbeSeverity.MEDIUM);
+        statusThreshold = (config.get("status.threshold")!=null ? ProbeStatus.valueOf((String) config.get("status.threshold")) : ProbeStatus.RED);
+        statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
     }
 
     @Reference(service = HttpServlet.class, target = "(jmx.objectname=graphql.servlet:type=graphql)")
