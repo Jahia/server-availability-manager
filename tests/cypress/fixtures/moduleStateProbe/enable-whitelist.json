@@ -1,0 +1,8 @@
+[
+  {
+    "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
+    "properties": {
+      "probes.ModuleStateProbe.whitelist": "location"
+    }
+  }
+]
