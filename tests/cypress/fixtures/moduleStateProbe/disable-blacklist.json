@@ -2,7 +2,7 @@
   {
     "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
     "properties": {
-      "probes.ModuleStateProbe.blacklist": ""
+      "probes.ModuleState.blacklist": ""
     }
   }
 ]

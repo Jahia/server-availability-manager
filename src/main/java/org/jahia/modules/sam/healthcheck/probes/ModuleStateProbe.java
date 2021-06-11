@@ -64,7 +64,8 @@ public class ModuleStateProbe implements Probe {
                 .stream()
                 .filter(entry -> {
                     Bundle bundle = entry.getKey();
-                    if (!whitelist.isEmpty() && !whitelist.contains(bundle.getSymbolicName())) {
+                    if (!whitelist.isEmpty() && !StringUtils.isEmpty(whitelist.get(0))
+                    && !whitelist.contains(bundle.getSymbolicName())) {
                         return false;
                     }
                     return !BundleUtils.isFragment(bundle)

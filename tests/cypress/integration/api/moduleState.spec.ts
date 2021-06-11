@@ -8,6 +8,8 @@ describe('Module state probe test', () => {
     let disableBlacklist: string
     let stopLocation: string
     let startLocation: string
+    let stopSeoModule: string
+    let startSeoModule: string
 
     before('load graphql file and create test dataset', () => {
         enableWhitelist = require('../../fixtures/moduleStateProbe/enable-whitelist.json')
@@ -16,6 +18,8 @@ describe('Module state probe test', () => {
         disableBlacklist = require('../../fixtures/moduleStateProbe/disable-blacklist.json')
         stopLocation = require('../../fixtures/moduleStateProbe/stop-location.json')
         startLocation = require('../../fixtures/moduleStateProbe/start-location.json')
+        startSeoModule = require('../../fixtures/moduleStateProbe/start-seo.json')
+        stopSeoModule = require('../../fixtures/moduleStateProbe/stop-seo.json')
     })
 
     it('Check that module state probe is all green with no whitelists or blacklists', () => {
@@ -45,8 +49,17 @@ describe('Module state probe test', () => {
         })
     })
 
-    it('Checks that module state probe is RED even after we whitelisted the PAT module', () => {
+    it('Checks that module state probe is GREEN even after we whitelisted the PAT module', () => {
         cy.runProvisioningScript(enableWhitelist)
+        healthCheck('MEDIUM', apollo()).should((r) => {
+            expect(r.status).to.eq('GREEN')
+            const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
+            expect(moduleStateProbe.status).to.eq('GREEN')
+        })
+    })
+
+    it('Checks the module state probe is RED when we removed blacklist', () => {
+        cy.runProvisioningScript(disableBlacklist)
         healthCheck('MEDIUM', apollo()).should((r) => {
             expect(r.status).to.eq('RED')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
@@ -54,8 +67,9 @@ describe('Module state probe test', () => {
         })
     })
 
-    it('Checks the module state probe is GREEN when we removed blacklist', () => {
-        cy.runProvisioningScript(disableBlacklist)
+    it('Checks the module state probe is GREEN when we started location module and stopped SEO module, which is not inside whitelist', () => {
+        cy.runProvisioningScript(startLocation)
+        cy.runProvisioningScript(stopSeoModule)
         healthCheck('MEDIUM', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
@@ -64,8 +78,8 @@ describe('Module state probe test', () => {
     })
 
     after('Start location module back', () => {
+        cy.runProvisioningScript(startSeoModule)
         cy.runProvisioningScript(disableBlacklist)
         cy.runProvisioningScript(disableWhitelist)
-        cy.runProvisioningScript(startLocation)
     })
 })
