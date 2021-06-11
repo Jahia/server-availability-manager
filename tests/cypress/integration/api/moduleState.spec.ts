@@ -79,6 +79,7 @@ describe('Module state probe test', () => {
 
     after('Start location module back', () => {
         cy.runProvisioningScript(startSeoModule)
+        cy.runProvisioningScript(startLocation)
         cy.runProvisioningScript(disableBlacklist)
         cy.runProvisioningScript(disableWhitelist)
     })
