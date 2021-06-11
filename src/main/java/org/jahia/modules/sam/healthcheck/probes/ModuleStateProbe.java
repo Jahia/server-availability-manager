@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toMap;
 
 /**
  * Module state probe to find out modules that are not active, specific modules can be added to blacklist to
- * ignore them and to whitelist to check only specific ones, otherwise all modules are whitelisted
+ * ignore them and to whitelist to check only specific ones, by default all modules are whitelisted
  */
 @Component(service = Probe.class, immediate = true)
 public class ModuleStateProbe implements Probe {
@@ -64,13 +64,12 @@ public class ModuleStateProbe implements Probe {
                 .stream()
                 .filter(entry -> {
                     Bundle bundle = entry.getKey();
-                    if (!whitelist.isEmpty() && !StringUtils.isEmpty(whitelist.get(0))
-                    && !whitelist.contains(bundle.getSymbolicName())) {
+                    if (blacklist.contains(bundle.getSymbolicName()) || (!whitelist.isEmpty()
+                            && !StringUtils.isEmpty(whitelist.get(0))
+                            && !whitelist.contains(bundle.getSymbolicName()))) {
                         return false;
                     }
-                    return !BundleUtils.isFragment(bundle)
-                            && entry.getValue().getState() != ModuleState.State.STARTED
-                            && !blacklist.contains(bundle.getSymbolicName());
+                    return !BundleUtils.isFragment(bundle) && entry.getValue().getState() != ModuleState.State.STARTED;
                 })
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
 
