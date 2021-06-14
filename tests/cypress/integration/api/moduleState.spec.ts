@@ -6,8 +6,8 @@ describe('Module state probe test', () => {
     let enableBlacklist: string
     let disableWhitelist: string
     let disableBlacklist: string
-    let stopLocation: string
-    let startLocation: string
+    let stopChannels: string
+    let startChannels: string
     let stopSeoModule: string
     let startSeoModule: string
 
@@ -16,8 +16,8 @@ describe('Module state probe test', () => {
         enableBlacklist = require('../../fixtures/moduleStateProbe/enable-blacklist.json')
         disableWhitelist = require('../../fixtures/moduleStateProbe/disable-whitelist.json')
         disableBlacklist = require('../../fixtures/moduleStateProbe/disable-blacklist.json')
-        stopLocation = require('../../fixtures/moduleStateProbe/stop-location.json')
-        startLocation = require('../../fixtures/moduleStateProbe/start-location.json')
+        stopChannels = require('../../fixtures/moduleStateProbe/stop-channels.json')
+        startChannels = require('../../fixtures/moduleStateProbe/start-channels.json')
         startSeoModule = require('../../fixtures/moduleStateProbe/start-seo.json')
         stopSeoModule = require('../../fixtures/moduleStateProbe/stop-seo.json')
     })
@@ -32,7 +32,7 @@ describe('Module state probe test', () => {
     })
 
     it('Checks that module state probe is in RED after stopping the module', () => {
-        cy.runProvisioningScript(stopLocation)
+        cy.runProvisioningScript(stopChannels)
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('RED')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
@@ -67,8 +67,8 @@ describe('Module state probe test', () => {
         })
     })
 
-    it('Checks the module state probe is GREEN when we started location module and stopped SEO module, which is not inside whitelist', () => {
-        cy.runProvisioningScript(startLocation)
+    it('Checks the module state probe is GREEN when we started channels module and stopped SEO module, which is not inside whitelist', () => {
+        cy.runProvisioningScript(startChannels)
         cy.runProvisioningScript(stopSeoModule)
         healthCheck('MEDIUM', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
@@ -79,7 +79,7 @@ describe('Module state probe test', () => {
 
     after('Start location module back', () => {
         cy.runProvisioningScript(startSeoModule)
-        cy.runProvisioningScript(startLocation)
+        cy.runProvisioningScript(startChannels)
         cy.runProvisioningScript(disableBlacklist)
         cy.runProvisioningScript(disableWhitelist)
     })
