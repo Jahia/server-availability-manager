@@ -5,8 +5,6 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.utils.JCRSessionLoadAverage;
 import org.jahia.utils.RequestLoadAverage;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,33 +25,25 @@ public class ServerLoadProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
 
-        JSONObject loadAverageJson = new JSONObject();
-        try {
-            loadAverageJson.put("oneMinuteRequestLoadAverage", RequestLoadAverage.getInstance().getOneMinuteLoad());
-            loadAverageJson.put("oneMinuteCurrentSessionLoad", JCRSessionLoadAverage.getInstance().getOneMinuteLoad());
-        } catch (JSONException ex) {
-            logger.error("Impossible to generate the JSON", ex);
-        }
-        try {
-            logger.debug("requestYellowThreshold: {}, requestRedThreshold: {}, sessionYellowThreshold: {}, sessionRedThreshold: {}",
-                    requestLoadYellowThreshold,
-                    requestLoadRedThreshold,
-                    sessionLoadYellowThreshold,
-                    sessionLoadRedThreshold);
-            if (!loadAverageJson.has("oneMinuteRequestLoadAverage") || !loadAverageJson.has("oneMinuteCurrentSessionLoad")) {
-                logger.warn("Impossible to read request load values {} {}", loadAverageJson.has("oneMinuteRequestLoadAverage"), loadAverageJson.has("oneMinuteCurrentSessionLoad"));
-                return ProbeStatus.YELLOW;
-            }
-            if (loadAverageJson.getInt("oneMinuteRequestLoadAverage") < requestLoadYellowThreshold && loadAverageJson.getInt("oneMinuteCurrentSessionLoad") < sessionLoadYellowThreshold) {
-                return ProbeStatus.GREEN;
-            }
-            if (loadAverageJson.getInt("oneMinuteRequestLoadAverage") < requestLoadRedThreshold && loadAverageJson.getInt("oneMinuteCurrentSessionLoad") < sessionLoadRedThreshold) {
-                return ProbeStatus.YELLOW;
-            }
+        double oneMinuteRequestLoadAverage = RequestLoadAverage.getInstance().getOneMinuteLoad();
+        double oneMinuteCurrentSessionLoad = JCRSessionLoadAverage.getInstance().getOneMinuteLoad();
 
-        } catch (JSONException ex) {
-            logger.error("Impossible to read the JSON", ex);
+        logger.debug("requestYellowThreshold: {}, requestRedThreshold: {}, sessionYellowThreshold: {}, sessionRedThreshold: {}",
+                requestLoadYellowThreshold,
+                requestLoadRedThreshold,
+                sessionLoadYellowThreshold,
+                sessionLoadRedThreshold);
+        if (oneMinuteRequestLoadAverage==0 || oneMinuteCurrentSessionLoad==0) {
+            logger.warn("Impossible to read request load values {} {}", oneMinuteRequestLoadAverage, oneMinuteCurrentSessionLoad);
+            return ProbeStatus.YELLOW;
         }
+        if (oneMinuteRequestLoadAverage < requestLoadYellowThreshold && oneMinuteCurrentSessionLoad < sessionLoadYellowThreshold) {
+            return ProbeStatus.GREEN;
+        }
+        if (oneMinuteRequestLoadAverage < requestLoadRedThreshold && oneMinuteCurrentSessionLoad < sessionLoadRedThreshold) {
+            return ProbeStatus.YELLOW;
+        }
+
         return ProbeStatus.RED;
     }
 
