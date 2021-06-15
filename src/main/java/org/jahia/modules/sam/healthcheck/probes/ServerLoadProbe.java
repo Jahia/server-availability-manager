@@ -33,10 +33,6 @@ public class ServerLoadProbe implements Probe {
                 requestLoadRedThreshold,
                 sessionLoadYellowThreshold,
                 sessionLoadRedThreshold);
-        if (oneMinuteRequestLoadAverage==0 || oneMinuteCurrentSessionLoad==0) {
-            logger.warn("Impossible to read request load values {} {}", oneMinuteRequestLoadAverage, oneMinuteCurrentSessionLoad);
-            return ProbeStatus.YELLOW;
-        }
         if (oneMinuteRequestLoadAverage < requestLoadYellowThreshold && oneMinuteCurrentSessionLoad < sessionLoadYellowThreshold) {
             return ProbeStatus.GREEN;
         }
