@@ -1,6 +1,6 @@
 query {
     admin {
-        serverAvailabilityManager{
+        jahia{
             tasks{
                 name
                 service

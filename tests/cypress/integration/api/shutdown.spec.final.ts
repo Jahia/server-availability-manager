@@ -1,7 +1,7 @@
 import { DocumentNode } from 'graphql'
 import { apollo } from '../../support/apollo'
 
-describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown', () => {
+describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
     let GQL_SHUTDOWN: DocumentNode
 
     before('load graphql file and create test dataset', () => {
@@ -16,7 +16,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             },
             mutation: GQL_SHUTDOWN,
         })
-            .its('data.admin.serverAvailabilityManager.shutdown')
+            .its('data.admin.jahia.shutdown')
             .should('eq', true)
     })
 })
