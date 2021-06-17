@@ -3,18 +3,22 @@ package org.jahia.modules.sam.graphql;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
-import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
+import graphql.annotations.annotationTypes.GraphQLTypeExtension;
+import org.jahia.modules.graphql.provider.dxm.admin.GqlJahiaAdminQuery;
 import org.jahia.modules.sam.TasksIdentificationService;
+import org.jahia.osgi.BundleUtils;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @GraphQLDescription("Queries for Tasks in Server availability manager")
+@GraphQLTypeExtension(GqlJahiaAdminQuery.class)
 public class ServerAvailabilityQuery {
 
-    @Inject
-    @GraphQLOsgiService
+    public ServerAvailabilityQuery(GqlJahiaAdminQuery admin) {
+        this.tasksIdentificationService = BundleUtils.getOsgiService(TasksIdentificationService.class, null);
+    }
+
     private TasksIdentificationService tasksIdentificationService;
 
     @GraphQLField

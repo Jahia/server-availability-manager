@@ -1,18 +1,15 @@
 package org.jahia.modules.sam.graphql;
 
-import graphql.annotations.annotationTypes.GraphQLDescription;
-import graphql.annotations.annotationTypes.GraphQLField;
-import graphql.annotations.annotationTypes.GraphQLName;
-import graphql.annotations.annotationTypes.GraphQLNonNull;
+import graphql.annotations.annotationTypes.*;
 import org.jahia.modules.graphql.provider.dxm.DataFetchingException;
-import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
+import org.jahia.modules.graphql.provider.dxm.admin.GqlJahiaAdminMutation;
 import org.jahia.modules.sam.TaskRegistryService;
 import org.jahia.modules.sam.TasksIdentificationService;
 import org.jahia.modules.sam.model.TaskDetails;
+import org.jahia.osgi.BundleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.management.*;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,16 +20,17 @@ import java.util.Calendar;
 /**
  * Server availability mutations
  */
-@GraphQLDescription("Server availability mutations")
+@GraphQLTypeExtension(GqlJahiaAdminMutation.class)
 public class ServerAvailabilityMutation {
     private static final Logger logger = LoggerFactory.getLogger(ServerAvailabilityMutation.class);
 
-    @Inject
-    @GraphQLOsgiService
+    public ServerAvailabilityMutation(GqlJahiaAdminMutation admin) {
+        this.taskRegistryService = BundleUtils.getOsgiService(TaskRegistryService.class, null);
+        this.tasksIdentificationService = BundleUtils.getOsgiService(TasksIdentificationService.class, null);
+    }
+
     private TaskRegistryService taskRegistryService;
 
-    @Inject
-    @GraphQLOsgiService
     private TasksIdentificationService tasksIdentificationService;
 
     /**

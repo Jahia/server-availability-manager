@@ -45,7 +45,7 @@ export const healthCheck = (
             },
         })
         .then((response: any) => {
-            return response.data.admin.serverAvailabilityManager.healthCheck
+            return response.data.admin.jahia.healthCheck
         })
 }
 
@@ -62,6 +62,6 @@ export const load = (
         })
         .then((response: any) => {
             console.log(response)
-            return response.data.admin.serverAvailabilityManager.load
+            return response.data.admin.jahia.load
         })
 }

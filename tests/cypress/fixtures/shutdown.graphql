@@ -1,6 +1,6 @@
 mutation($timeout: Int, $force: Boolean, $dryRun: Boolean) {
     admin {
-        serverAvailabilityManager{
+        jahia{
             shutdown(timeout:$timeout, force:$force, dryRun:$dryRun)
         }
     }

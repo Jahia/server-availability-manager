@@ -2,7 +2,7 @@ import { DocumentNode } from 'graphql'
 import { createTask, deleteTask } from '../../support/gql'
 import { apollo } from '../../support/apollo'
 
-describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown', () => {
+describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
     let GQL_SHUTDOWN: DocumentNode
 
     before('load graphql file and create test dataset', () => {
@@ -16,7 +16,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             },
             mutation: GQL_SHUTDOWN,
         })
-            .its('data.admin.serverAvailabilityManager.shutdown')
+            .its('data.admin.jahia.shutdown')
             .should('eq', true)
     })
 
@@ -30,7 +30,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             mutation: GQL_SHUTDOWN,
         }).should((response) => {
             cy.log('Requested shutdown')
-            expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.false
+            expect(response.data.admin.jahia.shutdown).to.be.false
             const completeShutdown = new Date().getTime()
             const executionTime = completeShutdown - startShutdown
             cy.log(`Execution time: ${executionTime}`)
@@ -51,7 +51,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             mutation: GQL_SHUTDOWN,
         }).should((response) => {
             cy.log('Requested shutdown')
-            expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.false
+            expect(response.data.admin.jahia.shutdown).to.be.false
             const completeShutdown = new Date().getTime()
             const executionTime = completeShutdown - startShutdown
             cy.log(`Execution time: ${executionTime}`)
@@ -70,7 +70,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             },
             mutation: GQL_SHUTDOWN,
         }).should((response) => {
-            expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
+            expect(response.data.admin.jahia.shutdown).to.be.true
             const completeShutdown = new Date().getTime()
             const executionTime = completeShutdown - startShutdown
             cy.log(`Execution time: ${executionTime}`)
@@ -89,7 +89,7 @@ describe('Shutdown via API - mutation.admin.serverAvailabilityManager.shutdown',
             mutation: GQL_SHUTDOWN,
         }).should((response) => {
             cy.log('Requested shutdown')
-            expect(response.data.admin.serverAvailabilityManager.shutdown).to.be.true
+            expect(response.data.admin.jahia.shutdown).to.be.true
             const completeShutdown = new Date().getTime()
             const executionTime = completeShutdown - startShutdown
             cy.log(`Execution time: ${executionTime}`)

@@ -54,7 +54,7 @@ public class HealthCheckServlet extends HttpServlet {
                 if (name.equals("query")) {
                     return "{\n" +
                             "  admin {\n" +
-                            "    serverAvailabilityManager {\n" +
+                            "    jahia {\n" +
                             "      healthCheck(severity:" + severity + ") {\n" +
                             "        status\n" +
                             "        probes {\n" +
@@ -85,7 +85,7 @@ public class HealthCheckServlet extends HttpServlet {
             JSONObject obj = new JSONObject(result);
             JSONObject healthCheckNode = obj.getJSONObject("data")
                     .getJSONObject("admin")
-                    .getJSONObject("serverAvailabilityManager")
+                    .getJSONObject("jahia")
                     .getJSONObject("healthCheck");
 
             ProbeStatus status = ProbeStatus.valueOf(healthCheckNode.getString("status"));

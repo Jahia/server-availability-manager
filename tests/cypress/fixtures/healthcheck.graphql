@@ -1,6 +1,6 @@
 query($severity: GqlProbeSeverity) {
     admin {
-        serverAvailabilityManager {
+        jahia {
             healthCheck(severity: $severity) {
                 status
                 probes {

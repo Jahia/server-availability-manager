@@ -1,6 +1,6 @@
 query($interval: LoadInterval) {
     admin {
-        serverAvailabilityManager {
+        jahia {
             load {
                 requests {
                     count

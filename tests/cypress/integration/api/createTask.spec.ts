@@ -1,8 +1,8 @@
 import { createTask, deleteTask } from '../../support/gql'
 
-describe('Task creation via API - mutation.admin.serverAvailabilityManager.createTask', () => {
+describe('Task creation via API - mutation.admin.jahia.createTask', () => {
     it('Create task by providing service, name', () => {
-        createTask('service1', 'name1').its('data.admin.serverAvailabilityManager.createTask').should('eq', true)
+        createTask('service1', 'name1').its('data.admin.jahia.createTask').should('eq', true)
         deleteTask('service1', 'name1')
     })
 

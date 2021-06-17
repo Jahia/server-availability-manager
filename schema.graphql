@@ -280,8 +280,6 @@ interface Principal {
 type AdminMutation {
     "Get Jahia admin mutation"
     jahia: JahiaAdminMutation!
-    "Get server availability mutations"
-    serverAvailabilityManager: ServerAvailabilityMutation
 }
 
 "Admin queries root"
@@ -290,8 +288,6 @@ type AdminQuery {
     datetime: String
     "Get Jahia admin query"
     jahia: JahiaAdminQuery!
-    "SAM queries for the tasks"
-    serverAvailabilityManager: TasksQuery
     "Get user administration endpoint"
     userAdmin: UserAdminQuery
     "Version of the running Jahia instance"
@@ -321,6 +317,30 @@ type Category {
     "Title"
     title: String
     uuid: String
+}
+
+type ConfigurationItemValuesMutation {
+    "Get keys"
+    keys: [String]
+    "Get a list of items"
+    list(name: String): ConfigurationItemsListMutation
+    "Get a sub structured object value"
+    object(name: String): ConfigurationItemValuesMutation
+    "Get a property value"
+    value(name: String): String
+    "Get property values"
+    values: [GqlConfigurationProperty]
+}
+
+type ConfigurationItemsListMutation {
+    "Get sub lists of items"
+    lists: [ConfigurationItemsListMutation]
+    "Get sub structured object values"
+    objets: [ConfigurationItemValuesMutation]
+    "Adds a new structured object to the list"
+    size: Int
+    "Get property values"
+    values: [String]
 }
 
 "Simple node count aggregation"
@@ -571,8 +591,43 @@ type GqlBackgroundJob {
     userKey: String
 }
 
+type GqlConfigurationMutation {
+    "Modify a list of items"
+    mutateList(name: String): ConfigurationItemsListMutation
+    "Modify a structured object"
+    mutateObject(name: String): ConfigurationItemValuesMutation
+    "Remove the specified property and all sub/list properties"
+    remove(name: String): Boolean
+    "Set a property value"
+    value(name: String, value: String): String
+}
+
+type GqlConfigurationProperty {
+    key: String
+    value: String
+}
+
+type GqlConfigurationQuery {
+    "Get all properties of the configuration, as they are stored in OSGi"
+    flatKeys: [String]
+    "Get all properties of the configuration, as they are stored in OSGi"
+    flatProperties: [GqlConfigurationProperty]
+    "Get keys"
+    keys: [String]
+    "Get a list of items"
+    list(name: String): ConfigurationItemsListMutation
+    "Get a sub structured object value"
+    object(name: String): ConfigurationItemValuesMutation
+    "Get a property value"
+    value(name: String): String
+    "Get property values"
+    values: [GqlConfigurationProperty]
+}
+
+"Server healthcheck"
 type GqlHealthcheck {
     probes: [GqlProbe]
+    "Highest reported status across all probes"
     status: GqlProbeStatus
 }
 
@@ -625,9 +680,13 @@ type GqlOperationsSupport {
 }
 
 type GqlProbe {
+    "Description specified by the developer of the probe"
     description: String
+    "Name of the probe"
     name: String
+    "Severity of the probe (LOW to CRITICAL)"
     severity: GqlProbeSeverity
+    "Status reported by the probe (GREEN to RED)"
     status: GqlProbeStatus
 }
 
@@ -1670,11 +1729,43 @@ type JCRTags {
 
 "Admin mutations"
 type JahiaAdminMutation {
-    noop: Boolean
+    "Mutate an OSGi configuration"
+    configuration(identifier: String, pid: String!): GqlConfigurationMutation
+    "Create a task"
+    createTask(
+        "Task name"
+        name: String!,
+        "Service name"
+        service: String!
+    ): Boolean
+    "Delete a task"
+    deleteTask(
+        "Task name"
+        name: String!,
+        "Service name"
+        service: String!
+    ): Boolean
+    "Shutdown the server"
+    shutdown(
+        "Do not send the shutdown event"
+        dryRun: Boolean,
+        "Force immediate shutdown even if server is busy"
+        force: Boolean,
+        "In seconds, maximum time to wait for server to be ready to shutdown"
+        timeout: Int
+    ): Boolean
 }
 
 "Jahia admin queries root"
 type JahiaAdminQuery {
+    "Read an OSGi configuration"
+    configuration(identifier: String, pid: String!): GqlConfigurationQuery
+    "Healthcheck node"
+    healthCheck(severity: GqlProbeSeverity): GqlHealthcheck
+    "Get server load"
+    load: Load
+    "Lists tasks running on the Jahia server. A server should not be stopped/restarted when any of these tasks are present. These tasks are specific to the server being queried and are not shared accorss a cluster"
+    tasks: [task]
     "Version of the running Jahia instance"
     version: JahiaVersion
 }
@@ -1689,6 +1780,22 @@ type JahiaVersion {
     isSnapshot: Boolean
     "Release of the running Jahia instance"
     release: String
+}
+
+"Server load"
+type Load {
+    "Get requests load"
+    requests: LoadValue
+    "Get JCR Sessions load"
+    sessions: LoadValue
+}
+
+"Load value"
+type LoadValue {
+    "Exponential moving average"
+    average(interval: LoadInterval): Float
+    "Instantaneous count"
+    count: Int
 }
 
 "Information on node lock"
@@ -1818,33 +1925,6 @@ type RenderedNode {
     ): [StaticAsset]
 }
 
-"Server availability mutations"
-type ServerAvailabilityMutation {
-    "Create a task"
-    createTask(
-        "Task name"
-        name: String!,
-        "Service name"
-        service: String!
-    ): Boolean
-    "Delete a task"
-    deleteTask(
-        "Task name"
-        name: String!,
-        "Service name"
-        service: String!
-    ): Boolean
-    "Shutdown the server"
-    shutdown(
-        "Do not send the shutdown event"
-        dryRun: Boolean,
-        "Force immediate shutdown even if server is busy"
-        force: Boolean,
-        "In seconds, maximum time to wait for server to be ready to shutdown"
-        timeout: Int
-    ): Boolean
-}
-
 "Simple numeric aggregation on properties values"
 type StatAggregation {
     "The date representation of a JCR node property"
@@ -1896,14 +1976,6 @@ type Subscription {
         "The target scheduler for listening jobs"
         targetScheduler: TargetScheduler = BOTH
     ): GqlBackgroundJob
-}
-
-"Queries for Tasks in Server availability manager"
-type TasksQuery {
-    "Healthcheck node"
-    healthCheck(severity: GqlProbeSeverity): GqlHealthcheck
-    "Lists tasks running on the Jahia server. A server should not be stopped/restarted when any of these tasks are present. These tasks are specific to the server being queried and are not shared accorss a cluster"
-    tasks: [task]
 }
 
 "GraphQL representation of a Jahia user"
@@ -2360,6 +2432,15 @@ enum JCRPropertyType {
     URI
     "WEAKREFERENCE"
     WEAKREFERENCE
+}
+
+enum LoadInterval {
+    "FIFTEEN"
+    FIFTEEN
+    "FIVE"
+    FIVE
+    "ONE"
+    ONE
 }
 
 enum MulticriteriaEvaluation {

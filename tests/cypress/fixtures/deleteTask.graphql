@@ -1,6 +1,6 @@
 mutation($service: String!, $name: String!) {
     admin {
-        serverAvailabilityManager {
+        jahia {
             deleteTask(service: $service, name: $name)
         }
     }
