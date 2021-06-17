@@ -183,7 +183,7 @@ Finally, the module also provides jahia load metrics.
 ```graphql
 query {
   admin {
-    serverAvailabilityManager {
+    jahia {
       load {
         requests {
           count
