@@ -1,5 +1,5 @@
 import { createTask, deleteTask } from '../../support/gql'
-import {apollo} from "../../support/apollo";
+import { apollo } from '../../support/apollo'
 
 describe('Task deletion Task via API - mutation.admin.jahia.createTask', () => {
     it('Delete task success path', () => {
