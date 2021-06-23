@@ -1,4 +1,5 @@
 import { createTask, deleteTask } from '../../support/gql'
+import { apollo } from '../../support/apollo'
 
 describe('Task creation via API - mutation.admin.jahia.createTask', () => {
     it('Create task by providing service, name', () => {
@@ -11,21 +12,9 @@ describe('Task creation via API - mutation.admin.jahia.createTask', () => {
             .its('errors.0.message')
             .should('contains', 'Service is not a alphanumerical with a limited length of 50 characters')
     })
-
-    //TODO Fix - Something wrong with users (looks like it is not taking username in consideration)
-    // it('Should fail creating task with guess user', function () {
-    //     cy.task('apolloNode', {
-    //         baseUrl: Cypress.config().baseUrl,
-    //         authMethod: { username: 'guest', password: null },
-    //         mode: 'mutate',
-    //         variables: {
-    //             service: 'service1',
-    //             name: 'name1',
-    //         },
-    //         query: GQL_CREATE_TASK,
-    //     }).then((response: any) => {
-    //         cy.log(JSON.stringify(response))
-    //         expect(response.graphQLErrors[0].message).to.contain('Internal Server Error(s) while executing query')
-    //     })
-    // })
+    it('Should fail creating task with guest user', () => {
+        createTask('service1', 'name1', apollo({ username: 'guest', password: null }))
+            .its('errors.0.message')
+            .should('contains', 'Permission denied')
+    })
 })
