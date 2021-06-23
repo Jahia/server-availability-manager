@@ -9,12 +9,7 @@ import org.jahia.utils.RequestLoadAverage;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
-
-import static java.util.stream.Collectors.toList;
 
 @Component(service = Probe.class, immediate = true)
 public class ServerLoadProbe implements Probe {

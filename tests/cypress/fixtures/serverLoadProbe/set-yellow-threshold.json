@@ -1,0 +1,11 @@
+[
+  {
+    "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
+    "properties": {
+      "probes.ServerLoad.requestLoadYellowThreshold": "-1",
+      "probes.ServerLoad.requestLoadRedThreshold": "70",
+      "probes.ServerLoad.sessionLoadYellowThreshold": "-1",
+      "probes.ServerLoad.sessionLoadRedThreshold": "70"
+    }
+  }
+]
