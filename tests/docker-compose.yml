@@ -1,11 +1,33 @@
 version: '3.6'
 services:
+    mariadb:
+        image: library/mariadb:10-focal
+        container_name: mariadb
+        mem_limit: 2gb
+        networks:
+            - stack
+        command: --max_allowed_packet=134217728 --transaction-isolation=READ-UNCOMMITTED --innodb-lock-wait-timeout=10
+        environment:
+            MYSQL_ROOT_PASSWORD: mariadbP@55
+            MYSQL_DATABASE: jahia
+            MYSQL_USER: jahia
+            MYSQL_PASSWORD: jahia
     jahia:
         image: '${JAHIA_IMAGE}'
         container_name: jahia
         environment:
             - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}        
             - MAX_RAM_PERCENTAGE=95
+            - jahia_cfg_karaf_remoteShellHost=0.0.0.0
+            - DBMS_TYPE=mariadb
+            - DB_HOST=mariadb
+            - DB_NAME=jahia
+            - DB_USER=jahia
+            - DB_PASS=jahia
+            - OPERATING_MODE=development
+            - PROCESSING_SERVER=true
+            - RESTORE_MODULE_STATES=false
+            - MAX_RAM_PERCENTAGE=95            
         ports:
             - '8080:8080'
         extra_hosts:
@@ -26,6 +48,10 @@ services:
             - JAHIA_URL=http://jahia:8080
             - NEXUS_USERNAME=${NEXUS_USERNAME}
             - NEXUS_PASSWORD=${NEXUS_PASSWORD}
+            - JAHIA_USERNAME=${JAHIA_USERNAME}
+            - JAHIA_PASSWORD=${JAHIA_PASSWORD}
+            - JAHIA_USERNAME_TOOLS=${JAHIA_USERNAME_TOOLS}
+            - JAHIA_PASSWORD_TOOLS=${JAHIA_PASSWORD_TOOLS}            
         networks:
             - stack
 networks:
