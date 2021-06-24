@@ -27,7 +27,6 @@ services:
             - OPERATING_MODE=development
             - PROCESSING_SERVER=true
             - RESTORE_MODULE_STATES=false
-            - MAX_RAM_PERCENTAGE=95            
         ports:
             - '8080:8080'
         extra_hosts:
