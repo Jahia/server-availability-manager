@@ -82,6 +82,6 @@
   },
   "homepage": "https://github.com/Jahia/sandbox#readme",
   "dependencies": {
-    "jahia-cli": "^0.0.60"
+    "jahia-cli": "^0.0.61"
   }
 }
