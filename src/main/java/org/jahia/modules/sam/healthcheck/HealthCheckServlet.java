@@ -1,7 +1,5 @@
 package org.jahia.modules.sam.healthcheck;
 
-import graphql.GraphQLError;
-import org.jahia.modules.graphql.provider.dxm.DXGraphQLError;
 import org.jahia.modules.graphql.provider.dxm.security.GqlAccessDeniedException;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
@@ -13,7 +11,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -22,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @SuppressWarnings({"java:S2226", "java:S1989"})
-@Component(service = {javax.servlet.http.HttpServlet.class, javax.servlet.Servlet.class}, property = {"alias=/healthcheck"})
+@Component(service = {javax.servlet.http.HttpServlet.class, javax.servlet.Servlet.class}, property = {"alias=/healthcheck", "allow-api-token=true"})
 public class HealthCheckServlet extends HttpServlet {
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
