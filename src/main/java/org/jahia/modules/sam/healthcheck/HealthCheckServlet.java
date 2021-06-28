@@ -88,8 +88,8 @@ public class HealthCheckServlet extends HttpServlet {
         try {
             String result = writer.getBuffer().toString();
             JSONObject obj = new JSONObject(result);
-            JSONArray errors = obj.getJSONArray("errors");
-            if (errors.length() > 0) {
+            if (obj.has("errors") && obj.getJSONArray("errors").length() > 0) {
+                JSONArray errors = obj.getJSONArray("errors");
                 JSONObject error = errors.getJSONObject(0);
                 if (error.getString("errorType").equals(GqlAccessDeniedException.class.getSimpleName())) {
                     resp.sendError(HttpServletResponse.SC_FORBIDDEN,error.getString("message"));

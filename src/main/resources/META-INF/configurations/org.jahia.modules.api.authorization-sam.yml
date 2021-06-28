@@ -1,0 +1,12 @@
+healthcheck:
+  description: Can read server healtcheck
+  metadata:
+    visible: true
+  constraints:
+    - privileged_user: true
+  grants:
+    - api: graphql.Query.admin
+    - api: graphql.AdminQuery.jahia
+    - api: graphql.JahiaAdminQuery.healthCheck
+    - api: graphql.GqlHealthcheck
+    - api: graphql.GqlProbe
