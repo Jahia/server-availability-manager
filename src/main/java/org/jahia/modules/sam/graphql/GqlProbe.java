@@ -2,22 +2,14 @@ package org.jahia.modules.sam.graphql;
 
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
-import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.healthcheck.ProbesRegistry;
-
-import javax.inject.Inject;
+import org.jahia.osgi.BundleUtils;
 
 public class GqlProbe {
 
     private Probe probe;
-    private ProbesRegistry probesRegistry;
-
-    @Inject
-    @GraphQLOsgiService
-    public void setProbesRegistry(ProbesRegistry probesRegistry) {
-        this.probesRegistry = probesRegistry;
-    }
+    private ProbesRegistry probesRegistry = BundleUtils.getOsgiService(ProbesRegistry.class, null);
 
     public GqlProbe(Probe probe) {
         this.probe = probe;
