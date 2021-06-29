@@ -11,13 +11,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@GraphQLDescription("Server healthcheck")
-public class GqlHealthcheck {
+@GraphQLDescription("Server healthCheck")
+public class GqlHealthCheck {
 
     private ProbesRegistry probesRegistry;
     private GqlProbeSeverity severityThreshold;
 
-    public GqlHealthcheck(GqlProbeSeverity severityThreshold) {
+    public GqlHealthCheck(GqlProbeSeverity severityThreshold) {
         if (severityThreshold != null) {
             this.severityThreshold = severityThreshold;
         } else {

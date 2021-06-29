@@ -28,9 +28,9 @@ public class ServerAvailabilityQuery {
     }
 
     @GraphQLField
-    @GraphQLDescription("Healthcheck node")
-    public GqlHealthcheck getHealthCheck(@GraphQLName("severity") GqlProbeSeverity severity) {
-        return new GqlHealthcheck(severity);
+    @GraphQLDescription("HealthCheck node")
+    public GqlHealthCheck getHealthCheck(@GraphQLName("severity") GqlProbeSeverity severity) {
+        return new GqlHealthCheck(severity);
     }
 
     @GraphQLField

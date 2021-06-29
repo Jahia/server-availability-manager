@@ -1,7 +1,9 @@
 package org.jahia.modules.sam.healthcheck;
 
+import org.jahia.modules.graphql.provider.dxm.security.GqlAccessDeniedException;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.component.annotations.Activate;
@@ -17,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @SuppressWarnings({"java:S2226", "java:S1989"})
-@Component(service = {javax.servlet.http.HttpServlet.class, javax.servlet.Servlet.class}, property = {"alias=/healthcheck"})
+@Component(service = {javax.servlet.http.HttpServlet.class, javax.servlet.Servlet.class}, property = {"alias=/healthcheck", "allow-api-token=true"})
 public class HealthCheckServlet extends HttpServlet {
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
@@ -83,18 +85,28 @@ public class HealthCheckServlet extends HttpServlet {
         try {
             String result = writer.getBuffer().toString();
             JSONObject obj = new JSONObject(result);
-            JSONObject healthCheckNode = obj.getJSONObject("data")
-                    .getJSONObject("admin")
-                    .getJSONObject("jahia")
-                    .getJSONObject("healthCheck");
+            if (obj.has("errors") && obj.getJSONArray("errors").length() > 0) {
+                JSONArray errors = obj.getJSONArray("errors");
+                JSONObject error = errors.getJSONObject(0);
+                if (error.getString("errorType").equals(GqlAccessDeniedException.class.getSimpleName())) {
+                    resp.sendError(HttpServletResponse.SC_FORBIDDEN,error.getString("message"));
+                } else {
+                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, error.getString("message"));
+                }
+            } else {
+                JSONObject healthCheckNode = obj.getJSONObject("data")
+                        .getJSONObject("admin")
+                        .getJSONObject("jahia")
+                        .getJSONObject("healthCheck");
 
-            ProbeStatus status = ProbeStatus.valueOf(healthCheckNode.getString("status"));
+                ProbeStatus status = ProbeStatus.valueOf(healthCheckNode.getString("status"));
 
-            if (status.ordinal() >= statusThreshold.ordinal()) {
-                resp.setStatus(statusCode);
+                if (status.ordinal() >= statusThreshold.ordinal()) {
+                    resp.setStatus(statusCode);
+                }
+
+                healthCheckNode.write(resp.getWriter());
             }
-
-            healthCheckNode.write(resp.getWriter());
         } catch (JSONException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
