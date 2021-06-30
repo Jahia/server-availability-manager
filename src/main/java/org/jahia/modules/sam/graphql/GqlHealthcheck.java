@@ -2,11 +2,10 @@ package org.jahia.modules.sam.graphql;
 
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
-import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.healthcheck.ProbesRegistry;
+import org.jahia.osgi.BundleUtils;
 
-import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 @GraphQLDescription("Server healthcheck")
 public class GqlHealthcheck {
 
-    private ProbesRegistry probesRegistry;
+    private ProbesRegistry probesRegistry = BundleUtils.getOsgiService(ProbesRegistry.class, null);
     private GqlProbeSeverity severityThreshold;
 
     public GqlHealthcheck(GqlProbeSeverity severityThreshold) {
@@ -24,12 +23,6 @@ public class GqlHealthcheck {
             this.severityThreshold = GqlProbeSeverity.MEDIUM;
         }
 
-    }
-
-    @Inject
-    @GraphQLOsgiService
-    public void setProbesRegistry(ProbesRegistry probesRegistry) {
-        this.probesRegistry = probesRegistry;
     }
 
     @GraphQLField

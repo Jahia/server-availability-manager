@@ -19,6 +19,7 @@ fi
 
 if [[ -e ../target ]]; then
   cp -R ../target/*-SNAPSHOT.jar ./artifacts/
+  cp -R ../target/server-availability-*-SNAPSHOT.jar ./artifacts/SAM-SNAPSHOT.jar
 fi
 
 docker build -t ${TESTS_IMAGE} .
