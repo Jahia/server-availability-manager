@@ -109,6 +109,18 @@ workflows:
             branches:
               only:
                 - << pipeline.parameters.PRIMARY_RELEASE_BRANCH >>
+      - jahia-modules-orb/integration-tests:
+          context: QA_ENVIRONMENT
+          requires:
+            - jahia-modules-orb/build
+          matrix:
+            parameters:
+              jahia_image: ['jahia/jahia:7.3.4.1', 'jahia/jahia:7.3.8.0']            
+#         Testing on version jahia/jahia-ee:8 due to work in progress regarding security filter
+          tests_manifest: provisioning-manifest-build.yml
+          module_id: << pipeline.parameters.MODULE_ID >>
+          testrail_project: << pipeline.parameters.TESTRAIL_PROJECTNAME >>
+          testrail_milestone: << pipeline.parameters.TESTRAIL_MILESTONE >>                
 
   # The on-release workflow was created to handle the full release lifecycle after creating a release using GitHub
   # https://github.com/Jahia/sandbox/releases
