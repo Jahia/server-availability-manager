@@ -29,15 +29,67 @@ describe('Module state probe test', () => {
     }
     const stopChannels = () => {
         cy.log('Stopping Channels')
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/api/bundles/org.jahia.modules/channels/7.2.1/_stop`,
+            method: 'POST',
+            body: { data: '' },
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+            auth: {
+                user: 'root',
+                pass: 'root',
+                sendImmediately: true,
+            },
+        })
     }
     const startChannels = () => {
         cy.log('Starting Channels')
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/api/bundles/org.jahia.modules/channels/7.2.1/_start`,
+            method: 'POST',
+            body: { data: '' },
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+            auth: {
+                user: 'root',
+                pass: 'root',
+                sendImmediately: true,
+            },
+        })
     }
     const stopSeoModule = () => {
         cy.log('Stopping SeoModule')
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/api/bundles/org.jahia.modules/seo/7.2.0/_stop`,
+            method: 'POST',
+            body: { data: '' },
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+            auth: {
+                user: 'root',
+                pass: 'root',
+                sendImmediately: true,
+            },
+        })
     }
     const startSeoModule = () => {
         cy.log('Starting SeoModule')
+        cy.request({
+            url: `${Cypress.config().baseUrl}/modules/api/bundles/org.jahia.modules/seo/7.2.0/_start`,
+            method: 'POST',
+            body: { data: '' },
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+            auth: {
+                user: 'root',
+                pass: 'root',
+                sendImmediately: true,
+            },
+        })
     }
 
     it('Check that module state probe is all green with no whitelists or blacklists', () => {
