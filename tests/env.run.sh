@@ -58,10 +58,6 @@ if [[ $INSTALLED_MODULE_VERSION == "UNKNOWN" ]]; then
   exit 1
 fi
 
-echo "$(date +'%d %B %Y - %k:%M')== Sleeping for an additional 120 seconds =="
-sleep 120
-echo "$(date +'%d %B %Y - %k:%M')== DONE - Sleeping for an additional 120 seconds =="
-
 echo "$(date +'%d %B %Y - %k:%M')== Run tests =="
 yarn e2e:ci
 if [[ $? -eq 0 ]]; then

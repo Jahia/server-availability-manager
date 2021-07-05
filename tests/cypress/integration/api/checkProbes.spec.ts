@@ -2,16 +2,42 @@ import { apollo } from '../../support/apollo'
 import { healthCheck } from '../../support/gql'
 
 describe('Health check', () => {
-    let enableProbe: string
-    let disableProbe: string
+    const disableProbe = () => {
+        const sshCommands = [
+            'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
+            'config:property-set probes.testProbe.severity IGNORED',
+            'config:property-set probes.testProbe.status GREEN',
+            'config:update',
+        ]
+        cy.task('sshCommand', sshCommands).then((response: string) => {
+            cy.log('SSH commands executed:')
+            cy.log(JSON.stringify(sshCommands))
+            cy.log('Response')
+            cy.log(JSON.stringify(response))
+        })
+        // eslint-disable-next-line cypress/no-unnecessary-waiting
+        cy.wait(2000)
+    }
 
-    before('load graphql file and create test dataset', () => {
-        enableProbe = require('../../fixtures/test-enable.json')
-        disableProbe = require('../../fixtures/test-disable.json')
-    })
+    const enableProbe = () => {
+        const sshCommands = [
+            'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
+            'config:property-set probes.testProbe.severity HIGH',
+            'config:property-set probes.testProbe.status RED',
+            'config:update',
+        ]
+        cy.task('sshCommand', sshCommands).then((response: string) => {
+            cy.log('SSH commands executed:')
+            cy.log(JSON.stringify(sshCommands))
+            cy.log('Response')
+            cy.log(JSON.stringify(response))
+        })
+        // eslint-disable-next-line cypress/no-unnecessary-waiting
+        cy.wait(2000)
+    }
 
     afterEach(() => {
-        cy.runProvisioningScript(disableProbe)
+        disableProbe()
     })
 
     it('Check healthcheck when everything is fine', () => {
@@ -22,7 +48,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck with one HIGH probe RED, asking low', () => {
-        cy.runProvisioningScript(enableProbe)
+        enableProbe()
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('RED')
             expect(r.probes.length).to.eq(5)
@@ -30,7 +56,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck with one HIGH probe RED, asking critical', () => {
-        cy.runProvisioningScript(enableProbe)
+        enableProbe()
         healthCheck('CRITICAL', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
             expect(r.probes.length).to.eq(2)
@@ -52,7 +78,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck servlet with one HIGH probe RED, default severity, should return 503', () => {
-        cy.runProvisioningScript(enableProbe)
+        enableProbe()
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
             auth: {
@@ -68,7 +94,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck servlet with one HIGH probe RED, asking critical', () => {
-        cy.runProvisioningScript(enableProbe)
+        enableProbe()
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
             auth: {

@@ -28,7 +28,8 @@ services:
             - PROCESSING_SERVER=true
             - RESTORE_MODULE_STATES=false
         ports:
-            - '8080:8080'
+            - 8080:8080
+            - 8101:8101
         extra_hosts:
             - jahia:127.0.0.1
         networks:
@@ -45,6 +46,7 @@ services:
             - MANIFEST=${MANIFEST}
             - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}
             - JAHIA_URL=http://jahia:8080
+            - JAHIA_HOST=jahia
             - NEXUS_USERNAME=${NEXUS_USERNAME}
             - NEXUS_PASSWORD=${NEXUS_PASSWORD}
             - JAHIA_USERNAME=${JAHIA_USERNAME}
