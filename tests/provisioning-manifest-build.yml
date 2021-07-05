@@ -8,6 +8,7 @@ jobs:
     filepath: /tmp/graphql-dxm-provider-LATEST.jar
   - type: module
     id: graphql-dxm-provider
+    forceInstall: true
     filepath: /tmp/graphql-dxm-provider-LATEST.jar
   - type: module
     id: server-availability-manager
