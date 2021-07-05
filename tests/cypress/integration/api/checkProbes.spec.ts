@@ -15,8 +15,6 @@ describe('Health check', () => {
             cy.log('Response')
             cy.log(JSON.stringify(response))
         })
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(2000)
     }
 
     const enableProbe = () => {
@@ -32,8 +30,6 @@ describe('Health check', () => {
             cy.log('Response')
             cy.log(JSON.stringify(response))
         })
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(2000)
     }
 
     afterEach(() => {

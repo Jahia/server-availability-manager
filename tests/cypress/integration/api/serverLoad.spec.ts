@@ -2,16 +2,59 @@ import { apollo } from '../../support/apollo'
 import { healthCheck } from '../../support/gql'
 
 describe('Server Load probe test', () => {
-    let setDefaultThreshold: string
-    let setYellowThreshold: string
-    let setRedThreshold: string
+    const setDefaultThreshold = () => {
+        const sshCommands = [
+            'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
+            'config:property-set probes.ServerLoad.requestLoadYellowThreshold 40',
+            'config:property-set probes.ServerLoad.requestLoadRedThreshold 70',
+            'config:property-set probes.ServerLoad.sessionLoadYellowThreshold 40',
+            'config:property-set probes.ServerLoad.sessionLoadRedThreshold 70',
+            'config:update',
+        ]
+        cy.task('sshCommand', sshCommands).then((response: string) => {
+            cy.log('SSH commands executed:')
+            cy.log(JSON.stringify(sshCommands))
+            cy.log('Response')
+            cy.log(JSON.stringify(response))
+        })
+    }
+
+    const setYellowThreshold = () => {
+        const sshCommands = [
+            'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
+            'config:property-set probes.ServerLoad.requestLoadYellowThreshold -1',
+            'config:property-set probes.ServerLoad.requestLoadRedThreshold 70',
+            'config:property-set probes.ServerLoad.sessionLoadYellowThreshold -1',
+            'config:property-set probes.ServerLoad.sessionLoadRedThreshold 70',
+            'config:update',
+        ]
+        cy.task('sshCommand', sshCommands).then((response: string) => {
+            cy.log('SSH commands executed:')
+            cy.log(JSON.stringify(sshCommands))
+            cy.log('Response')
+            cy.log(JSON.stringify(response))
+        })
+    }
+
+    const setRedThreshold = () => {
+        const sshCommands = [
+            'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
+            'config:property-set probes.ServerLoad.requestLoadYellowThreshold -1',
+            'config:property-set probes.ServerLoad.requestLoadRedThreshold -1',
+            'config:property-set probes.ServerLoad.sessionLoadYellowThreshold -1',
+            'config:property-set probes.ServerLoad.sessionLoadRedThreshold -1',
+            'config:update',
+        ]
+        cy.task('sshCommand', sshCommands).then((response: string) => {
+            cy.log('SSH commands executed:')
+            cy.log(JSON.stringify(sshCommands))
+            cy.log('Response')
+            cy.log(JSON.stringify(response))
+        })
+    }
 
     before('load graphql file and create test dataset', () => {
-        setDefaultThreshold = require('../../fixtures/serverLoadProbe/set-default-threshold.json')
-        setYellowThreshold = require('../../fixtures/serverLoadProbe/set-yellow-threshold.json')
-        setRedThreshold = require('../../fixtures/serverLoadProbe/set-red-threshold.json')
-
-        cy.runProvisioningScript(setDefaultThreshold)
+        setDefaultThreshold()
     })
 
     it('Check that server load probe is all green with default threshold parameters', () => {
@@ -24,7 +67,7 @@ describe('Server Load probe test', () => {
     })
 
     it('Checks that server load probe is in YELLOW after changing the threshold to 0', () => {
-        cy.runProvisioningScript(setYellowThreshold)
+        setYellowThreshold()
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('YELLOW')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
@@ -33,7 +76,7 @@ describe('Server Load probe test', () => {
     })
 
     it('Checks that server load probe is in RED after changing the threshold to -1', () => {
-        cy.runProvisioningScript(setRedThreshold)
+        setRedThreshold()
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status).to.eq('RED')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
@@ -42,6 +85,6 @@ describe('Server Load probe test', () => {
     })
 
     after('Set server load threshold back to the default', () => {
-        cy.runProvisioningScript(setDefaultThreshold)
+        setDefaultThreshold()
     })
 })
