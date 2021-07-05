@@ -64,7 +64,7 @@ parameters:
     default: false
   SSH_KEY_FINGERPRINT:
     type: string
-    default: "42:1b:3b:0d:9d:9f:ae:76:34:ca:18:07:9c:eb:22:90"
+    default: "9f:e5:a9:c2:72:0d:4f:06:e0:15:2d:1e:27:3c:b8:77"
 
 workflows:
   # On code change is executed each time new code is pushed to a branch
