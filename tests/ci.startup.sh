@@ -5,4 +5,4 @@ echo " MANIFEST: ${MANIFEST}"
 echo " TESTS_IMAGE: ${TESTS_IMAGE}"
 echo " JAHIA_IMAGE: ${JAHIA_IMAGE}"
 
-docker-compose up --renew-anon
+docker-compose up --renew-anon --abort-on-container-exit

@@ -37,6 +37,7 @@ sed -i "" -e "s/JAHIA_VERSION/${JAHIA_VERSION}/g" ./run-artifacts/${MANIFEST}
 
 # If we're building the module (and manifest name contains build), then we're copying the module file to one with a set name'
 cd ./artifacts
+ls -lah
 for file in *-SNAPSHOT.jar
 do
   echo "$(date +'%d %B %Y - %k:%M') == Processing file: $file =="
@@ -45,6 +46,7 @@ do
     cp $file ./SAM-SNAPSHOT.jar
   fi
 done
+ls -lah
 cd ..
 
 ./node_modules/jahia-cli/bin/run manifest:run --manifest=./run-artifacts/${MANIFEST} --jahiaAdminUrl=${JAHIA_URL} --jahiaToolsUsername=${JAHIA_USERNAME_TOOLS} --jahiaToolsPassword=${JAHIA_PASSWORD_TOOLS} --nosandbox
