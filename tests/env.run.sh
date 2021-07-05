@@ -35,6 +35,8 @@ sed -i -e "s/NEXUS_USERNAME/$(echo ${NEXUS_USERNAME} | sed -e 's/\\/\\\\/g; s/\/
 sed -i -e "s/NEXUS_PASSWORD/$(echo ${NEXUS_PASSWORD} | sed -e 's/\\/\\\\/g; s/\//\\\//g; s/&/\\\&/g')/g" ./run-artifacts/${MANIFEST}
 sed -i "" -e "s/JAHIA_VERSION/${JAHIA_VERSION}/g" ./run-artifacts/${MANIFEST}
 
+ls -lah artifacts/
+
 ./node_modules/jahia-cli/bin/run manifest:run --manifest=./run-artifacts/${MANIFEST} --jahiaAdminUrl=${JAHIA_URL} --jahiaToolsUsername=${JAHIA_USERNAME_TOOLS} --jahiaToolsPassword=${JAHIA_PASSWORD_TOOLS} --nosandbox
 if [[ $? -eq 1 ]]; then
   echo "PROVISIONING FAILURE - EXITING SCRIPT, NOT RUNNING THE TESTS"
