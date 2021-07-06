@@ -4,6 +4,9 @@
         "@typescript-eslint",
         "cypress"
     ],
+    "rules": {
+        "cypress/no-unnecessary-waiting": "warn"
+    },
     "extends": [
         "plugin:cypress/recommended",
         "plugin:@typescript-eslint/recommended",
