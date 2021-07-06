@@ -66,49 +66,35 @@ export const load = (
         })
 }
 
-const changeHealthCheckProperty = (property, value) => {
+const sshCommandExecutor = (sshCommands): any => {
+    cy.task('sshCommand', sshCommands).then((response: string) => {
+        cy.log('SSH commands executed:')
+        cy.log(JSON.stringify(sshCommands))
+        cy.log('Response')
+        cy.log(JSON.stringify(response))
+    })
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(2000)
+}
+
+export const changeHealthCheckProperty = (property: string, value: string): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-set ' + property + ' ' + value,
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    cy.wait(2000)
+    sshCommandExecutor(sshCommands)
 }
-const deleteHealthCheckProperty = (property) => {
+export const deleteHealthCheckProperty = (property: string): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-delete ' + property,
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    cy.wait(2000)
+    sshCommandExecutor(sshCommands)
 }
 
-export const enableBlacklist = () => {
-    changeHealthCheckProperty('probes.ModuleState.blacklist', 'channels')
-}
-export const enableWhitelist = () => {
-    changeHealthCheckProperty('probes.ModuleState.whitelist', 'channels')
-}
-export const disableBlacklist = () => {
-    deleteHealthCheckProperty('probes.ModuleState.blacklist')
-}
-export const disableWhitelist = () => {
-    deleteHealthCheckProperty('probes.ModuleState.whitelist')
-}
-
-export const stoppingModules = (module, version) => {
+export const stoppingModules = (module: string, version: string): any => {
     cy.log('Stopping ' + module + '/' + version)
     cy.request({
         url: `${Cypress.config().baseUrl}/modules/api/bundles/org.jahia.modules/` + module + `/` + version + `/_stop`,
@@ -121,10 +107,11 @@ export const stoppingModules = (module, version) => {
             sendImmediately: true,
         },
     })
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(2000)
 }
 
-export const startingModules = (module, version) => {
+export const startingModules = (module: string, version: string): any => {
     cy.log('Starting ' + module + '/' + version)
     cy.request({
         url: `${Cypress.config().baseUrl}/modules/api/bundles/org.jahia.modules/` + module + `/` + version + `/_start`,
@@ -137,10 +124,11 @@ export const startingModules = (module, version) => {
             sendImmediately: true,
         },
     })
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(2000)
 }
 
-export const setDefaultThreshold = () => {
+export const setDefaultThreshold = (): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-set probes.ServerLoad.requestLoadYellowThreshold 40',
@@ -149,16 +137,10 @@ export const setDefaultThreshold = () => {
         'config:property-set probes.ServerLoad.sessionLoadRedThreshold 70',
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    cy.wait(2000)
+    sshCommandExecutor(sshCommands)
 }
 
-export const setYellowThreshold = () => {
+export const setYellowThreshold = (): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-set probes.ServerLoad.requestLoadYellowThreshold -1',
@@ -167,16 +149,10 @@ export const setYellowThreshold = () => {
         'config:property-set probes.ServerLoad.sessionLoadRedThreshold 70',
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    cy.wait(2000)
+    sshCommandExecutor(sshCommands)
 }
 
-export const setRedThreshold = () => {
+export const setRedThreshold = (): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-set probes.ServerLoad.requestLoadYellowThreshold -1',
@@ -185,45 +161,25 @@ export const setRedThreshold = () => {
         'config:property-set probes.ServerLoad.sessionLoadRedThreshold -1',
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    cy.wait(2000)
+    sshCommandExecutor(sshCommands)
 }
 
-export const disableProbe = () => {
+export const disableProbe = (): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-set probes.testProbe.severity IGNORED',
         'config:property-set probes.testProbe.status GREEN',
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(5000)
+    sshCommandExecutor(sshCommands)
 }
 
-export const enableProbe = () => {
+export const enableProbe = (): any => {
     const sshCommands = [
         'config:edit org.jahia.modules.sam.healthcheck.ProbesRegistry',
         'config:property-set probes.testProbe.severity HIGH',
         'config:property-set probes.testProbe.status RED',
         'config:update',
     ]
-    cy.task('sshCommand', sshCommands).then((response: string) => {
-        cy.log('SSH commands executed:')
-        cy.log(JSON.stringify(sshCommands))
-        cy.log('Response')
-        cy.log(JSON.stringify(response))
-    })
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(5000)
+    sshCommandExecutor(sshCommands)
 }

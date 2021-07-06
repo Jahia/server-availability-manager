@@ -3,10 +3,8 @@ import {
     healthCheck,
     startingModules,
     stoppingModules,
-    disableBlacklist,
-    enableBlacklist,
-    disableWhitelist,
-    enableWhitelist,
+    changeHealthCheckProperty,
+    deleteHealthCheckProperty,
 } from '../../support/gql'
 
 describe('Module state probe test', () => {
@@ -30,30 +28,30 @@ describe('Module state probe test', () => {
     })
 
     it('Check that module state probe is green after we blacklist the module', () => {
-        enableBlacklist()
+        changeHealthCheckProperty('probes.ModuleState.blacklist', 'channels')
         healthCheck('MEDIUM', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
             expect(moduleStateProbe.status).to.eq('GREEN')
         })
-        disableBlacklist()
+        deleteHealthCheckProperty('probes.ModuleState.blacklist')
     })
 
     it('Checks that module state probe is GREEN even after we whitelisted the PAT module', () => {
-        enableWhitelist()
+        changeHealthCheckProperty('probes.ModuleState.whitelist', 'channels')
         healthCheck('MEDIUM', apollo()).should((r) => {
             expect(r.status).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
             expect(moduleStateProbe.status).to.eq('GREEN')
         })
-        disableWhitelist()
+        deleteHealthCheckProperty('probes.ModuleState.whitelist')
     })
 
     // it('Checks the module state probe is RED when we remove blacklist', () => {
     //     startingModules('seo', '7.2.0')
     //     startingModules('channels', '7.2.1')
-    //     enableBlacklist()
-    //     // disableWhitelist()
+    //     changeHealthCheckProperty('probes.ModuleState.blacklist', 'channels')
+    //     // deleteHealthCheckProperty('probes.ModuleState.whitelist')
     //     healthCheck('MEDIUM', apollo()).should((r) => {
     //         expect(r.status).to.eq('RED')
     //         const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
@@ -74,7 +72,7 @@ describe('Module state probe test', () => {
     after('Start location module back', () => {
         startingModules('seo', '7.2.0')
         startingModules('channels', '7.2.1')
-        disableBlacklist()
-        disableWhitelist()
+        deleteHealthCheckProperty('probes.ModuleState.blacklist')
+        deleteHealthCheckProperty('probes.ModuleState.whitelist')
     })
 })
