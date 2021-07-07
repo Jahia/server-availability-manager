@@ -16,6 +16,8 @@ RUN CI=true yarn install
 
 COPY --chown=jahians:jahians . /home/jahians
 
+RUN ls -lah /home/jahians/artifacts/
+
 RUN CI=true /home/jahians/node_modules/.bin/cypress install
 
 # Jahia-cli is used to warmup the environment at startup

@@ -4,7 +4,7 @@ orbs:
   docker: circleci/docker@0.5.20
   jq: circleci/jq@2.2.0
   # IMPORTANT: When creating a module, use a fix version of the orb, not dev:alpha
-  jahia-modules-orb: jahia/jahia-modules-orb@0.1.10
+  jahia-modules-orb: jahia/jahia-modules-orb@0.3.1
 
 # Parameters are available across the entire config file and can be used with this syntax: << pipeline.parameters.THE_PARAMETER >>
 # Avoid using project-specific variables in the jobs or steps.
@@ -28,7 +28,7 @@ parameters:
     default: "jahia/server-availability-manager"
   PRIMARY_RELEASE_BRANCH:
     type: string
-    default: "main" # main or master ? set the branch for the main release
+    default: "1_x" # main or master ? set the branch for the main release
   JAHIA_IMAGE:
     type: string
     default: "jahia/jahia-ee-dev:8-SNAPSHOT"
@@ -64,7 +64,7 @@ parameters:
     default: false
   SSH_KEY_FINGERPRINT:
     type: string
-    default: "42:1b:3b:0d:9d:9f:ae:76:34:ca:18:07:9c:eb:22:90"
+    default: "9f:e5:a9:c2:72:0d:4f:06:e0:15:2d:1e:27:3c:b8:77"
 
 workflows:
   # On code change is executed each time new code is pushed to a branch
@@ -109,6 +109,18 @@ workflows:
             branches:
               only:
                 - << pipeline.parameters.PRIMARY_RELEASE_BRANCH >>
+      - jahia-modules-orb/integration-tests-machine:
+          context: QA_ENVIRONMENT
+          requires:
+            - jahia-modules-orb/build
+          matrix:
+            parameters:
+              jahia_image: ['jahia/jahia:7.3.4.1', 'jahia/jahia:7.3.8.0']            
+#         Testing on version jahia/jahia-ee:8 due to work in progress regarding security filter
+          tests_manifest: provisioning-manifest-build.yml
+          module_id: << pipeline.parameters.MODULE_ID >>
+          testrail_project: << pipeline.parameters.TESTRAIL_PROJECTNAME >>
+          testrail_milestone: << pipeline.parameters.TESTRAIL_MILESTONE >>                
 
   # The on-release workflow was created to handle the full release lifecycle after creating a release using GitHub
   # https://github.com/Jahia/sandbox/releases

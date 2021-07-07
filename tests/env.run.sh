@@ -9,6 +9,7 @@ START_TIME=$SECONDS
 
 echo " == Using MANIFEST: ${MANIFEST}"
 echo " == Using JAHIA_URL= ${JAHIA_URL}"
+echo " == Using JAHIA_HOST: ${JAHIA_HOST}"
 
 echo " == Waiting for Jahia to startup"
 while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${JAHIA_URL}/cms/login)" != "200" ]];
@@ -35,6 +36,20 @@ sed -i -e "s/NEXUS_USERNAME/$(echo ${NEXUS_USERNAME} | sed -e 's/\\/\\\\/g; s/\/
 sed -i -e "s/NEXUS_PASSWORD/$(echo ${NEXUS_PASSWORD} | sed -e 's/\\/\\\\/g; s/\//\\\//g; s/&/\\\&/g')/g" ./run-artifacts/${MANIFEST}
 sed -i "" -e "s/JAHIA_VERSION/${JAHIA_VERSION}/g" ./run-artifacts/${MANIFEST}
 
+# If we're building the module (and manifest name contains build), then we're copying the module file to one with a set name'
+cd ./artifacts
+ls -lah
+for file in *-SNAPSHOT.jar
+do
+  echo "$(date +'%d %B %Y - %k:%M') == Processing file: $file =="
+  if [[ $file == *"server-availability-manager"* ]]; then
+    echo "$(date +'%d %B %Y - %k:%M') == copying $file to ./SAM-SNAPSHOT.jar =="
+    cp $file ./SAM-SNAPSHOT.jar
+  fi
+done
+ls -lah
+cd ..
+
 ./node_modules/jahia-cli/bin/run manifest:run --manifest=./run-artifacts/${MANIFEST} --jahiaAdminUrl=${JAHIA_URL} --jahiaToolsUsername=${JAHIA_USERNAME_TOOLS} --jahiaToolsPassword=${JAHIA_PASSWORD_TOOLS} --nosandbox
 if [[ $? -eq 1 ]]; then
   echo "PROVISIONING FAILURE - EXITING SCRIPT, NOT RUNNING THE TESTS"
@@ -57,10 +72,6 @@ if [[ $INSTALLED_MODULE_VERSION == "UNKNOWN" ]]; then
   echo "failure" > ./results/test_failure
   exit 1
 fi
-
-echo "$(date +'%d %B %Y - %k:%M')== Sleeping for an additional 120 seconds =="
-sleep 120
-echo "$(date +'%d %B %Y - %k:%M')== DONE - Sleeping for an additional 120 seconds =="
 
 echo "$(date +'%d %B %Y - %k:%M')== Run tests =="
 yarn e2e:ci

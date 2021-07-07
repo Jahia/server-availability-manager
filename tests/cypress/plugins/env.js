@@ -1,7 +1,10 @@
 module.exports = (on, config) => {
-    config.baseUrl = process.env.JAHIA_URL;
-    config.env.JAHIA_URL = process.env.JAHIA_URL;
-    config.env.SUPER_USER_PASSWORD = process.env.SUPER_USER_PASSWORD;
-
+    config.baseUrl = process.env.JAHIA_URL
+    config.env.JAHIA_URL = process.env.JAHIA_URL
+    config.env.SUPER_USER_PASSWORD = process.env.SUPER_USER_PASSWORD
+    config.env.JAHIA_HOST = process.env.JAHIA_HOST
+    config.env.JAHIA_PORT_KARAF = process.env.JAHIA_PORT_KARAF
+    config.env.JAHIA_USERNAME_TOOLS = process.env.JAHIA_USERNAME_TOOLS
+    config.env.JAHIA_PASSWORD_TOOLS = process.env.JAHIA_PASSWORD_TOOLS
     return config
 }
