@@ -1,3 +1,17 @@
+# v2.0.1 (Wed Jul 07 2021)
+
+#### ⚠️ Pushed to `main`
+
+- Removed doc from readme and added a link to the corresponding page on the Academy ([@Fgerthoffert](https://github.com/Fgerthoffert))
+- [ci skip] Updated signature for Server Availability Manager ([@jahia-ci](https://github.com/jahia-ci))
+
+#### Authors: 2
+
+- Francois G. ([@Fgerthoffert](https://github.com/Fgerthoffert))
+- Jahia Continuous Integration account ([@jahia-ci](https://github.com/jahia-ci))
+
+---
+
 # v0.0.1 (Wed Jun 30 2021)
 
 #### 🐛 Bug Fix
