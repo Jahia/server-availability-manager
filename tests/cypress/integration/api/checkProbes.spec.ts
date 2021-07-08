@@ -40,6 +40,9 @@ describe('Health check', () => {
     it('Check healthcheck servlet when everything is fine', () => {
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
+            headers: {
+                referer: Cypress.config().baseUrl,
+            },
             auth: {
                 user: 'root',
                 pass: Cypress.env('SUPER_USER_PASSWORD'),
@@ -55,6 +58,9 @@ describe('Health check', () => {
         cy.runProvisioningScript(enableProbe)
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
+            headers: {
+                referer: Cypress.config().baseUrl,
+            },
             auth: {
                 user: 'root',
                 pass: Cypress.env('SUPER_USER_PASSWORD'),
@@ -71,6 +77,9 @@ describe('Health check', () => {
         cy.runProvisioningScript(enableProbe)
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
+            headers: {
+                referer: Cypress.config().baseUrl,
+            },
             auth: {
                 user: 'root',
                 pass: Cypress.env('SUPER_USER_PASSWORD'),
