@@ -71,7 +71,6 @@
         <jahia-module-signature>MCwCFDoALnLscThicYi40W44PQY16m+XAhQGGgwA4up4gUxXphs0xHtofU68RQ==</jahia-module-signature>
         <export-package>org.jahia.modules.sam</export-package>
         <yarn.arguments>build:production</yarn.arguments>
-        <import-package>graphql.annotations.annotationTypes;version="[6.1,9)"</import-package>
     </properties>
 
     <distributionManagement>
