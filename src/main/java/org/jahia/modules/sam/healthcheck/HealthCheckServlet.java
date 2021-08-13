@@ -34,7 +34,7 @@ public class HealthCheckServlet extends HttpServlet {
         statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
     }
 
-    @Reference(service = HttpServlet.class, target = "(jmx.objectname=graphql.servlet:type=graphql)")
+    @Reference(service = HttpServlet.class, target = "(component.name=graphql.kickstart.servlet.OsgiGraphQLHttpServlet)")
     public void setGql(HttpServlet gql) {
         this.gql = gql;
     }
