@@ -3,6 +3,8 @@ package org.jahia.modules.sam.healthcheck;
 import org.jahia.modules.graphql.provider.dxm.security.GqlAccessDeniedException;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.jahia.osgi.BundleUtils;
+import org.jahia.services.securityfilter.PermissionService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +17,7 @@ import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +27,7 @@ public class HealthCheckServlet extends HttpServlet {
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
     private ProbeStatus statusThreshold;
+    private PermissionService permissionService;
     private int statusCode;
 
     @Activate
@@ -37,6 +41,11 @@ public class HealthCheckServlet extends HttpServlet {
     @Reference(service = HttpServlet.class, target = "(component.name=graphql.kickstart.servlet.OsgiGraphQLHttpServlet)")
     public void setGql(HttpServlet gql) {
         this.gql = gql;
+    }
+
+    @Reference
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -78,7 +87,13 @@ public class HealthCheckServlet extends HttpServlet {
             public PrintWriter getWriter() throws IOException {
                 return new PrintWriter(writer);
             }
+
+            @Override
+            public void setContentLength(int len) {
+            }
         };
+
+        permissionService.addScopes(Collections.singleton("graphql"), req);
 
         gql.service(requestWrapper, responseWrapper);
 
@@ -103,9 +118,21 @@ public class HealthCheckServlet extends HttpServlet {
 
                 if (status.ordinal() >= statusThreshold.ordinal()) {
                     resp.setStatus(statusCode);
+                } else {
+                    resp.setStatus(HttpServletResponse.SC_OK);
                 }
 
-                healthCheckNode.write(resp.getWriter());
+
+                try (StringWriter finalWriter = new StringWriter()) {
+                    healthCheckNode.write(finalWriter);
+                    result = finalWriter.getBuffer().toString();
+                }
+
+                resp.setContentLength(result.length());
+
+                try (PrintWriter respWriter = resp.getWriter()) {
+                    respWriter.write(result);
+                }
             }
         } catch (JSONException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
