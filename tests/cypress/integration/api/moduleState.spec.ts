@@ -24,9 +24,9 @@ describe('Module state probe test', () => {
 
     it('Check that module state probe is all green with no whitelists or blacklists', () => {
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
+            expect(r.status.health).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status).to.eq('GREEN')
+            expect(moduleStateProbe.status.health).to.eq('GREEN')
             expect(moduleStateProbe.severity).to.eq('MEDIUM')
         })
     })
@@ -34,36 +34,36 @@ describe('Module state probe test', () => {
     it('Checks that module state probe is in RED after stopping the module', () => {
         cy.runProvisioningScript(stopChannels)
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('RED')
+            expect(r.status.health).to.eq('RED')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status).to.eq('RED')
+            expect(moduleStateProbe.status.health).to.eq('RED')
         })
     })
 
     it('Check that module state probe is green after we blacklist the module', () => {
         cy.runProvisioningScript(enableBlacklist)
         healthCheck('MEDIUM', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
+            expect(r.status.health).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status).to.eq('GREEN')
+            expect(moduleStateProbe.status.health).to.eq('GREEN')
         })
     })
 
     it('Checks that module state probe is GREEN even after we whitelisted the PAT module', () => {
         cy.runProvisioningScript(enableWhitelist)
         healthCheck('MEDIUM', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
+            expect(r.status.health).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status).to.eq('GREEN')
+            expect(moduleStateProbe.status.health).to.eq('GREEN')
         })
     })
 
     it('Checks the module state probe is RED when we removed blacklist', () => {
         cy.runProvisioningScript(disableBlacklist)
         healthCheck('MEDIUM', apollo()).should((r) => {
-            expect(r.status).to.eq('RED')
+            expect(r.status.health).to.eq('RED')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status).to.eq('RED')
+            expect(moduleStateProbe.status.health).to.eq('RED')
         })
     })
 
@@ -71,9 +71,9 @@ describe('Module state probe test', () => {
         cy.runProvisioningScript(startChannels)
         cy.runProvisioningScript(stopSeoModule)
         healthCheck('MEDIUM', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
+            expect(r.status.health).to.eq('GREEN')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status).to.eq('GREEN')
+            expect(moduleStateProbe.status.health).to.eq('GREEN')
         })
     })
 

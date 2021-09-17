@@ -25,10 +25,12 @@ public class DatastoreProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
         if (isDbPersistenceManager()) {
-            return ProbeStatus.GREEN;
+            return new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN);
         }
         final String datastoreHome = System.getProperty("jahia.jackrabbit.datastore.path");
-        return (new File(datastoreHome)).canWrite() ? ProbeStatus.GREEN : ProbeStatus.RED;
+        return (new File(datastoreHome)).canWrite() ?
+                new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN) :
+                new ProbeStatus("Could not perform write operation", ProbeStatus.Health.RED);
     }
 
     private boolean isDbPersistenceManager() {
@@ -48,7 +50,7 @@ public class DatastoreProbe implements Probe {
                 return pm instanceof BundleDbPersistenceManager;
             });
         } catch (RepositoryException e) {
-            logger.error("", e);
+            logger.error("Error trying to get persistence manager", e);
             return false;
         }
     }

@@ -52,7 +52,16 @@ public class ModuleStateProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        return isAnyModuleInactive() || isAnyWithInvalidStartLevel() ? ProbeStatus.RED : ProbeStatus.GREEN;
+        Map<Bundle, ModuleState> notStartedModules = getNotStartedModules();
+
+        if (notStartedModules.isEmpty()) {
+            return new ProbeStatus("All modules are started", ProbeStatus.Health.GREEN);
+        } else {
+            Map.Entry<Bundle, ModuleState> entry = notStartedModules.entrySet().iterator().next();
+            Bundle bundle = entry.getKey();
+            ModuleState moduleState = entry.getValue();
+            return new ProbeStatus(String.format("At least one module is not started. Module (%s) is in (%s) state.", bundle.getSymbolicName(), moduleState.getState().toString()), ProbeStatus.Health.YELLOW);
+        }
     }
 
     @Override
@@ -60,12 +69,10 @@ public class ModuleStateProbe implements Probe {
         return ProbeSeverity.MEDIUM;
     }
 
-    private boolean isAnyModuleInactive() {
-        Map<Bundle, ModuleState> moduleStateMap = getBundlesToCheck()
+    private Map<Bundle, ModuleState> getNotStartedModules() {
+        return getBundlesToCheck()
                 .filter(entry -> !BundleUtils.isFragment(entry.getKey()) && entry.getValue().getState() != ModuleState.State.STARTED)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        return !moduleStateMap.isEmpty();
     }
 
     private boolean isAnyWithInvalidStartLevel() {

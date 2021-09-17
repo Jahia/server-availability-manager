@@ -26,7 +26,7 @@ import java.util.Optional;
 public class HealthCheckServlet extends HttpServlet {
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
-    private ProbeStatus statusThreshold;
+    private ProbeStatus.Health statusThreshold;
     private PermissionService permissionService;
     private int statusCode;
 
@@ -34,7 +34,7 @@ public class HealthCheckServlet extends HttpServlet {
     public void activate(Map<String, Object> config) {
         //setting default values for probes
         defaultSeverity = (config.get("severity.default")!=null ? ProbeSeverity.valueOf((String) config.get("severity.default")) : ProbeSeverity.MEDIUM);
-        statusThreshold = (config.get("status.threshold")!=null ? ProbeStatus.valueOf((String) config.get("status.threshold")) : ProbeStatus.RED);
+        statusThreshold = (config.get("status.threshold")!=null ? ProbeStatus.Health.valueOf((String) config.get("status.threshold")) : ProbeStatus.Health.RED);
         statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
     }
 
@@ -67,11 +67,17 @@ public class HealthCheckServlet extends HttpServlet {
                             "  admin {\n" +
                             "    jahia {\n" +
                             "      healthCheck(severity:" + severity + ") {\n" +
-                            "        status\n" +
+                            "        status {\n" +
+                            "          health\n" +
+                            "          message\n" +
+                            "        }\n" +
                             "        probes {\n" +
                             "          name\n" +
                             "          severity\n" +
-                            "status\n" +
+                            "          status {\n" +
+                            "            health\n" +
+                            "            message\n" +
+                            "          }\n" +
                             "        }\n" +
                             "      }\n" +
                             "    }\n" +
@@ -112,9 +118,10 @@ public class HealthCheckServlet extends HttpServlet {
                 JSONObject healthCheckNode = obj.getJSONObject("data")
                         .getJSONObject("admin")
                         .getJSONObject("jahia")
-                        .getJSONObject("healthCheck");
+                        .getJSONObject("healthCheck")
+                        .getJSONObject("status");
 
-                ProbeStatus status = ProbeStatus.valueOf(healthCheckNode.getString("status"));
+                ProbeStatus.Health status = ProbeStatus.Health.valueOf(healthCheckNode.getString("health"));
 
                 if (status.ordinal() >= statusThreshold.ordinal()) {
                     resp.setStatus(statusCode);

@@ -39,13 +39,13 @@ public class ServerLoadProbe implements Probe {
                 sessionLoadRedThreshold);
 
         if (oneMinuteRequestLoadAverage < requestLoadYellowThreshold && oneMinuteCurrentSessionLoad < sessionLoadYellowThreshold) {
-            return ProbeStatus.GREEN;
+            return new ProbeStatus("Serverload is normal", ProbeStatus.Health.GREEN);
         }
         if (oneMinuteRequestLoadAverage < requestLoadRedThreshold && oneMinuteCurrentSessionLoad < sessionLoadRedThreshold) {
-            return ProbeStatus.YELLOW;
+            return new ProbeStatus("Serverload is above normal", ProbeStatus.Health.YELLOW);
         }
 
-        return ProbeStatus.RED;
+        return new ProbeStatus("Serverload is very high", ProbeStatus.Health.RED);
     }
 
     @Override
