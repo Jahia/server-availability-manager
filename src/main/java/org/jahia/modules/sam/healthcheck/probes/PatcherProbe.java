@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
 public class PatcherProbe implements Probe {
@@ -25,7 +26,7 @@ public class PatcherProbe implements Probe {
     public ProbeStatus getStatus() {
         File lookupFolder = Patcher.getInstance().getPatchesFolder();
         if (lookupFolder == null) {
-            return ProbeStatus.GREEN;
+            return new ProbeStatus("No patching to report on", ProbeStatus.Health.GREEN);
         }
 
         if (logger.isDebugEnabled()) {
@@ -42,9 +43,9 @@ public class PatcherProbe implements Probe {
                 logger.debug(patches.size() > 1 ? "{} Failed patches were found:" : "{} Failed patch was found:", patches.size());
                 patches.forEach(file -> logger.debug("Patch {} has failed.", file.getName()));
             }
-            return ProbeStatus.RED;
+            return new ProbeStatus(String.format("Following patches failed: %s", patches.stream().map(file -> String.format("%s ", file.getName())).collect(Collectors.joining())), ProbeStatus.Health.RED);
         }
-        return ProbeStatus.GREEN;
+        return new ProbeStatus("Patch applied successfully", ProbeStatus.Health.GREEN);
     }
 
     @Override
