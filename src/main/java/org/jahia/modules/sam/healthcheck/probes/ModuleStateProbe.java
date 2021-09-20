@@ -97,7 +97,9 @@ public class ModuleStateProbe implements Probe {
     }
 
     private boolean hasAnotherVersionStarted(Bundle bundle) {
-        return getBundlesToCheck().anyMatch(entry -> entry.getKey().getSymbolicName().equals(bundle.getSymbolicName()) && !entry.getKey().getVersion().equals(bundle.getVersion()));
+        return getBundlesToCheck().anyMatch(entry -> entry.getKey().getSymbolicName().equals(bundle.getSymbolicName()) &&
+                entry.getValue().getState().equals(ModuleState.State.STARTED) &&
+                !entry.getKey().getVersion().equals(bundle.getVersion()));
     }
 
     @Override
