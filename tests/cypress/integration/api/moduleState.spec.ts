@@ -35,6 +35,18 @@ describe('Module state probe test', () => {
         })
     })
 
+    it('Checks the module state probe is YELLOW when two versions installed with only one running', () => {
+        cy.runProvisioningScript(installDashboardModule)
+        healthCheck('LOW', apollo()).should((r) => {
+            expect(r.status.health).to.eq('YELLOW')
+            expect(r.status.message).to.contain('jahia-dashboard')
+            const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
+            expect(moduleStateProbe.status.health).to.eq('YELLOW')
+            expect(moduleStateProbe.status.message).to.contain('jahia-dashboard')
+        })
+        cy.runProvisioningScript(uninstallDashboardModule)
+    })
+
     it('Checks that module state probe is in RED after stopping the module', () => {
         cy.runProvisioningScript(stopChannels)
         healthCheck('LOW', apollo()).should((r) => {
@@ -82,24 +94,10 @@ describe('Module state probe test', () => {
         })
     })
 
-    it('Checks the module state probe is YELLOW when two versions installed with only one running', () => {
-        cy.runProvisioningScript(installDashboardModule)
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(5000)
-        healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status.health).to.eq('YELLOW')
-            expect(r.status.message).to.contain('jahia-dashboard')
-            const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-            expect(moduleStateProbe.status.health).to.eq('YELLOW')
-            expect(moduleStateProbe.status.message).to.contain('jahia-dashboard')
-        })
-    })
-
     after('Start location module back', () => {
         cy.runProvisioningScript(startSeoModule)
         cy.runProvisioningScript(startChannels)
         cy.runProvisioningScript(disableBlacklist)
         cy.runProvisioningScript(disableWhitelist)
-        cy.runProvisioningScript(uninstallDashboardModule)
     })
 })
