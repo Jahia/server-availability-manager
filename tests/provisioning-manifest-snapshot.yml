@@ -3,4 +3,3 @@
   - 'mvn:org.jahia.modules/server-availability-manager'
   autoStart: true
   uninstallPreviousVersion: true
-
