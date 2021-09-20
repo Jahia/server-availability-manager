@@ -11,6 +11,34 @@
                 <sonar.login>${env.SONAR_TOKEN}</sonar.login>
             </properties>
         </profile>
+        <profile>
+            <id>internal</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>Central Repository</name>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                </repository>
+                <repository>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <id>jahia-internal</id>
+                    <name>Jahia Internal Repository</name>
+                    <url>https://devtools.jahia.com/nexus/content/groups/internal</url>
+                </repository>
+            </repositories>
+        </profile>
     </profiles>
     <servers>
         <server>
@@ -38,8 +66,13 @@
             <username>${env.NEXUS_USERNAME}</username>
             <password>${env.NEXUS_PASSWORD}</password>
         </server>
+        <server>
+            <id>jahia-internal</id>
+            <username>${env.NEXUS_RELEASE_USERNAME}</username>
+            <password>${env.NEXUS_RELEASE_PASSWORD}</password>
+        </server>
     </servers>
     <pluginGroups>
-	    <pluginGroup>org.owasp</pluginGroup>
+        <pluginGroup>org.owasp</pluginGroup>
     </pluginGroups>
 </settings>
