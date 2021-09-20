@@ -8,6 +8,7 @@ import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.services.templates.JahiaTemplateManagerService;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -50,7 +52,7 @@ public class ModuleStateProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        return isAnyModuleInactive() ? ProbeStatus.RED : ProbeStatus.GREEN;
+        return isAnyModuleInactive() || isAnyWithInvalidStartLevel() ? ProbeStatus.RED : ProbeStatus.GREEN;
     }
 
     @Override
@@ -59,21 +61,28 @@ public class ModuleStateProbe implements Probe {
     }
 
     private boolean isAnyModuleInactive() {
-        Map<Bundle, ModuleState> moduleStateMap = templateManagerService.getModuleStates()
-                .entrySet()
-                .stream()
-                .filter(entry -> {
-                    Bundle bundle = entry.getKey();
-                    if (blacklist.contains(bundle.getSymbolicName()) || (!whitelist.isEmpty()
-                            && !StringUtils.isEmpty(whitelist.get(0))
-                            && !whitelist.contains(bundle.getSymbolicName()))) {
-                        return false;
-                    }
-                    return !BundleUtils.isFragment(bundle) && entry.getValue().getState() != ModuleState.State.STARTED;
-                })
+        Map<Bundle, ModuleState> moduleStateMap = getBundlesToCheck()
+                .filter(entry -> !BundleUtils.isFragment(entry.getKey()) && entry.getValue().getState() != ModuleState.State.STARTED)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return !moduleStateMap.isEmpty();
+    }
+
+    private boolean isAnyWithInvalidStartLevel() {
+        Map<Bundle, ModuleState> moduleStateMap = getBundlesToCheck()
+                .filter(entry -> entry.getKey().adapt(BundleStartLevel.class).getStartLevel() <= 80)
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return !moduleStateMap.isEmpty();
+    }
+
+    private Stream<Map.Entry<Bundle, ModuleState>> getBundlesToCheck() {
+        return templateManagerService.getModuleStates()
+                .entrySet()
+                .stream()
+                .filter(entry -> !(blacklist.contains(entry.getKey().getSymbolicName()) || (!whitelist.isEmpty()
+                        && !StringUtils.isEmpty(whitelist.get(0))
+                        && !whitelist.contains(entry.getKey().getSymbolicName()))));
     }
 
     @Override
