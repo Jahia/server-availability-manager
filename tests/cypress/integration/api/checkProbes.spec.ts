@@ -16,7 +16,7 @@ describe('Health check', () => {
 
     it('Check healthcheck when everything is fine', () => {
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status.health).to.eq('GREEN')
+            expect(r.health).to.eq('GREEN')
             expect(r.probes.length).to.eq(5)
         })
     })
@@ -24,7 +24,7 @@ describe('Health check', () => {
     it('Check healthcheck with one HIGH probe RED, asking low', () => {
         cy.runProvisioningScript(enableProbe)
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status.health).to.eq('RED')
+            expect(r.health).to.eq('RED')
             expect(r.probes.length).to.eq(6)
         })
     })
@@ -32,7 +32,7 @@ describe('Health check', () => {
     it('Check healthcheck with one HIGH probe RED, asking critical', () => {
         cy.runProvisioningScript(enableProbe)
         healthCheck('CRITICAL', apollo()).should((r) => {
-            expect(r.status.health).to.eq('GREEN')
+            expect(r.health).to.eq('GREEN')
             expect(r.probes.length).to.eq(3)
         })
     })
@@ -49,7 +49,7 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.status.health).to.eq('GREEN')
+            expect(response.body.health).to.eq('GREEN')
             expect(response.status).to.eq(200)
         })
     })
@@ -68,7 +68,7 @@ describe('Health check', () => {
             },
             failOnStatusCode: false,
         }).should((response) => {
-            expect(response.body.status.health).to.eq('RED')
+            expect(response.body.health).to.eq('RED')
             expect(response.status).to.eq(503)
         })
     })
@@ -86,7 +86,7 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.status.health).to.eq('GREEN')
+            expect(response.body.health).to.eq('GREEN')
             expect(response.status).to.eq(200)
         })
     })
