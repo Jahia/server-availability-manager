@@ -44,7 +44,7 @@ cd ./artifacts
 echo "List or artifacts to be provisioned:"
 ls
 
-for file in server-availability-manager-*SNAPSHOT.jar
+for file in *SNAPSHOT.jar
 do
   echo "$(date +'%d %B %Y - %k:%M') == Submitting module from: $file =="
   curl -u root:${SUPER_USER_PASSWORD} -X POST ${JAHIA_URL}/modules/api/provisioning --form script='[{"installAndStartBundle":"'"$file"'"}]' --form file=@$file
