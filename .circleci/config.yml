@@ -113,7 +113,6 @@ workflows:
           context: QA_ENVIRONMENT
           requires:
             - jahia-modules-orb/build
-          should_skip_artifacts: true
           jahia_image: jahia/jahia-ee-dev:8-SNAPSHOT
           tests_manifest: provisioning-manifest-build.yml
           module_id: << pipeline.parameters.MODULE_ID >>
