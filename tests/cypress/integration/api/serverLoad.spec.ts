@@ -16,9 +16,9 @@ describe('Server Load probe test', () => {
 
     it('Check that server load probe is all green with default threshold parameters', () => {
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
+            expect(r.status.health).to.eq('GREEN')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
-            expect(serverLoadProbe.status).to.eq('GREEN')
+            expect(serverLoadProbe.status.health).to.eq('GREEN')
             expect(serverLoadProbe.severity).to.eq('HIGH')
         })
     })
@@ -26,18 +26,18 @@ describe('Server Load probe test', () => {
     it('Checks that server load probe is in YELLOW after changing the threshold to 0', () => {
         cy.runProvisioningScript(setYellowThreshold)
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('YELLOW')
+            expect(r.status.health).to.eq('YELLOW')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
-            expect(serverLoadProbe.status).to.eq('YELLOW')
+            expect(serverLoadProbe.status.health).to.eq('YELLOW')
         })
     })
 
     it('Checks that server load probe is in RED after changing the threshold to -1', () => {
         cy.runProvisioningScript(setRedThreshold)
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('RED')
+            expect(r.status.health).to.eq('RED')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
-            expect(serverLoadProbe.status).to.eq('RED')
+            expect(serverLoadProbe.status.health).to.eq('RED')
         })
     })
 

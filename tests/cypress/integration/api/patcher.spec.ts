@@ -14,9 +14,9 @@ describe('Server Load probe test', () => {
 
     it('Check that patcher  probe is all green after startup', () => {
         healthCheck('CRITICAL', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
+            expect(r.status.health).to.eq('GREEN')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'PatchFailures')
-            expect(serverLoadProbe.status).to.eq('GREEN')
+            expect(serverLoadProbe.status.health).to.eq('GREEN')
             expect(serverLoadProbe.severity).to.eq('CRITICAL')
         })
     })
@@ -24,9 +24,9 @@ describe('Server Load probe test', () => {
     it('Check that patcher  probe is red after failing a patch', () => {
         cy.runProvisioningScript(runFailPatchScript)
         healthCheck('CRITICAL', apollo()).should((r) => {
-            expect(r.status).to.eq('RED')
+            expect(r.status.health).to.eq('RED')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'PatchFailures')
-            expect(serverLoadProbe.status).to.eq('RED')
+            expect(serverLoadProbe.status.health).to.eq('RED')
             expect(serverLoadProbe.severity).to.eq('CRITICAL')
         })
     })

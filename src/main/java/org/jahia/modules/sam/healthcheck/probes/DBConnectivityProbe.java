@@ -24,13 +24,13 @@ public class DBConnectivityProbe implements Probe {
     public ProbeStatus getStatus() {
         try (Connection conn = DatabaseUtils.getDatasource().getConnection()) {
             if (conn.isValid(timeout)) {
-                return ProbeStatus.GREEN;
+                return new ProbeStatus("Connection established", ProbeStatus.Health.GREEN);
             } else {
-                return ProbeStatus.RED;
+                return new ProbeStatus("Could not connect", ProbeStatus.Health.RED);
             }
         } catch (SQLException ex) {
             LOGGER.debug("Impossible to check the validity of the DB connection", ex);
-            return ProbeStatus.RED;
+            return new ProbeStatus("Encountered exception while connecting", ProbeStatus.Health.RED);
         }
 
     }

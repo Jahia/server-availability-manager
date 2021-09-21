@@ -1,4 +1,1 @@
-- installBundle:
-    - 'mvn:org.jahia.modules/graphql-dxm-provider'
-  autoStart: true
-  uninstallPreviousVersion: true
+- karafCommand: "bundle:list"

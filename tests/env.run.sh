@@ -41,7 +41,10 @@ echo "$(date +'%d %B %Y - %k:%M') == Environment warmup complete =="
 
 # If we're building the module (and manifest name contains build), then we'll end up pushing that module individually
 cd ./artifacts
-for file in *-SNAPSHOT.jar
+echo "List or artifacts to be provisioned:"
+ls
+
+for file in *SNAPSHOT.jar
 do
   echo "$(date +'%d %B %Y - %k:%M') == Submitting module from: $file =="
   curl -u root:${SUPER_USER_PASSWORD} -X POST ${JAHIA_URL}/modules/api/provisioning --form script='[{"installAndStartBundle":"'"$file"'"}]' --form file=@$file

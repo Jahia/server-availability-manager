@@ -9,6 +9,7 @@ import org.jahia.modules.sam.healthcheck.ProbesRegistry;
 import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @GraphQLDescription("Server healthCheck")
@@ -35,7 +36,8 @@ public class GqlHealthCheck {
     @GraphQLField
     @GraphQLDescription("Highest reported status across all probes")
     public GqlProbeStatus getStatus() {
-        return getProbes().stream().map(GqlProbe::getStatus).max(Comparator.comparing(Enum::ordinal)).orElse(GqlProbeStatus.GREEN);
+        Function<GqlProbeStatus, Integer> keyExtractor = (GqlProbeStatus status) -> status.getHealth().ordinal();
+        return getProbes().stream().map(GqlProbe::getStatus).max(Comparator.comparing(keyExtractor)).orElse(new GqlProbeStatus("All probes are healthy", GqlProbeStatus.GqlProbeHealth.GREEN));
     }
 
     @GraphQLField
