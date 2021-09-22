@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Component(immediate = true, service = Probe.class)
 public class TestProbe implements Probe {
-    private ProbeStatus status = ProbeStatus.GREEN;
+    private ProbeStatus status = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
 
     @Override
     public String getName() {
@@ -29,7 +29,7 @@ public class TestProbe implements Probe {
     @Override
     public void setConfig(Map<String, Object> config) {
         if (config.containsKey("status")) {
-            status = ProbeStatus.valueOf((String) config.get("status"));
+            status = new ProbeStatus("Configured test probe status", ProbeStatus.Health.valueOf((String) config.get("status")));
         }
     }
 }
