@@ -21,6 +21,7 @@ describe('Module state probe test', () => {
         stoppingModules('channels', '7.2.1')
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status.health).to.eq('RED')
+            expect(r.status.message).to.contain('channels')
             const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
             expect(moduleStateProbe.status.health).to.eq('RED')
         })
@@ -46,28 +47,6 @@ describe('Module state probe test', () => {
         })
         deleteHealthCheckProperty('probes.ModuleState.whitelist')
     })
-
-    // it('Checks the module state probe is RED when we remove blacklist', () => {
-    //     startingModules('seo', '7.2.0')
-    //     startingModules('channels', '7.2.1')
-    //     changeHealthCheckProperty('probes.ModuleState.blacklist', 'channels')
-    //     // deleteHealthCheckProperty('probes.ModuleState.whitelist')
-    //     healthCheck('MEDIUM', apollo()).should((r) => {
-    //         expect(r.status).to.eq('RED')
-    //         const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-    //         expect(moduleStateProbe.status).to.eq('RED')
-    //     })
-    // })
-
-    // it('Checks the module state probe is GREEN when we started channels module and stopped SEO module, which is not inside whitelist', () => {
-    //     startingModules('channels', '7.2.1')
-    //     stoppingModules('seo', '7.2.0')
-    //     healthCheck('MEDIUM', apollo()).should((r) => {
-    //         expect(r.status).to.eq('GREEN')
-    //         const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
-    //         expect(moduleStateProbe.status).to.eq('GREEN')
-    //     })
-    // })
 
     after('Start location module back', () => {
         startingModules('seo', '7.2.0')

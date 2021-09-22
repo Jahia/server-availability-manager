@@ -29,4 +29,8 @@ describe('Server Load probe test', () => {
             expect(r.status.health).to.eq('RED')
         })
     })
+
+    after('Reset threshold', () => {
+        setDefaultThreshold()
+    })
 })
