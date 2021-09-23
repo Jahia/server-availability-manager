@@ -65,5 +65,6 @@ describe('Module state probe test', () => {
         startingModules('channels', '7.2.1')
         deleteHealthCheckProperty('probes.ModuleState.blacklist')
         deleteHealthCheckProperty('probes.ModuleState.whitelist')
+        cy.uninstallModule('article', '2.0.2')
     })
 })
