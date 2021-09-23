@@ -78,6 +78,33 @@ module.exports = (on, config) => {
             }
 
             return true
+        },
+        async runGroovyScript(script) {
+            try {
+                const resp = await axios({
+                    url: `${config.env.JAHIA_URL}/modules/tools/groovyConsole.jsp?`,
+                    credentials: 'include',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    },
+                    auth: {
+                        username: config.env.JAHIA_USERNAME_TOOLS,
+                        password: config.env.JAHIA_PASSWORD_TOOLS,
+                    },
+                    data: `toolAccessToken=&runScript=true&script=${script}` ,
+                    method: 'POST',
+                    mode: 'cors'
+                })
+
+                if (resp.data.indexOf('>Error<') !== -1) {
+                    console.error('Failed to execute script:', script)
+                    return false;
+                }
+            } catch (e) {
+                console.error('Failed to send script: ', e)
+                return false;
+            }
+            return true;
         }
     })
     return config
