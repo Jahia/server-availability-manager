@@ -21,6 +21,10 @@ declare global {
             apolloMutate(apollo: ApolloClient<any>, options: MutationOptions): Chainable<any>
 
             runProvisioningScript(body: string, type?: string): Chainable<Response>
+
+            downloadAndInstallModuleFromStore(module: string, version: string): Chainable<Response>
+
+            uninstallModule(module: string, version: string): Chainable<Response>
         }
     }
 }
@@ -68,6 +72,18 @@ Cypress.Commands.add('runProvisioningScript', function (body: string, type = 'ap
         },
         body,
     })
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100)
+})
+
+Cypress.Commands.add('downloadAndInstallModuleFromStore', function (module: string, version: string) {
+    cy.task('installModule', { name: module, version: version })
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100)
+})
+
+Cypress.Commands.add('uninstallModule', function (module: string, version: string) {
+    cy.task('uninstallModule', { name: module, version: version, key: `${module}\/${version}` })
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(100)
 })

@@ -17,6 +17,18 @@ describe('Module state probe test', () => {
         })
     })
 
+    it('Checks the module state probe is YELLOW when two versions installed with only one running', () => {
+        cy.downloadAndInstallModuleFromStore('article', '2.0.2')
+        healthCheck('LOW', apollo()).should((r) => {
+            expect(r.status.health).to.eq('YELLOW')
+            expect(r.status.message).to.contain('article')
+            const moduleStateProbe = r.probes.find((probe) => probe.name === 'ModuleState')
+            expect(moduleStateProbe.status.health).to.eq('YELLOW')
+            expect(moduleStateProbe.status.message).to.contain('article')
+        })
+        cy.uninstallModule('article', '2.0.2')
+    })
+
     it('Checks that module state probe is in RED after stopping the module', () => {
         stoppingModules('channels', '7.2.1')
         healthCheck('LOW', apollo()).should((r) => {
