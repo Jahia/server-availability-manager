@@ -87,7 +87,7 @@ Cypress.Commands.add('downloadAndInstallModuleFromStore', function (module: stri
 Cypress.Commands.add('uninstallModule', function (module: string, version: string) {
     cy.task('uninstallModule', { name: module, version: version, key: `${module}\/${version}` })
     // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(100)
+    cy.wait(1000)
 })
 
 Cypress.Commands.add('runGroovyScript', function (script: string) {
