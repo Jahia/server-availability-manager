@@ -37,7 +37,11 @@ public class GqlHealthCheck {
     @GraphQLDescription("Highest reported status across all probes")
     public GqlProbeStatus getStatus() {
         Function<GqlProbeStatus, Integer> keyExtractor = (GqlProbeStatus status) -> status.getHealth().ordinal();
-        return getProbes().stream().map(GqlProbe::getStatus).max(Comparator.comparing(keyExtractor)).orElse(new GqlProbeStatus("All probes are healthy", GqlProbeStatus.GqlProbeHealth.GREEN));
+        return getProbes()
+                .stream().map(GqlProbe::getStatus)
+                .filter(status -> !status.getHealth().name().equals(GqlProbeStatus.GqlProbeHealth.GREEN.name()))
+                .max(Comparator.comparing(keyExtractor))
+                .orElse(new GqlProbeStatus("All probes are healthy", GqlProbeStatus.GqlProbeHealth.GREEN));
     }
 
     @GraphQLField
