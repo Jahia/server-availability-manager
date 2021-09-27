@@ -39,7 +39,7 @@ public class GqlHealthCheck {
         Function<GqlProbeStatus, Integer> keyExtractor = (GqlProbeStatus status) -> status.getHealth().ordinal();
         return getProbes()
                 .stream().map(GqlProbe::getStatus)
-                .filter(status -> !status.getHealth().name().equals(GqlProbeStatus.GqlProbeHealth.GREEN.name()))
+                .filter(status -> !status.getHealth().equals(GqlProbeStatus.GqlProbeHealth.GREEN))
                 .max(Comparator.comparing(keyExtractor))
                 .orElse(new GqlProbeStatus("All probes are healthy", GqlProbeStatus.GqlProbeHealth.GREEN));
     }
