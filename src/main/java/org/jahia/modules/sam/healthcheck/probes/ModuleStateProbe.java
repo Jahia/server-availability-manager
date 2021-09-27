@@ -12,7 +12,10 @@ import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -45,7 +48,7 @@ public class ModuleStateProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Checks if any of the modules on Jahia instance are in an inactive state";
+        return "Checks if any of the modules on Jahia instance are in an inactive/invalid state";
     }
 
     @Override
@@ -53,21 +56,31 @@ public class ModuleStateProbe implements Probe {
         Map<Bundle, ModuleState> notStartedModules = getNotStartedModules();
         Map<Bundle, ModuleState> invalidLevelModules = getModulesWithInvalidStartLevel();
 
-        if (notStartedModules.isEmpty() && invalidLevelModules.isEmpty()) {
-            return new ProbeStatus("All modules are started", ProbeStatus.Health.GREEN);
-        }
-
-        notStartedModules.putAll(invalidLevelModules);
         Bundle singleNotStarted = notStartedModules.keySet().stream().filter(entry -> !hasAnotherVersionStarted(entry)).findFirst().orElse(null);
 
         if (singleNotStarted != null) {
-            return new ProbeStatus(String.format("Module (%s) is not started", singleNotStarted.getSymbolicName()), ProbeStatus.Health.RED);
+            return new ProbeStatus(String.format("At least one module is not started. Module %s is in %s state.",
+                    singleNotStarted.getSymbolicName(),
+                    notStartedModules.get(singleNotStarted).getState().toString()),
+                    ProbeStatus.Health.RED);
         }
 
-        Map.Entry<Bundle, ModuleState> entry = notStartedModules.entrySet().iterator().next();
-        Bundle bundle = entry.getKey();
-        ModuleState moduleState = entry.getValue();
-        return new ProbeStatus(String.format("At least one module is not started. Module (%s) is in (%s) state.", bundle.getSymbolicName(), moduleState.getState().toString()), ProbeStatus.Health.YELLOW);
+        if (!invalidLevelModules.isEmpty()) {
+            Bundle bundle = invalidLevelModules.entrySet().iterator().next().getKey();
+            return new ProbeStatus(String.format("At least one module has an invalid start-level. Module %s has start-level %s.",
+                    bundle.getSymbolicName(), bundle.adapt(BundleStartLevel.class).getStartLevel()),
+                    ProbeStatus.Health.RED);
+        }
+
+        if (!notStartedModules.isEmpty()) {
+            Bundle bundle = notStartedModules.entrySet().iterator().next().getKey();
+            return new ProbeStatus(String.format("At least one module is not started. Module %s is in %s state.",
+                    bundle.getSymbolicName(),
+                    notStartedModules.get(bundle).getState().toString()),
+                    ProbeStatus.Health.YELLOW);
+        }
+
+        return new ProbeStatus("All modules are started", ProbeStatus.Health.GREEN);
     }
 
     @Override
