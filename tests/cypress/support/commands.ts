@@ -69,5 +69,5 @@ Cypress.Commands.add('runProvisioningScript', function (body: string, type = 'ap
         body,
     })
     // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(100)
+    cy.wait(200)
 })
