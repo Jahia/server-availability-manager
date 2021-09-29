@@ -49,7 +49,8 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.health).to.eq('GREEN')
+            expect(response.body.status.health).to.eq('GREEN')
+            expect(response.body.probes.length).to.eq(5)
             expect(response.status).to.eq(200)
         })
     })
@@ -68,7 +69,8 @@ describe('Health check', () => {
             },
             failOnStatusCode: false,
         }).should((response) => {
-            expect(response.body.health).to.eq('RED')
+            expect(response.body.status.health).to.eq('RED')
+            expect(response.body.probes.length).to.eq(6)
             expect(response.status).to.eq(503)
         })
     })
@@ -86,7 +88,8 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.health).to.eq('GREEN')
+            expect(response.body.status.health).to.eq('GREEN')
+            expect(response.body.probes.length).to.eq(3)
             expect(response.status).to.eq(200)
         })
     })
