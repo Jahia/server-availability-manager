@@ -38,7 +38,7 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.health).to.eq('GREEN')
+            expect(response.body.status.health).to.eq('GREEN')
             expect(response.status).to.eq(200)
         })
     })
@@ -69,7 +69,7 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.health).to.eq('GREEN')
+            expect(response.body.status.health).to.eq('GREEN')
             expect(response.status).to.eq(200)
         })
     })
