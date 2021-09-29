@@ -107,10 +107,9 @@ public class HealthCheckServlet extends HttpServlet {
                 JSONObject healthCheckNode = obj.getJSONObject("data")
                         .getJSONObject("admin")
                         .getJSONObject("jahia")
-                        .getJSONObject("healthCheck")
-                        .getJSONObject("status");
+                        .getJSONObject("healthCheck");
 
-                ProbeStatus.Health status = ProbeStatus.Health.valueOf(healthCheckNode.getString("health"));
+                ProbeStatus.Health status = ProbeStatus.Health.valueOf(healthCheckNode.getJSONObject("status").getString("health"));
 
                 if (status.ordinal() >= statusThreshold.ordinal()) {
                     resp.setStatus(statusCode);
