@@ -13,6 +13,7 @@
     "viewportWidth": 1366,
     "viewportHeight": 768,
     "testFiles": [
+        "api/cleanup.spec.initial.ts",
         "api/*.spec.ts",
         "api/shutdown.spec.final.ts"
         ]
