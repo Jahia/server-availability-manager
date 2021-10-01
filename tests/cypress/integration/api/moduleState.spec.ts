@@ -19,6 +19,7 @@ describe('Module state probe test', () => {
 
     it('Checks the module state probe is YELLOW when two versions installed with only one running', () => {
         cy.downloadAndInstallModuleFromStore('article', '2.0.2')
+        cy.sshCommand(['bundle:start-level article/2.0.2 90'])
         healthCheck('LOW', apollo()).should((r) => {
             expect(r.status.health).to.eq('YELLOW')
             expect(r.status.message).to.contain('article')

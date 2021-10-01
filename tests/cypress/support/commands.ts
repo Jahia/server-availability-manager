@@ -27,6 +27,8 @@ declare global {
             uninstallModule(module: string, version: string): Chainable<Response>
 
             runGroovyScript(script: string): Chainable<Response>
+
+            sshCommand(commands: string[]): Chainable<Response>
         }
     }
 }
@@ -92,6 +94,12 @@ Cypress.Commands.add('uninstallModule', function (module: string, version: strin
 
 Cypress.Commands.add('runGroovyScript', function (script: string) {
     cy.task('runGroovyScript', script)
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100)
+})
+
+Cypress.Commands.add('sshCommand', function (commands: string[]) {
+    cy.task('sshCommand', commands)
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(100)
 })
