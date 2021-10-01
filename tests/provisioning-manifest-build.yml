@@ -1,15 +1,5 @@
 version: 1.0
 jobs:
-  - type: asset
-    fetch: http
-    username: NEXUS_USERNAME
-    password: NEXUS_PASSWORD
-    source: https://store.jahia.com/cms/mavenproxy/private-app-store/org/jahia/modules/graphql-dxm-provider/1.9.1/graphql-dxm-provider-1.9.1.jar
-    filepath: /tmp/graphql-dxm-provider-LATEST.jar
-  - type: module
-    id: graphql-dxm-provider
-    forceInstall: true
-    filepath: /tmp/graphql-dxm-provider-LATEST.jar
   - type: module
     id: server-availability-manager
     filepath: ./artifacts/SAM-SNAPSHOT.jar    

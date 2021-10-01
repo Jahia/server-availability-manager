@@ -8,6 +8,7 @@ import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.services.templates.JahiaTemplateManagerService;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -28,6 +30,7 @@ public class ModuleStateProbe implements Probe {
 
     private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
     private static final String WHITELIST_CONFIG_PROPERTY = "whitelist";
+    private static final int EXPECTED_START_LEVEL = 80;
 
     private JahiaTemplateManagerService templateManagerService;
     private List<String> blacklist;
@@ -45,12 +48,39 @@ public class ModuleStateProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Checks if any of the modules on Jahia instance are in an inactive state";
+        return "Checks if any of the modules on Jahia instance are in an inactive/invalid state";
     }
 
     @Override
     public ProbeStatus getStatus() {
-        return isAnyModuleInactive() ? ProbeStatus.RED : ProbeStatus.GREEN;
+        Map<Bundle, ModuleState> notStartedModules = getNotStartedModules();
+        Map<Bundle, ModuleState> invalidLevelModules = getModulesWithInvalidStartLevel();
+
+        Bundle singleNotStarted = notStartedModules.keySet().stream().filter(entry -> !hasAnotherVersionStarted(entry)).findFirst().orElse(null);
+
+        if (singleNotStarted != null) {
+            return new ProbeStatus(String.format("At least one module is not started. Module %s is in %s state.",
+                    singleNotStarted.getSymbolicName(),
+                    notStartedModules.get(singleNotStarted).getState().toString()),
+                    ProbeStatus.Health.RED);
+        }
+
+        if (!invalidLevelModules.isEmpty()) {
+            Bundle bundle = invalidLevelModules.entrySet().iterator().next().getKey();
+            return new ProbeStatus(String.format("At least one module has an invalid start-level. Module %s has start-level %s.",
+                    bundle.getSymbolicName(), bundle.adapt(BundleStartLevel.class).getStartLevel()),
+                    ProbeStatus.Health.RED);
+        }
+
+        if (!notStartedModules.isEmpty()) {
+            Bundle bundle = notStartedModules.entrySet().iterator().next().getKey();
+            return new ProbeStatus(String.format("At least one module is not started. Module %s is in %s state.",
+                    bundle.getSymbolicName(),
+                    notStartedModules.get(bundle).getState().toString()),
+                    ProbeStatus.Health.YELLOW);
+        }
+
+        return new ProbeStatus("All modules are started", ProbeStatus.Health.GREEN);
     }
 
     @Override
@@ -58,22 +88,31 @@ public class ModuleStateProbe implements Probe {
         return ProbeSeverity.MEDIUM;
     }
 
-    private boolean isAnyModuleInactive() {
-        Map<Bundle, ModuleState> moduleStateMap = templateManagerService.getModuleStates()
+    private Map<Bundle, ModuleState> getNotStartedModules() {
+        return getBundlesToCheck()
+                .filter(entry -> !BundleUtils.isFragment(entry.getKey()) && entry.getValue().getState() != ModuleState.State.STARTED)
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private Map<Bundle, ModuleState> getModulesWithInvalidStartLevel() {
+        return getBundlesToCheck()
+                .filter(entry -> entry.getKey().adapt(BundleStartLevel.class).getStartLevel() <= EXPECTED_START_LEVEL)
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private Stream<Map.Entry<Bundle, ModuleState>> getBundlesToCheck() {
+        return templateManagerService.getModuleStates()
                 .entrySet()
                 .stream()
-                .filter(entry -> {
-                    Bundle bundle = entry.getKey();
-                    if (blacklist.contains(bundle.getSymbolicName()) || (!whitelist.isEmpty()
-                            && !StringUtils.isEmpty(whitelist.get(0))
-                            && !whitelist.contains(bundle.getSymbolicName()))) {
-                        return false;
-                    }
-                    return !BundleUtils.isFragment(bundle) && entry.getValue().getState() != ModuleState.State.STARTED;
-                })
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(entry -> !(blacklist.contains(entry.getKey().getSymbolicName()) || (!whitelist.isEmpty()
+                        && !StringUtils.isEmpty(whitelist.get(0))
+                        && !whitelist.contains(entry.getKey().getSymbolicName()))));
+    }
 
-        return !moduleStateMap.isEmpty();
+    private boolean hasAnotherVersionStarted(Bundle bundle) {
+        return getBundlesToCheck().anyMatch(entry -> entry.getKey().getSymbolicName().equals(bundle.getSymbolicName()) &&
+                entry.getValue().getState().equals(ModuleState.State.STARTED) &&
+                !entry.getKey().getVersion().equals(bundle.getVersion()));
     }
 
     @Override

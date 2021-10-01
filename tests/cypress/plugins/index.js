@@ -3,6 +3,8 @@ const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor')
 const sshCommand = require('./ssh')
 const installLogsPrinter = require('cypress-terminal-report/src/installLogsPrinter')
 const env = require('./env')
+const FormData = require('form-data')
+const axios = require('axios')
 
 module.exports = (on, config) => {
     env(on, config)
@@ -21,6 +23,89 @@ module.exports = (on, config) => {
                 password: config.env.JAHIA_PASSWORD_TOOLS,
             })
         },
+        async installModule(moduleInfo) {
+            let resp;
+            try {
+                resp = await axios({
+                    method: 'get',
+                    url: `https://store.jahia.com/cms/mavenproxy/private-app-store/org/jahia/modules/${moduleInfo.name}/${moduleInfo.version}/${moduleInfo.name}-${moduleInfo.version}.jar`,
+                    responseType: 'stream'
+                });
+            } catch (e) {
+                console.error('Failed to download module: ', e)
+                return false;
+            }
+
+            const form = new FormData();
+            form.append('bundle', resp.data);
+
+            try {
+                await axios.post(`${config.env.JAHIA_URL}/modules/api/bundles`, form, {
+                    headers: {
+                        ...form.getHeaders(),
+                        Origin: config.env.JAHIA_URL
+                    },
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity,
+                    auth: {
+                        username: 'root',
+                        password: config.env.SUPER_USER_PASSWORD,
+                    },
+                })
+            } catch (e) {
+                console.error('Failed to install module: ', e);
+                return false;
+            }
+
+            return true;
+        },
+        async uninstallModule(moduleInfo) {
+            try {
+                await axios.post(`${config.env.JAHIA_URL}/modules/api/bundles/${moduleInfo.key}/_uninstall`, null, {
+                    headers: {
+                        Origin: config.env.JAHIA_URL
+                    },
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity,
+                    auth: {
+                        username: 'root',
+                        password: config.env.SUPER_USER_PASSWORD,
+                    },
+                })
+            } catch (e) {
+                console.error('Failed to uninstall module: ', e)
+                return false;
+            }
+
+            return true
+        },
+        async runGroovyScript(script) {
+            try {
+                const resp = await axios({
+                    url: `${config.env.JAHIA_URL}/modules/tools/groovyConsole.jsp?`,
+                    credentials: 'include',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    },
+                    auth: {
+                        username: config.env.JAHIA_USERNAME_TOOLS,
+                        password: config.env.JAHIA_PASSWORD_TOOLS,
+                    },
+                    data: `toolAccessToken=&runScript=true&script=${script}` ,
+                    method: 'POST',
+                    mode: 'cors'
+                })
+
+                if (resp.data.indexOf('>Error<') !== -1) {
+                    console.error('Failed to execute script:', script)
+                    return false;
+                }
+            } catch (e) {
+                console.error('Failed to send script: ', e)
+                return false;
+            }
+            return true;
+        }
     })
     return config
 }

@@ -8,24 +8,24 @@ describe('Health check', () => {
 
     it('Check healthcheck when everything is fine', () => {
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
-            expect(r.probes.length).to.eq(4)
+            expect(r.status.health).to.eq('GREEN')
+            expect(r.probes.length).to.eq(5)
         })
     })
 
     it('Check healthcheck with one HIGH probe RED, asking low', () => {
         enableProbe()
         healthCheck('LOW', apollo()).should((r) => {
-            expect(r.status).to.eq('RED')
-            expect(r.probes.length).to.eq(5)
+            expect(r.status.health).to.eq('RED')
+            expect(r.probes.length).to.eq(6)
         })
     })
 
     it('Check healthcheck with one HIGH probe RED, asking critical', () => {
         enableProbe()
         healthCheck('CRITICAL', apollo()).should((r) => {
-            expect(r.status).to.eq('GREEN')
-            expect(r.probes.length).to.eq(2)
+            expect(r.status.health).to.eq('GREEN')
+            expect(r.probes.length).to.eq(3)
         })
     })
 
@@ -38,7 +38,7 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.status).to.eq('GREEN')
+            expect(response.body.status.health).to.eq('GREEN')
             expect(response.status).to.eq(200)
         })
     })
@@ -69,7 +69,7 @@ describe('Health check', () => {
                 sendImmediately: true,
             },
         }).should((response) => {
-            expect(response.body.status).to.eq('GREEN')
+            expect(response.body.status.health).to.eq('GREEN')
             expect(response.status).to.eq(200)
         })
     })
