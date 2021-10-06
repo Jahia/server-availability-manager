@@ -1,3 +1,17 @@
+# v1.0.1 (Wed Oct 06 2021)
+
+#### 🐛 Bug Fix
+
+- QA-13829 Merge changes, update tests [#50](https://github.com/Jahia/server-availability-manager/pull/50) ([@AKarmanov](https://github.com/AKarmanov) [@tdraier](https://github.com/tdraier) [@cedmail](https://github.com/cedmail))
+
+#### Authors: 3
+
+- Alex Karmanov ([@AKarmanov](https://github.com/AKarmanov))
+- Cedric Mailleux ([@cedmail](https://github.com/cedmail))
+- Thomas Draier ([@tdraier](https://github.com/tdraier))
+
+---
+
 # v2.0.1 (Thu Jul 08 2021)
 
 #### 🐛 Bug Fix
