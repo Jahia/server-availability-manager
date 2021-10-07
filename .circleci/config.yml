@@ -4,7 +4,7 @@ orbs:
   docker: circleci/docker@0.5.20
   jq: circleci/jq@2.2.0
   # IMPORTANT: When creating a module, use a fix version of the orb, not dev:alpha
-  jahia-modules-orb: jahia/jahia-modules-orb@0.5.4
+  jahia-modules-orb: jahia/jahia-modules-orb@0.5.6
 
 # Parameters are available across the entire config file and can be used with this syntax: << pipeline.parameters.THE_PARAMETER >>
 # Avoid using project-specific variables in the jobs or steps.
@@ -88,7 +88,7 @@ workflows:
       - jahia-modules-orb/static-analysis:
           requires:
             - jahia-modules-orb/initialize
-          auditci_level: high
+          auditci_level: critical
       - jahia-modules-orb/build:
           context: QA_ENVIRONMENT
           requires:
