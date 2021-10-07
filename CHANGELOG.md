@@ -1,19 +1,3 @@
-# v1.0.1 (Thu Oct 07 2021)
-
-#### 🐛 Bug Fix
-
-- BACKLOG-16428 - Update jahia version [#54](https://github.com/Jahia/server-availability-manager/pull/54) ([@rknj](https://github.com/rknj))
-- QA-13829 Merge changes, update tests [#50](https://github.com/Jahia/server-availability-manager/pull/50) ([@AKarmanov](https://github.com/AKarmanov) [@tdraier](https://github.com/tdraier) [@cedmail](https://github.com/cedmail))
-
-#### Authors: 4
-
-- Alex Karmanov ([@AKarmanov](https://github.com/AKarmanov))
-- Cedric Mailleux ([@cedmail](https://github.com/cedmail))
-- Michael De Checchi ([@rknj](https://github.com/rknj))
-- Thomas Draier ([@tdraier](https://github.com/tdraier))
-
----
-
 # v1.0.1 (Wed Oct 06 2021)
 
 #### 🐛 Bug Fix
