@@ -4,7 +4,7 @@ orbs:
   docker: circleci/docker@0.5.20
   jq: circleci/jq@2.2.0
   # IMPORTANT: When creating a module, use a fix version of the orb, not dev:alpha
-  jahia-modules-orb: jahia/jahia-modules-orb@0.4.3
+  jahia-modules-orb: jahia/jahia-modules-orb@0.6.0
 
 # Parameters are available across the entire config file and can be used with this syntax: << pipeline.parameters.THE_PARAMETER >>
 # Avoid using project-specific variables in the jobs or steps.
@@ -88,7 +88,7 @@ workflows:
       - jahia-modules-orb/static-analysis:
           requires:
             - jahia-modules-orb/initialize
-          auditci_level: high
+          auditci_level: critical
       - jahia-modules-orb/build:
           context: QA_ENVIRONMENT
           requires:
@@ -240,8 +240,7 @@ workflows:
             - jahia-modules-orb/initialize
           matrix:
             parameters:
-              # TODO add stable release image (jahia/jahia-ee:8) back after 8.1 release
-              jahia_image: ["jahia/jahia-ee-dev:8-SNAPSHOT"]
+              jahia_image: ["jahia/jahia-ee:8", "jahia/jahia-ee-dev:8-SNAPSHOT"]
               tests_manifest: ["provisioning-manifest-snapshot.yml"]
               module_id: ["<< pipeline.parameters.MODULE_ID >>"]
               testrail_project: ["<< pipeline.parameters.TESTRAIL_PROJECTNAME >>"]
