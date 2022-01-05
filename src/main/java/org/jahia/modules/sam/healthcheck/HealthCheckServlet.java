@@ -3,8 +3,6 @@ package org.jahia.modules.sam.healthcheck;
 import org.jahia.modules.graphql.provider.dxm.security.GqlAccessDeniedException;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.osgi.BundleUtils;
-import org.jahia.services.securityfilter.PermissionService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,7 +15,6 @@ import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,7 +24,6 @@ public class HealthCheckServlet extends HttpServlet {
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
     private ProbeStatus.Health statusThreshold;
-    private PermissionService permissionService;
     private int statusCode;
 
     @Activate
@@ -38,14 +34,9 @@ public class HealthCheckServlet extends HttpServlet {
         statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
     }
 
-    @Reference(service = HttpServlet.class, target = "(component.name=graphql.kickstart.servlet.OsgiGraphQLHttpServlet)")
+    @Reference(service = HttpServlet.class, target = "(jmx.objectname=graphql.servlet:type=graphql)")
     public void setGql(HttpServlet gql) {
         this.gql = gql;
-    }
-
-    @Reference
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
     }
 
     @Override
@@ -98,8 +89,6 @@ public class HealthCheckServlet extends HttpServlet {
             public void setContentLength(int len) {
             }
         };
-
-        permissionService.addScopes(Collections.singleton("graphql"), req);
 
         gql.service(requestWrapper, responseWrapper);
 
