@@ -32,11 +32,11 @@ public class ServerLoadProbe implements Probe {
         double oneMinuteRequestLoadAverage = RequestLoadAverage.getInstance().getOneMinuteLoad();
         double oneMinuteCurrentSessionLoad = JCRSessionLoadAverage.getInstance().getOneMinuteLoad();
 
-        logger.debug("requestYellowThreshold: {}, requestRedThreshold: {}, sessionYellowThreshold: {}, sessionRedThreshold: {}",
+        logger.debug("requestYellowThreshold: {}, requestRedThreshold: {}, sessionYellowThreshold: {}, sessionRedThreshold: {}", new Object[] {
                 requestLoadYellowThreshold,
                 requestLoadRedThreshold,
                 sessionLoadYellowThreshold,
-                sessionLoadRedThreshold);
+                sessionLoadRedThreshold});
 
         if (oneMinuteRequestLoadAverage < requestLoadYellowThreshold && oneMinuteCurrentSessionLoad < sessionLoadYellowThreshold) {
             return new ProbeStatus("Serverload is normal", ProbeStatus.Health.GREEN);
