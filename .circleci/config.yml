@@ -115,7 +115,7 @@ workflows:
             - jahia-modules-orb/build
           matrix:
             parameters:
-              jahia_image: ['jahia/jahia7-snapshot:7.3.9.0-SNAPSHOT']
+              jahia_image: ['jahia/jahia7-snapshot:7.3.8.0']
 #         Testing on version jahia/jahia-ee:8 due to work in progress regarding security filter
           tests_manifest: provisioning-manifest-build.yml
           module_id: << pipeline.parameters.MODULE_ID >>
