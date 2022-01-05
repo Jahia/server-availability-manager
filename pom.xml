@@ -61,7 +61,7 @@
         <connection>scm:git:git@github.com:Jahia/server-availability-manager.git</connection>
         <developerConnection>scm:git:git@github.com:Jahia/server-availability-manager.git</developerConnection>
         <url>scm:git:git@github.com:Jahia/server-availability-manager.git</url>
-        <tag>1.0.0</tag>
+        <tag>1_0_x</tag>
     </scm>
 
     <properties>
