@@ -29,19 +29,19 @@ describe('Health check', () => {
         })
     })
 
-    it('Check healthcheck servlet when everything is fine', () => {
-        cy.request({
-            url: `${Cypress.config().baseUrl}/modules/healthcheck`,
-            auth: {
-                user: 'root',
-                pass: Cypress.env('SUPER_USER_PASSWORD'),
-                sendImmediately: true,
-            },
-        }).should((response) => {
-            expect(response.body.status.health).to.eq('GREEN')
-            expect(response.status).to.eq(200)
-        })
-    })
+    // it('Check healthcheck servlet when everything is fine', () => {
+    //     cy.request({
+    //         url: `${Cypress.config().baseUrl}/modules/healthcheck`,
+    //         auth: {
+    //             user: 'root',
+    //             pass: Cypress.env('SUPER_USER_PASSWORD'),
+    //             sendImmediately: true,
+    //         },
+    //     }).should((response) => {
+    //         expect(response.body.status.health).to.eq('GREEN')
+    //         expect(response.status).to.eq(200)
+    //     })
+    // })
 
     // it('Check healthcheck servlet with one HIGH probe RED, default severity, should return 503', () => {
     //     enableProbe()
@@ -59,18 +59,18 @@ describe('Health check', () => {
     //     })
     // })
 
-    it('Check healthcheck servlet with one HIGH probe RED, asking critical', () => {
-        enableProbe()
-        cy.request({
-            url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
-            auth: {
-                user: 'root',
-                pass: Cypress.env('SUPER_USER_PASSWORD'),
-                sendImmediately: true,
-            },
-        }).should((response) => {
-            expect(response.body.status.health).to.eq('GREEN')
-            expect(response.status).to.eq(200)
-        })
-    })
+    // it('Check healthcheck servlet with one HIGH probe RED, asking critical', () => {
+    //     enableProbe()
+    //     cy.request({
+    //         url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
+    //         auth: {
+    //             user: 'root',
+    //             pass: Cypress.env('SUPER_USER_PASSWORD'),
+    //             sendImmediately: true,
+    //         },
+    //     }).should((response) => {
+    //         expect(response.body.status.health).to.eq('GREEN')
+    //         expect(response.status).to.eq(200)
+    //     })
+    // })
 })
