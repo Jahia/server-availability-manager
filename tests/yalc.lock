@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "@jahia/cypress": {
+      "signature": "1d08cee61d7fbd48f33702155862aa65",
+      "file": true
+    }
+  }
+}

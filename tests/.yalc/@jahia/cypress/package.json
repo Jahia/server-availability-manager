@@ -1,0 +1,11 @@
+{
+  "name": "@jahia/cypress",
+  "version": "1.0.0-1d08cee6",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src -c .eslintrc.json --ext .ts"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT"
+}
