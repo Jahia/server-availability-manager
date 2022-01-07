@@ -1,3 +1,30 @@
+# v0.0.1 (Fri Jan 07 2022)
+
+#### 🐛 Bug Fix
+
+- QA-14075 - Update orb version [#65](https://github.com/Jahia/server-availability-manager/pull/65) ([@rknj](https://github.com/rknj))
+- Update orb to the latest version [#62](https://github.com/Jahia/server-availability-manager/pull/62) ([@Fgerthoffert](https://github.com/Fgerthoffert))
+- Updated to the latest version of the orb [#61](https://github.com/Jahia/server-availability-manager/pull/61) ([@Fgerthoffert](https://github.com/Fgerthoffert))
+- Updated config to use latest version of the orb [#60](https://github.com/Jahia/server-availability-manager/pull/60) ([@Fgerthoffert](https://github.com/Fgerthoffert))
+
+#### ⚠️ Pushed to `main`
+
+- Fixed test ([@tdraier](https://github.com/tdraier))
+- Upgrade graphql for tests, fixed signature ([@tdraier](https://github.com/tdraier))
+- Fixed test with removed probe ([@tdraier](https://github.com/tdraier))
+- Fixed test version ([@tdraier](https://github.com/tdraier))
+- 8.0.x version ([@tdraier](https://github.com/tdraier))
+- [ci skip] Updated signature for Server Availability Manager ([@jahia-ci](https://github.com/jahia-ci))
+
+#### Authors: 4
+
+- Francois G. ([@Fgerthoffert](https://github.com/Fgerthoffert))
+- Jahia Continuous Integration account ([@jahia-ci](https://github.com/jahia-ci))
+- Michael De Checchi ([@rknj](https://github.com/rknj))
+- Thomas Draier ([@tdraier](https://github.com/tdraier))
+
+---
+
 # v1.1.1 (Fri Oct 29 2021)
 
 #### 🐛 Bug Fix
