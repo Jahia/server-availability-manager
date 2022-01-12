@@ -70,6 +70,44 @@
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
         <jahia-module-signature>MC0CFFi9MXQuowD4RDKlnfpw74Ni2Ee/AhUAlPU9zpCjcx0WRaOohmOKVyXj0iI=</jahia-module-signature>
         <export-package>org.jahia.modules.sam</export-package>
+        <import-package>
+            graphql.annotations.annotationTypes;version="[7.2,8)",
+            graphql.schema;version="[13.0,14)",
+            javax.inject,javax.jcr;version="[2.0,3)",
+            javax.management,javax.servlet,
+            javax.servlet.http,
+            javax.sql,
+            org.apache.commons.io;version="[1.4,2)",
+            org.apache.commons.io.filefilter;version="[1.4,2)",
+            org.apache.commons.lang;version="[2.6,3)",
+            org.apache.jackrabbit.core,
+            org.apache.jackrabbit.core.persistence,
+            org.apache.jackrabbit.core.persistence.pool,
+            org.apache.jackrabbit.core.version,
+            org.jahia.data.templates,
+            org.jahia.modules.graphql.provider.dxm;version="[2.7,3)",
+            org.jahia.modules.graphql.provider.dxm.admin;version="[2.7,3)",
+            org.jahia.modules.graphql.provider.dxm.osgi.annotations;version="[2.7,3)",
+            org.jahia.modules.graphql.provider.dxm.predicate;version="[2.7,3)",
+            org.jahia.modules.graphql.provider.dxm.relay;version="[2.7,3)",
+            org.jahia.modules.graphql.provider.dxm.user;version="[2.7,3)",
+            org.jahia.modules.graphql.provider.dxm.util;version="[2.7,3)",
+            org.jahia.osgi,
+            org.jahia.services.content,
+            org.jahia.services.templates,
+            org.jahia.services.usermanager,
+            org.jahia.tools.patches,
+            org.jahia.utils,
+            org.joda.time,
+            org.json,
+            org.osgi.framework;version="[1.8,2)",
+            org.osgi.service.event;version="[1.3,2)",
+            org.slf4j;version="[1.7,2)",
+            org.apache.naming.java,
+            org.jahia.defaults.config.spring,
+            org.jahia.exceptions,
+            org.jahia.services
+        </import-package>
         <yarn.arguments>build:production</yarn.arguments>
     </properties>
 
