@@ -9,8 +9,9 @@
     "isolatedModules": false,
     "types": [
       "cypress",
-      "node"
+      "node",
+      "@jahia/cypress"
     ],
-    "lib": [ "es2015" ]    
+    "lib": [ "es2015" ]
   }
 }

@@ -1,21 +1,12 @@
-import { apollo } from '../../support/apollo'
 import { healthCheck } from '../../support/gql'
 
 describe('Server Load probe test', () => {
-    let setDefaultThreshold: string
-    let setYellowThreshold: string
-    let setRedThreshold: string
-
     before('load graphql file and create test dataset', () => {
-        setDefaultThreshold = require('../../fixtures/serverLoadProbe/set-default-threshold.json')
-        setYellowThreshold = require('../../fixtures/serverLoadProbe/set-yellow-threshold.json')
-        setRedThreshold = require('../../fixtures/serverLoadProbe/set-red-threshold.json')
-
-        cy.runProvisioningScript(setDefaultThreshold)
+        cy.runProvisioningScript({fileName:'serverLoadProbe/set-default-threshold.json'})
     })
 
     it('Check that server load probe is all green with default threshold parameters', () => {
-        healthCheck('LOW', apollo()).should((r) => {
+        healthCheck('LOW').should((r) => {
             expect(r.status.health).to.eq('GREEN')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
             expect(serverLoadProbe.status.health).to.eq('GREEN')
@@ -24,8 +15,8 @@ describe('Server Load probe test', () => {
     })
 
     it('Checks that server load probe is in YELLOW after changing the threshold to 0', () => {
-        cy.runProvisioningScript(setYellowThreshold)
-        healthCheck('LOW', apollo()).should((r) => {
+        cy.runProvisioningScript({fileName:'serverLoadProbe/set-yellow-threshold.json'})
+        healthCheck('LOW').should((r) => {
             expect(r.status.health).to.eq('YELLOW')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
             expect(serverLoadProbe.status.health).to.eq('YELLOW')
@@ -33,8 +24,8 @@ describe('Server Load probe test', () => {
     })
 
     it('Checks that server load probe is in RED after changing the threshold to -1', () => {
-        cy.runProvisioningScript(setRedThreshold)
-        healthCheck('LOW', apollo()).should((r) => {
+        cy.runProvisioningScript({fileName:'serverLoadProbe/set-red-threshold.json'})
+        healthCheck('LOW').should((r) => {
             expect(r.status.health).to.eq('RED')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'ServerLoad')
             expect(serverLoadProbe.status.health).to.eq('RED')
@@ -42,6 +33,6 @@ describe('Server Load probe test', () => {
     })
 
     after('Set server load threshold back to the default', () => {
-        cy.runProvisioningScript(setDefaultThreshold)
+        cy.runProvisioningScript({fileName:'serverLoadProbe/set-default-threshold.json'})
     })
 })

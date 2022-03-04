@@ -1,67 +1,75 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 import Chainable = Cypress.Chainable
-import { apollo } from './apollo'
 
 export const createTask = (
     taskService: string,
     taskName: string,
-    apolloClient: ApolloClient<NormalizedCacheObject> = apollo(),
+    auth?:any
 ): Chainable<any> => {
-    return cy.apolloMutate(apolloClient, {
+    if (auth) {
+        cy.apolloClient(auth);
+    }
+    return cy.apollo({
+        mutationFile: 'createTask.graphql',
         variables: {
             service: taskService,
             name: taskName,
         },
         errorPolicy: 'all',
-        mutation: require(`graphql-tag/loader!../fixtures/createTask.graphql`),
-    })
+    });
 }
 
 export const deleteTask = (
     taskService: string,
     taskName: string,
-    apolloClient: ApolloClient<NormalizedCacheObject> = apollo(),
+    auth?:any
 ): Chainable<any> => {
-    return cy.apolloMutate(apolloClient, {
+    if (auth) {
+        cy.apolloClient(auth);
+    }
+    return cy.apollo({
+        mutationFile: 'deleteTask.graphql',
         variables: {
             service: taskService,
             name: taskName,
         },
         errorPolicy: 'all',
-        mutation: require(`graphql-tag/loader!../fixtures/deleteTask.graphql`),
-    })
+    });
 }
 
 export const healthCheck = (
     severity: string,
-    apolloClient: ApolloClient<NormalizedCacheObject> = apollo(),
+    auth?:any
 ): Chainable<any> => {
-    return cy
-        .apolloQuery(apolloClient, {
-            query: require(`graphql-tag/loader!../fixtures/healthcheck.graphql`),
-            variables: {
-                severity,
-            },
-        })
-        .then((response: any) => {
-            return response.data.admin.jahia.healthCheck
-        })
+    if (auth) {
+        cy.apolloClient(auth);
+    }
+    return cy.apollo({
+        queryFile: 'healthcheck.graphql',
+        variables: {
+            severity,
+        },
+        errorPolicy: 'all',
+    }).then((response: any) => {
+        return response.data.admin.jahia.healthCheck
+    });
 }
 
 export const load = (
     interval: string,
-    apolloClient: ApolloClient<NormalizedCacheObject> = apollo(),
+    auth?:any
 ): Chainable<any> => {
-    return cy
-        .apolloQuery(apolloClient, {
-            query: require(`graphql-tag/loader!../fixtures/load.graphql`),
-            variables: {
-                interval,
-            },
-        })
-        .then((response: any) => {
-            console.log(response)
-            return response.data.admin.jahia.load
-        })
+    if (auth) {
+        cy.apolloClient(auth);
+    }
+    return cy.apollo({
+        queryFile: 'load.graphql',
+        variables: {
+            interval
+        },
+        errorPolicy: 'all',
+    }).then((response: any) => {
+        console.log(response)
+        return response.data.admin.jahia.load
+    })
 }

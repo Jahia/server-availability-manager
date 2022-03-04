@@ -1,20 +1,12 @@
-import { DocumentNode } from 'graphql'
-import { createTask, deleteTask } from '../../support/gql'
-import { apollo } from '../../support/apollo'
+import {createTask, deleteTask} from '../../support/gql'
 
 describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
-    let GQL_SHUTDOWN: DocumentNode
-
-    before('load graphql file and create test dataset', () => {
-        GQL_SHUTDOWN = require(`graphql-tag/loader!../../fixtures/shutdown.graphql`)
-    })
-
     it('Shutdown with no tasks running (dryRun)', function () {
-        cy.apolloMutate(apollo(), {
+        cy.apollo({
             variables: {
                 dryRun: true,
             },
-            mutation: GQL_SHUTDOWN,
+            mutationFile: 'shutdown.graphql',
         })
             .its('data.admin.jahia.shutdown')
             .should('eq', true)
@@ -23,11 +15,11 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
     it('Shutdown impossible with tasks running (dryRun) - should exhaust default timeout (25s)', function () {
         createTask('service1', 'name1')
         const startShutdown = new Date().getTime()
-        cy.apolloMutate(apollo(), {
+        cy.apollo({
             variables: {
                 dryRun: true,
             },
-            mutation: GQL_SHUTDOWN,
+            mutationFile: 'shutdown.graphql',
         }).should((response) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.jahia.shutdown).to.be.false
@@ -43,12 +35,12 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
     it('Shutdown impossible with tasks running (dryRun) - shorter timeout (2s)', function () {
         createTask('service1', 'name1')
         const startShutdown = new Date().getTime()
-        cy.apolloMutate(apollo(), {
+        cy.apollo({
             variables: {
                 dryRun: true,
                 timeout: 2,
             },
-            mutation: GQL_SHUTDOWN,
+            mutationFile: 'shutdown.graphql',
         }).should((response) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.jahia.shutdown).to.be.false
@@ -63,12 +55,12 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
 
     it('Force shutdown without tasks running (dryRun)', function () {
         const startShutdown = new Date().getTime()
-        cy.apolloMutate(apollo(), {
+        cy.apollo({
             variables: {
                 dryRun: true,
                 force: true,
             },
-            mutation: GQL_SHUTDOWN,
+            mutationFile: 'shutdown.graphql',
         }).should((response) => {
             expect(response.data.admin.jahia.shutdown).to.be.true
             const completeShutdown = new Date().getTime()
@@ -81,12 +73,12 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
     it('Force shutdown with tasks running (dryRun)', function () {
         createTask('service1', 'name1')
         const startShutdown = new Date().getTime()
-        cy.apolloMutate(apollo(), {
+        cy.apollo({
             variables: {
                 dryRun: true,
                 force: true,
             },
-            mutation: GQL_SHUTDOWN,
+            mutationFile: 'shutdown.graphql',
         }).should((response) => {
             cy.log('Requested shutdown')
             expect(response.data.admin.jahia.shutdown).to.be.true

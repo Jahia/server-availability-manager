@@ -1,5 +1,5 @@
 import { createTask, deleteTask } from '../../support/gql'
-import { apollo } from '../../support/apollo'
+import {ApolloClient, NormalizedCacheObject} from "@apollo/client/core";
 
 describe('Task creation via API - mutation.admin.jahia.createTask', () => {
     it('Create task by providing service, name', () => {
@@ -13,7 +13,7 @@ describe('Task creation via API - mutation.admin.jahia.createTask', () => {
             .should('contains', 'Service is not a alphanumerical with a limited length of 50 characters')
     })
     it('Should fail creating task with guest user', () => {
-        createTask('service1', 'name1', apollo({ username: 'guest', password: null }))
+        createTask('service1', 'name1', { username: 'guest', password: null })
             .its('errors.0.message')
             .should('contains', 'Permission denied')
     })

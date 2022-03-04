@@ -1,19 +1,12 @@
-import { apollo } from '../../support/apollo'
-import { healthCheck } from '../../support/gql'
+import {healthCheck} from '../../support/gql'
 
 describe('Server Load probe test', () => {
-    let runFailPatchScript: string
-    let runSkipPatchScript: string
-
     before('load graphql file and create test dataset', () => {
-        runFailPatchScript = require('../../fixtures/patcherProbe/runFailPatchScript.json')
-        runSkipPatchScript = require('../../fixtures/patcherProbe/runSkipPatchScript.json')
-
-        cy.runProvisioningScript(runSkipPatchScript)
+        cy.runProvisioningScript({fileName: 'patcherProbe/runSkipPatchScript.json'})
     })
 
     it('Check that patcher  probe is all green after startup', () => {
-        healthCheck('CRITICAL', apollo()).should((r) => {
+        healthCheck('CRITICAL').should((r) => {
             expect(r.status.health).to.eq('GREEN')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'PatchFailures')
             expect(serverLoadProbe.status.health).to.eq('GREEN')
@@ -22,8 +15,8 @@ describe('Server Load probe test', () => {
     })
 
     it('Check that patcher  probe is red after failing a patch', () => {
-        cy.runProvisioningScript(runFailPatchScript)
-        healthCheck('CRITICAL', apollo()).should((r) => {
+        cy.runProvisioningScript({fileName: 'patcherProbe/runFailPatchScript.json'})
+        healthCheck('CRITICAL').should((r) => {
             expect(r.status.health).to.eq('RED')
             const serverLoadProbe = r.probes.find((probe) => probe.name === 'PatchFailures')
             expect(serverLoadProbe.status.health).to.eq('RED')
@@ -32,6 +25,6 @@ describe('Server Load probe test', () => {
     })
 
     after('Restoring state', () => {
-        cy.runProvisioningScript(runSkipPatchScript)
+        cy.runProvisioningScript({fileName: 'patcherProbe/runSkipPatchScript.json'})
     })
 })
