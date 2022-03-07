@@ -54,7 +54,7 @@ public class ModulesDefinitionsProbe implements Probe {
         Collection<String> incompatibleModules = getInvalidaModules();
 
         if (!incompatibleModules.isEmpty()) {
-            return new ProbeStatus(String.format("Some modules have incompatible definitions : %s", StringUtils.join(incompatibleModules, ",")),
+            return new ProbeStatus(String.format("The definitions used by the started %s modules correspond to the definitions of higher, non started, versions of these modules.", StringUtils.join(incompatibleModules, ",")),
                     ProbeStatus.Health.RED);
         }
         return new ProbeStatus("All modules are ok", ProbeStatus.Health.GREEN);
