@@ -10,13 +10,13 @@ const healthcheck = () => {
             sendImmediately: true,
         },
         failOnStatusCode: false,
-    });
+    })
 }
 
 describe('Module definitions probe test', () => {
-    it('should fail when installing incompatible definitions', function() {
+    it('should fail when installing incompatible definitions', function () {
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar')
-        cy.runProvisioningScript([{"startBundle": 'test/1.0.0.SNAPSHOT'}])
+        cy.runProvisioningScript([{ startBundle: 'test/1.0.0.SNAPSHOT' }])
         cy.installBundle('moduleDefinitionsProbe/test-1.2-SNAPSHOT.jar')
 
         cy.login()
@@ -27,9 +27,9 @@ describe('Module definitions probe test', () => {
         cy.get('td').contains('1.2.0.SNAPSHOT').should('not.exist')
     })
 
-    it('show an error if running version has incompatible definitions', function() {
+    it('show an error if running version has incompatible definitions', function () {
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar')
-        cy.runProvisioningScript([{"startBundle": 'test/1.0.0.SNAPSHOT'}])
+        cy.runProvisioningScript([{ startBundle: 'test/1.0.0.SNAPSHOT' }])
 
         healthcheck().should((response) => {
             expect(response.body.status.health).to.eq('GREEN')
@@ -37,14 +37,14 @@ describe('Module definitions probe test', () => {
         })
 
         cy.installBundle('moduleDefinitionsProbe/test-1.1-SNAPSHOT.jar')
-        cy.runProvisioningScript([{"startBundle": 'test/1.1.0.SNAPSHOT'}])
+        cy.runProvisioningScript([{ startBundle: 'test/1.1.0.SNAPSHOT' }])
 
         healthcheck().should((response) => {
             expect(response.body.status.health).to.eq('YELLOW')
             expect(response.status).to.eq(200)
         })
 
-        cy.runProvisioningScript([{"startBundle": 'test/1.0.0.SNAPSHOT'}])
+        cy.runProvisioningScript([{ startBundle: 'test/1.0.0.SNAPSHOT' }])
 
         healthcheck().should((response) => {
             expect(response.body.status.health).to.eq('RED')
@@ -57,6 +57,6 @@ describe('Module definitions probe test', () => {
         cy.visit('/tools/osgi/console/bundles')
         cy.get('.filter').first().type('test')
         cy.get('.filterApply').first().click()
-        cy.get('.ui-icon-trash', { timeout: 500 }).should(() => {}).click({ multiple: true })
-    });
+        cy.get('.ui-icon-trash', { timeout: 500 }).click({ multiple: true })
+    })
 })

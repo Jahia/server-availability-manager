@@ -1,5 +1,4 @@
 import { createTask, deleteTask } from '../../support/gql'
-import {ApolloClient, NormalizedCacheObject} from "@apollo/client/core";
 
 describe('Task creation via API - mutation.admin.jahia.createTask', () => {
     it('Create task by providing service, name', () => {

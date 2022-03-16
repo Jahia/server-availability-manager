@@ -1,5 +1,4 @@
 import { createTask, deleteTask } from '../../support/gql'
-import { DocumentNode } from 'graphql'
 
 describe('List Tasks via API - mutation.admin.jahia.listTasks', () => {
     it('Get List of tasks', () => {

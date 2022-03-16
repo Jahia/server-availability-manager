@@ -1,4 +1,4 @@
-import {createTask, deleteTask} from '../../support/gql'
+import { createTask, deleteTask } from '../../support/gql'
 
 describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
     it('Shutdown with no tasks running (dryRun)', function () {

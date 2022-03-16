@@ -1,11 +1,8 @@
 import { healthCheck } from '../../support/gql'
 
 describe('Health check', () => {
-    let enableProbe: string
-    let disableProbe: string
-
     afterEach(() => {
-        cy.runProvisioningScript({fileName:'test-disable.json'})
+        cy.runProvisioningScript({ fileName: 'test-disable.json' })
     })
 
     it('Check healthcheck when everything is fine', () => {
@@ -16,7 +13,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck with one HIGH probe RED, asking low', () => {
-        cy.runProvisioningScript({fileName:'test-enable.json'})
+        cy.runProvisioningScript({ fileName: 'test-enable.json' })
         healthCheck('LOW').should((r) => {
             expect(r.status.health).to.eq('RED')
             expect(r.probes.length).to.eq(7)
@@ -24,7 +21,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck with one HIGH probe RED, asking critical', () => {
-        cy.runProvisioningScript({fileName:'test-enable.json'})
+        cy.runProvisioningScript({ fileName: 'test-enable.json' })
         healthCheck('CRITICAL').should((r) => {
             expect(r.status.health).to.eq('GREEN')
             expect(r.probes.length).to.eq(3)
@@ -50,7 +47,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck servlet with one HIGH probe RED, default severity, should return 503', () => {
-        cy.runProvisioningScript({fileName:'test-enable.json'})
+        cy.runProvisioningScript({ fileName: 'test-enable.json' })
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
             headers: {
@@ -70,7 +67,7 @@ describe('Health check', () => {
     })
 
     it('Check healthcheck servlet with one HIGH probe RED, asking critical', () => {
-        cy.runProvisioningScript({fileName:'test-enable.json'})
+        cy.runProvisioningScript({ fileName: 'test-enable.json' })
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
             headers: {

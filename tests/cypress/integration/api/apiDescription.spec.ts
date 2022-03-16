@@ -1,10 +1,10 @@
 import gql from 'graphql-tag'
-import {ApolloClient} from "@apollo/client/core";
+import { ApolloClient } from '@apollo/client/core'
 
 describe('Test if every type in graphQL API has description', () => {
     it('Check every input for the User Type', function () {
         const noDesc = new Set()
-        cy.apolloClient().then(async client => {
+        cy.apolloClient().then(async (client) => {
             await executeTest(client, 'ServerAvailabilityManagerQuery', noDesc)
             await executeTest(client, 'ServerAvailabilityManagerMutation', noDesc)
             expect(JSON.stringify(Array.from(noDesc))).to.equals('[]')
@@ -15,7 +15,7 @@ describe('Test if every type in graphQL API has description', () => {
 // Test to go down the AST of GraphQL to check for descriptions
 const executeTest = async (client: ApolloClient<any>, typeName: string, noDesc: Set<any>) => {
     const query = constructQuery(typeName)
-    const response = await client.query({query})
+    const response = await client.query({ query })
     const responseDataType = response.data.__type
     if (responseDataType === null || responseDataType === undefined || responseDataType.kind === 'UNION') {
         return
@@ -29,7 +29,8 @@ const executeTest = async (client: ApolloClient<any>, typeName: string, noDesc: 
         await asyncForEach(responseDataType.fields, async (field) => {
             if (field.args) {
                 await asyncForEach(field.args, async (arg) => {
-                    await fieldCheck(client,
+                    await fieldCheck(
+                        client,
                         'type=' + responseDataType.name + '/field=' + field.name + '/arg=' + arg.name,
                         arg,
                         noDesc,
@@ -45,11 +46,11 @@ const executeTest = async (client: ApolloClient<any>, typeName: string, noDesc: 
         await asyncForEach(responseDataType.inputFields, async (field) => {
             if (field.args) {
                 await asyncForEach(field.args, async (arg) => {
-                    await fieldCheck(client,'inputType=' + responseDataType.name + '/arg=' + arg.name, arg, noDesc)
+                    await fieldCheck(client, 'inputType=' + responseDataType.name + '/arg=' + arg.name, arg, noDesc)
                 })
             }
 
-            await fieldCheck(client,'inputType=' + responseDataType.name + '/field=' + field.name, field, noDesc)
+            await fieldCheck(client, 'inputType=' + responseDataType.name + '/field=' + field.name, field, noDesc)
         })
     }
 }
