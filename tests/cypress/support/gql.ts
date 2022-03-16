@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Chainable = Cypress.Chainable
 
-export const createTask = (taskService: string, taskName: string, auth?: any): Chainable<any> => {
+interface AuthMethod {
+    token?: string
+    username?: string
+    password?: string
+}
+
+export const createTask = (taskService: string, taskName: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
         cy.apolloClient(auth)
     }
@@ -15,7 +21,7 @@ export const createTask = (taskService: string, taskName: string, auth?: any): C
     })
 }
 
-export const deleteTask = (taskService: string, taskName: string, auth?: any): Chainable<any> => {
+export const deleteTask = (taskService: string, taskName: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
         cy.apolloClient(auth)
     }
@@ -29,7 +35,7 @@ export const deleteTask = (taskService: string, taskName: string, auth?: any): C
     })
 }
 
-export const healthCheck = (severity: string, auth?: any): Chainable<any> => {
+export const healthCheck = (severity: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
         cy.apolloClient(auth)
     }
@@ -46,7 +52,7 @@ export const healthCheck = (severity: string, auth?: any): Chainable<any> => {
         })
 }
 
-export const load = (interval: string, auth?: any): Chainable<any> => {
+export const load = (interval: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
         cy.apolloClient(auth)
     }

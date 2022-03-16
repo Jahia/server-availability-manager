@@ -1,9 +1,9 @@
 import gql from 'graphql-tag'
-import { ApolloClient } from '@apollo/client/core'
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 
 describe('Test if every type in graphQL API has description', () => {
     it('Check every input for the User Type', function () {
-        const noDesc = new Set()
+        const noDesc = new Set<string>()
         cy.apolloClient().then(async (client) => {
             await executeTest(client, 'ServerAvailabilityManagerQuery', noDesc)
             await executeTest(client, 'ServerAvailabilityManagerMutation', noDesc)
@@ -13,7 +13,7 @@ describe('Test if every type in graphQL API has description', () => {
 })
 
 // Test to go down the AST of GraphQL to check for descriptions
-const executeTest = async (client: ApolloClient<any>, typeName: string, noDesc: Set<any>) => {
+const executeTest = async (client: ApolloClient<NormalizedCacheObject>, typeName: string, noDesc: Set<string>) => {
     const query = constructQuery(typeName)
     const response = await client.query({ query })
     const responseDataType = response.data.__type
