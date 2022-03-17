@@ -51,7 +51,7 @@ public class ModulesDefinitionsProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        Collection<String> incompatibleModules = getInvalidaModules();
+        Collection<String> incompatibleModules = getInvalidModules();
 
         if (!incompatibleModules.isEmpty()) {
             return new ProbeStatus(String.format("The definitions used by the started %s modules correspond to the definitions of higher, non started, versions of these modules.", StringUtils.join(incompatibleModules, ",")),
@@ -60,7 +60,7 @@ public class ModulesDefinitionsProbe implements Probe {
         return new ProbeStatus("All modules are ok", ProbeStatus.Health.GREEN);
     }
 
-    public Collection<String> getInvalidaModules() {
+    public Collection<String> getInvalidModules() {
         if (definitionsManagerService.skipDefinitionValidation()) {
             logger.debug("Skipping CND definition validation...");
             return Collections.emptyList();
