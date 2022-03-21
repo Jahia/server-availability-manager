@@ -1,21 +1,20 @@
-import { apollo } from '../../support/apollo'
 import gql from 'graphql-tag'
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 
 describe('Test if every type in graphQL API has description', () => {
     it('Check every input for the User Type', function () {
-        const noDesc = new Set()
-        cy.wrap({}).then(async () => {
-            await executeTest('ServerAvailabilityManagerQuery', noDesc)
-            await executeTest('ServerAvailabilityManagerMutation', noDesc)
+        const noDesc = new Set<string>()
+        cy.apolloClient().then(async (client) => {
+            await executeTest(client, 'ServerAvailabilityManagerQuery', noDesc)
+            await executeTest(client, 'ServerAvailabilityManagerMutation', noDesc)
             expect(JSON.stringify(Array.from(noDesc))).to.equals('[]')
         })
     })
 })
 
 // Test to go down the AST of GraphQL to check for descriptions
-const executeTest = async (typeName, noDesc) => {
+const executeTest = async (client: ApolloClient<NormalizedCacheObject>, typeName: string, noDesc: Set<string>) => {
     const query = constructQuery(typeName)
-    const client = apollo()
     const response = await client.query({ query })
     const responseDataType = response.data.__type
     if (responseDataType === null || responseDataType === undefined || responseDataType.kind === 'UNION') {
@@ -31,6 +30,7 @@ const executeTest = async (typeName, noDesc) => {
             if (field.args) {
                 await asyncForEach(field.args, async (arg) => {
                     await fieldCheck(
+                        client,
                         'type=' + responseDataType.name + '/field=' + field.name + '/arg=' + arg.name,
                         arg,
                         noDesc,
@@ -38,7 +38,7 @@ const executeTest = async (typeName, noDesc) => {
                 })
             }
 
-            await fieldCheck('type=' + responseDataType.name + '/field=' + field.name, field, noDesc)
+            await fieldCheck(client, 'type=' + responseDataType.name + '/field=' + field.name, field, noDesc)
         })
     }
 
@@ -46,30 +46,30 @@ const executeTest = async (typeName, noDesc) => {
         await asyncForEach(responseDataType.inputFields, async (field) => {
             if (field.args) {
                 await asyncForEach(field.args, async (arg) => {
-                    await fieldCheck('inputType=' + responseDataType.name + '/arg=' + arg.name, arg, noDesc)
+                    await fieldCheck(client, 'inputType=' + responseDataType.name + '/arg=' + arg.name, arg, noDesc)
                 })
             }
 
-            await fieldCheck('inputType=' + responseDataType.name + '/field=' + field.name, field, noDesc)
+            await fieldCheck(client, 'inputType=' + responseDataType.name + '/field=' + field.name, field, noDesc)
         })
     }
 }
 
-const fieldCheck = async (message, field, noDesc) => {
+const fieldCheck = async (client, message, field, noDesc) => {
     if (field.description === null) {
         noDesc.add(message)
     }
 
     if (field.type.kind === 'OBJECT' || field.type.kind === 'INPUT_OBJECT') {
-        await executeTest(field.type.name, noDesc)
+        await executeTest(client, field.type.name, noDesc)
     }
 
     if (field.type.kind === 'NON_NULL' && field.type.ofType.kind === 'LIST') {
-        await executeTest(field.type.ofType.ofType.name, noDesc)
+        await executeTest(client, field.type.ofType.ofType.name, noDesc)
     }
 
     if (field.type.kind === 'LIST') {
-        await executeTest(field.type.ofType.name, noDesc)
+        await executeTest(client, field.type.ofType.name, noDesc)
     }
 }
 
