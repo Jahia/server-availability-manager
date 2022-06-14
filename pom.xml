@@ -71,6 +71,7 @@
         <jahia-module-signature>MCwCFBoRS08hYnN3QITTxSp+TSPfCtzxAhQ0sryYO+OLVoNu5wVFwr4dc65+xQ==</jahia-module-signature>
         <export-package>org.jahia.modules.sam</export-package>
         <yarn.arguments>build:production</yarn.arguments>
+        <jahia.modules.importPackage>org.osgi.service.cm</jahia.modules.importPackage>
     </properties>
 
     <distributionManagement>
