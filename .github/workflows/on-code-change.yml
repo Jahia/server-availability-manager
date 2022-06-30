@@ -45,7 +45,6 @@ jobs:
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
           module_id: server-availability-manager
-          mvn_settings_filepath: '.github/maven.settings.xml'
 
   sonar-analysis:
     name: Sonar Analysis
@@ -61,7 +60,6 @@ jobs:
           github_pr_id: ${{github.event.number}}
           sonar_url: ${{ secrets.SONAR_URL }}
           sonar_token: ${{ secrets.SONAR_TOKEN }}
-          mvn_settings_filepath: '.github/maven.settings.xml'
 
   integration-tests-standalone:
     name: Integration Tests (Standalone)
@@ -86,7 +84,7 @@ jobs:
           jahia_image: jahia/jahia-ee-dev:8-SNAPSHOT
           should_use_build_artifacts: true
           should_skip_testrail: true
-          github_artifact_name: server-availability-manager-standalone-artifacts-${{ github.run_number }}
+          github_artifact_name: sam-artifacts-${{ github.run_number }}
           jahia_license: ${{ secrets.JAHIA_LICENSE_8X_FULL }}
           docker_username: ${{ secrets.DOCKERHUB_USERNAME }}
           docker_password: ${{ secrets.DOCKERHUB_PASSWORD }}
