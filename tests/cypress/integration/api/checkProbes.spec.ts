@@ -8,7 +8,7 @@ describe('Health check', () => {
     it('Check healthcheck when everything is fine', () => {
         healthCheck('LOW').should((r) => {
             expect(r.status.health).to.eq('GREEN')
-            expect(r.probes.length).to.eq(6)
+            expect(r.probes.length).to.eq(7)
         })
     })
 
@@ -16,7 +16,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({ fileName: 'test-enable.json' })
         healthCheck('LOW').should((r) => {
             expect(r.status.health).to.eq('RED')
-            expect(r.probes.length).to.eq(7)
+            expect(r.probes.length).to.eq(8)
         })
     })
 
@@ -24,7 +24,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({ fileName: 'test-enable.json' })
         healthCheck('CRITICAL').should((r) => {
             expect(r.status.health).to.eq('GREEN')
-            expect(r.probes.length).to.eq(3)
+            expect(r.probes.length).to.eq(4)
         })
     })
 
@@ -41,7 +41,7 @@ describe('Health check', () => {
             },
         }).should((response) => {
             expect(response.body.status.health).to.eq('GREEN')
-            expect(response.body.probes.length).to.eq(6)
+            expect(response.body.probes.length).to.eq(7)
             expect(response.status).to.eq(200)
         })
     })
@@ -61,7 +61,7 @@ describe('Health check', () => {
             failOnStatusCode: false,
         }).should((response) => {
             expect(response.body.status.health).to.eq('RED')
-            expect(response.body.probes.length).to.eq(7)
+            expect(response.body.probes.length).to.eq(8)
             expect(response.status).to.eq(503)
         })
     })
@@ -80,7 +80,7 @@ describe('Health check', () => {
             },
         }).should((response) => {
             expect(response.body.status.health).to.eq('GREEN')
-            expect(response.body.probes.length).to.eq(3)
+            expect(response.body.probes.length).to.eq(4)
             expect(response.status).to.eq(200)
         })
     })
