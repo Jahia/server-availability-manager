@@ -2,7 +2,7 @@ package org.jahia.modules.sam.healthcheck.probes;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.stats.RepositoryStatistics;
 import org.apache.jackrabbit.core.JahiaRepositoryImpl;
 import org.apache.lucene.index.CheckIndex;
@@ -12,7 +12,6 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.services.content.JCRSessionFactory;
 import org.jahia.services.content.impl.jackrabbit.SpringJackrabbitRepository;
-import org.jahia.settings.SettingsBean;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +23,9 @@ import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component(service = Probe.class, immediate = true)
 public class SearchIndexProbe implements Probe {
@@ -45,27 +43,47 @@ public class SearchIndexProbe implements Probe {
 
     @Override
     public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.CRITICAL;
+        return ProbeSeverity.HIGH;
     }
 
+
+    private int queryAVGLastMinuteYellowThreshold = 5;
+    private int queryAVGLastMinuteRedThreshold = 50;
+
+    private static final String QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteYellowThreshold";
+    private static final String QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteRedThreshold";
+
+    private static MessageFormat greenStatus = new MessageFormat("Query AVG ({0}ms) is lower than {1}ms over the last minute. All good here.");
+    private static MessageFormat yellowStatus = new MessageFormat("Query AVG ({0}ms) is greater than {1}ms over the last minute.");
+    private static MessageFormat redStatus = new MessageFormat("Query AVG ({0}ms) is greater than {1}ms over the last minute. It might be time to reindex.");
 
     @Override
     public ProbeStatus getStatus() {
         JahiaRepositoryImpl repository = (JahiaRepositoryImpl) ((SpringJackrabbitRepository) JCRSessionFactory.getInstance().getDefaultProvider().getRepository()).getRepository();
         RepositoryStatistics repositoryStatistics = repository.getContext().getRepositoryStatistics();
-        double queryAVG = Arrays.stream(repositoryStatistics.getTimeSeries(RepositoryStatistics.Type.QUERY_AVERAGE).getValuePerHour()).average().orElse(Double.NaN);
-        if (queryAVG > 100.0) {
-            return new ProbeStatus("Query AVG is greater than 100ms over the last hour. It might be time to reindex.", ProbeStatus.Health.YELLOW);
+        double queryAVG = Arrays.stream(repositoryStatistics.getTimeSeries(RepositoryStatistics.Type.QUERY_AVERAGE).getValuePerMinute()).average().orElse(Double.NaN);
+        if (queryAVG > queryAVGLastMinuteYellowThreshold) {
+            return new ProbeStatus(yellowStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.YELLOW);
+        } else if (queryAVG > queryAVGLastMinuteRedThreshold) {
+            return new ProbeStatus(redStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.RED);
         }
-        try {
-            File repositoryHome = SettingsBean.getInstance().getRepositoryHome();
-            List<IndexStatistics> indexStatistics = Arrays.asList(new File(repositoryHome, "index"), new File(repositoryHome, "workspaces/default/index"), new File(repositoryHome, "workspaces/live/index")).parallelStream().map(file -> new IndexStatistics(file)).collect(Collectors.toList());
+        return new ProbeStatus(greenStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.GREEN);
+    }
 
-            return new ProbeStatus(MessageFormat.format("All indices are OK. Query AVG : {0,number} ms. {1}", queryAVG, indexStatistics.stream().map(Objects::toString).collect(Collectors.joining("."))), ProbeStatus.Health.GREEN);
-        } catch (IOException e) {
-            return new ProbeStatus("Error while checking indices: " + e.getMessage(), ProbeStatus.Health.YELLOW);
+    @Override
+    public void setConfig(Map<String, Object> config) {
+        if (config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)))) {
+            queryAVGLastMinuteYellowThreshold = Integer.parseInt(String.valueOf(config.get(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)));
+        }
+        if (config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)))) {
+            queryAVGLastMinuteRedThreshold = Integer.parseInt(String.valueOf(config.get(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)));
         }
     }
+
+//            File repositoryHome = SettingsBean.getInstance().getRepositoryHome();
+//            List<IndexStatistics> indexStatistics = Arrays.asList(new File(repositoryHome, "index"), new File(repositoryHome, "workspaces/default/index"), new File(repositoryHome, "workspaces/live/index")).parallelStream().map(file -> new IndexStatistics(file)).collect(Collectors.toList());
+//
+//            return new ProbeStatus(MessageFormat.format("All indices are OK. Query AVG : {0,number} ms. {1}", queryAVG, indexStatistics.stream().map(Objects::toString).collect(Collectors.joining("."))), ProbeStatus.Health.GREEN);
 
     private class IndexStatistics {
         private final File file;
