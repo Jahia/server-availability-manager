@@ -62,10 +62,10 @@ public class SearchIndexProbe implements Probe {
         JahiaRepositoryImpl repository = (JahiaRepositoryImpl) ((SpringJackrabbitRepository) JCRSessionFactory.getInstance().getDefaultProvider().getRepository()).getRepository();
         RepositoryStatistics repositoryStatistics = repository.getContext().getRepositoryStatistics();
         double queryAVG = Arrays.stream(repositoryStatistics.getTimeSeries(RepositoryStatistics.Type.QUERY_AVERAGE).getValuePerMinute()).average().orElse(Double.NaN);
-        if (queryAVG > queryAVGLastMinuteYellowThreshold) {
-            return new ProbeStatus(yellowStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.YELLOW);
-        } else if (queryAVG > queryAVGLastMinuteRedThreshold) {
+        if (queryAVG > queryAVGLastMinuteRedThreshold || Double.isNaN(queryAVG)) {
             return new ProbeStatus(redStatus.format(new Object[]{queryAVG, queryAVGLastMinuteRedThreshold}), ProbeStatus.Health.RED);
+        } else if (queryAVG > queryAVGLastMinuteYellowThreshold) {
+            return new ProbeStatus(yellowStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.YELLOW);
         }
         return new ProbeStatus(greenStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.GREEN);
     }
