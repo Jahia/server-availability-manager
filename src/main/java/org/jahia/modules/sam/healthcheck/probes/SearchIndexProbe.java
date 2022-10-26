@@ -65,7 +65,7 @@ public class SearchIndexProbe implements Probe {
         if (queryAVG > queryAVGLastMinuteYellowThreshold) {
             return new ProbeStatus(yellowStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.YELLOW);
         } else if (queryAVG > queryAVGLastMinuteRedThreshold) {
-            return new ProbeStatus(redStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.RED);
+            return new ProbeStatus(redStatus.format(new Object[]{queryAVG, queryAVGLastMinuteRedThreshold}), ProbeStatus.Health.RED);
         }
         return new ProbeStatus(greenStatus.format(new Object[]{queryAVG, queryAVGLastMinuteYellowThreshold}), ProbeStatus.Health.GREEN);
     }
