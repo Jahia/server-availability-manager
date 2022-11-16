@@ -1,6 +1,8 @@
-FROM cypress/base:14.17.3
+FROM cypress/base:18.12.0
 
 RUN apt-get update && apt-get install -y jq
+
+RUN apt-get update && apt-get install -y curl
 
 RUN adduser --disabled-password jahians
 
