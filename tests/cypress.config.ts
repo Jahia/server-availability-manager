@@ -20,8 +20,8 @@ export default defineConfig({
         },
         excludeSpecPattern: '*.ignore.ts',
         specPattern: [
-            "api/*.spec.ts",
-            "api/shutdown.spec.final.ts"
+            "cypress/e2e/api/*.spec.ts",
+            "cypress/e2e/api/shutdown.spec.final.ts"
         ],
         baseUrl: 'http://localhost:8080',
         experimentalSessionAndOrigin: false
