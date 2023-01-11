@@ -24,6 +24,8 @@ public class ClusterConsistencyProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusterConsistencyProbe.class);
 
+    private static final String CLUSTER_GROUP = "clusterGroup";
+
     private String clusterGroup = "default";
 
     @Activate
@@ -95,8 +97,8 @@ public class ClusterConsistencyProbe implements Probe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey("clusterGroup")) {
-            clusterGroup = ((String) config.get("clusterGroup"));
+        if (config.containsKey(CLUSTER_GROUP)) {
+            clusterGroup = ((String) config.get(CLUSTER_GROUP));
         }
     }
 
