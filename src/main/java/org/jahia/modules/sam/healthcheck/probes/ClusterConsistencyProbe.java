@@ -162,7 +162,7 @@ public class ClusterConsistencyProbe implements Probe {
 
             try {
                 if (arr == null) {
-                    obj.put(entry.getKey(), "Not issues found on this node");
+                    obj.put(entry.getKey(), "No issues found on this node");
                 } else {
                     health = ProbeStatus.Health.YELLOW;
                     obj.put(entry.getKey(), arr);
