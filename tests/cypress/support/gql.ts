@@ -9,63 +9,67 @@ interface AuthMethod {
 
 export const createTask = (taskService: string, taskName: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
-        cy.apolloClient(auth)
+        cy.apolloClient(auth);
     }
+
     return cy.apollo({
         mutationFile: 'createTask.graphql',
         variables: {
             service: taskService,
-            name: taskName,
+            name: taskName
         },
-        errorPolicy: 'all',
-    })
-}
+        errorPolicy: 'all'
+    });
+};
 
 export const deleteTask = (taskService: string, taskName: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
-        cy.apolloClient(auth)
+        cy.apolloClient(auth);
     }
+
     return cy.apollo({
         mutationFile: 'deleteTask.graphql',
         variables: {
             service: taskService,
-            name: taskName,
+            name: taskName
         },
-        errorPolicy: 'all',
-    })
-}
+        errorPolicy: 'all'
+    });
+};
 
 export const healthCheck = (severity: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
-        cy.apolloClient(auth)
+        cy.apolloClient(auth);
     }
+
     return cy
         .apollo({
             queryFile: 'healthcheck.graphql',
             variables: {
-                severity,
+                severity
             },
-            errorPolicy: 'all',
+            errorPolicy: 'all'
         })
         .then((response: any) => {
-            return response.data.admin.jahia.healthCheck
-        })
-}
+            return response.data.admin.jahia.healthCheck;
+        });
+};
 
 export const load = (interval: string, auth?: AuthMethod): Chainable<any> => {
     if (auth) {
-        cy.apolloClient(auth)
+        cy.apolloClient(auth);
     }
+
     return cy
         .apollo({
             queryFile: 'load.graphql',
             variables: {
-                interval,
+                interval
             },
-            errorPolicy: 'all',
+            errorPolicy: 'all'
         })
         .then((response: any) => {
-            console.log(response)
-            return response.data.admin.jahia.load
-        })
-}
+            console.log(response);
+            return response.data.admin.jahia.load;
+        });
+};
