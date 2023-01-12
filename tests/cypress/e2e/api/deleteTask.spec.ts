@@ -1,16 +1,16 @@
-import { createTask, deleteTask } from '../../support/gql'
+import {createTask, deleteTask} from '../../support/gql';
 
 describe('Task deletion Task via API - mutation.admin.jahia.createTask', () => {
     it('Delete task success path', () => {
-        createTask('service1', 'name1')
-        deleteTask('service1', 'name1').its('data.admin.jahia.deleteTask').should('eq', true)
-    })
+        createTask('service1', 'name1');
+        deleteTask('service1', 'name1').its('data.admin.jahia.deleteTask').should('eq', true);
+    });
     it('Should fail deleting non existent task', function () {
-        deleteTask('anyService', 'anyName').its('data.admin.jahia.deleteTask').should('eq', false)
-    })
+        deleteTask('anyService', 'anyName').its('data.admin.jahia.deleteTask').should('eq', false);
+    });
     it('Should fail deleting task with guest user', () => {
-        deleteTask('service1', 'name1', { username: 'guest', password: null })
+        deleteTask('service1', 'name1', {username: 'guest', password: null})
             .its('errors.0.message')
-            .should('contains', 'Permission denied')
-    })
-})
+            .should('contains', 'Permission denied');
+    });
+});
