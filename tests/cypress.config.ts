@@ -16,12 +16,13 @@ export default defineConfig({
         // We've imported your old cypress plugins here.
         // You may want to clean this up later by importing tcleahese.
         setupNodeEvents(on, config) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             return require('./cypress/plugins/index.js')(on, config);
         },
         excludeSpecPattern: '*.ignore.ts',
         specPattern: [
-            "cypress/e2e/api/*.spec.ts",
-            "cypress/e2e/api/shutdown.spec.final.ts"
+            'cypress/e2e/api/*.spec.ts',
+            'cypress/e2e/api/shutdown.spec.final.ts'
         ],
         baseUrl: 'http://localhost:8080',
         experimentalSessionAndOrigin: false
