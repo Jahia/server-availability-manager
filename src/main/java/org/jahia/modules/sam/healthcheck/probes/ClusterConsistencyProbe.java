@@ -1,26 +1,31 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
+import org.apache.karaf.cellar.core.CellarSupport;
+import org.apache.karaf.cellar.core.ClusterManager;
+import org.apache.karaf.cellar.core.Group;
+import org.apache.karaf.cellar.core.event.EventType;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.jahia.osgi.BundleState;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.services.modulemanager.spi.BundleService;
-import org.jahia.settings.SettingsBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-@Component(service = Probe.class, immediate = true)
-public class ClusterConsistencyProbe implements Probe {
+@Component(service = Probe.class, enabled = false)
+public class ClusterConsistencyProbe extends CellarSupport implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusterConsistencyProbe.class);
 
@@ -28,19 +33,28 @@ public class ClusterConsistencyProbe implements Probe {
 
     private String clusterGroup = "default";
 
+    private BundleContext bundleContext;
+
     @Activate
-    public void activate() {
+    public void activate(BundleContext bundleContext) {
         logger.info("Activated: " + getName());
+        this.bundleContext = bundleContext;
     }
 
+    @Override
+    @Reference
+    public void setClusterManager(ClusterManager clusterManager) {
+        super.setClusterManager(clusterManager);
+    }
 
+    @Override
+    @Reference
+    public void setConfigurationAdmin(ConfigurationAdmin configurationAdmin) {
+        super.setConfigurationAdmin(configurationAdmin);
+    }
 
     @Override
     public ProbeStatus getStatus() {
-        if (!SettingsBean.getInstance().isClusterActivated()) {
-            return new ProbeStatus("Cluster is not activated", ProbeStatus.Health.GREEN);
-        }
-
         BundleService clusteredBundleService = BundleUtils.getOsgiService("org.jahia.services.modulemanager.spi.BundleService");
 
         if (clusteredBundleService != null) {
@@ -84,6 +98,11 @@ public class ClusterConsistencyProbe implements Probe {
                 }
             }
 
+            JSONArray cellarStatus = getCellarStatus();
+            if (cellarStatus.length() > 0) {
+                findings.put("cellar", cellarStatus);
+            }
+
             return getStatus(findings);
         }
 
@@ -119,7 +138,7 @@ public class ClusterConsistencyProbe implements Probe {
             for (ModuleState ms2 : moduleStateList) {
                 BundleService.ModuleInformation mi = ms1.getModuleInformation();
                 BundleService.ModuleInformation mi2 = ms2.getModuleInformation();
-                consistent = mi.getModuleState().equals(mi2.getModuleState()) && mi.getOsgiState().equals(mi2.getOsgiState());
+                consistent = mi != null && mi2 != null && mi.getModuleState() != null && mi2.getModuleState() != null && mi.getModuleState().equals(mi2.getModuleState()) && mi.getOsgiState().equals(mi2.getOsgiState());
 
                 if (!consistent) {
                     break;
@@ -143,8 +162,8 @@ public class ClusterConsistencyProbe implements Probe {
             try {
                 obj.put("clusterNodeId", ms.getClusterNodeId());
                 obj.put("module", ms.getModulePathId());
-                obj.put("osgiState", ms.getModuleInformation().getOsgiState().name());
-                obj.put("moduleState", ms.getModuleInformation().getModuleState().name());
+                obj.put("osgiState", ms.getModuleInformation() != null ? ms.getModuleInformation().getOsgiState().name() : BundleState.UNINSTALLED.name());
+                obj.put("moduleState", ms.getModuleInformation() != null ? ms.getModuleInformation().getModuleState().name() : null);
             } catch (JSONException e) {
                 logger.error("Failed to create json object for cluster status report", e);
             }
@@ -198,4 +217,48 @@ public class ClusterConsistencyProbe implements Probe {
             return modulePathId;
         }
     }
+
+    public JSONArray getCellarStatus() {
+        Map<String, org.apache.karaf.cellar.bundle.BundleState> clusterBundles = clusterManager.getMap("org.apache.karaf.cellar.bundle.map.default");
+
+        Set<String> remainings = new HashSet<>(clusterBundles.keySet());
+        JSONArray arr = new JSONArray();
+
+        try {
+            for (Bundle bundle : bundleContext.getBundles()) {
+                if (isAllowed(new Group(clusterGroup), "bundle", bundle.getLocation(), EventType.INBOUND)) {
+                    String key = bundle.getSymbolicName() + "/" + bundle.getVersion();
+                    if (clusterBundles.containsKey(key)) {
+                        remainings.remove(key);
+                        if (clusterBundles.get(key).getStatus() != bundle.getState()) {
+                            JSONObject obj = new JSONObject();
+                            obj.put("module", key);
+                            obj.put("clusterState", BundleState.fromInt(clusterBundles.get(key).getStatus()).name());
+                            arr.put(obj);
+
+                            // Different state
+                        }
+                    } else {
+                        // Installed locally, not in cluster
+                        JSONObject obj = new JSONObject();
+                        obj.put("module", key);
+                        obj.put("clusterState", BundleState.UNINSTALLED.name());
+                        arr.put(obj);
+                    }
+                }
+            }
+            for (String remaining : remainings) {
+                JSONObject obj = new JSONObject();
+                obj.put("module", remaining);
+                obj.put("clusterState", BundleState.fromInt(clusterBundles.get(remaining).getStatus()).name());
+                arr.put(obj);
+            }
+        } catch (JSONException e) {
+            logger.error("Failed to build json response for cluster status", e);
+        }
+
+        return arr;
+    }
+
+
 }
