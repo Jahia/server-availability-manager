@@ -10,16 +10,34 @@ describe('Module state probe test', () => {
         });
     });
 
-    it('Checks the module state probe is YELLOW when two versions installed with only one running', () => {
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/install-dashboard.json'});
-        healthCheck('LOW').should(r => {
-            expect(r.status.health).to.eq('YELLOW');
-            expect(r.status.message).to.contain('jahia-dashboard');
-            const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
-            expect(moduleStateProbe.status.health).to.eq('YELLOW');
-            expect(moduleStateProbe.status.message).to.contain('jahia-dashboard');
+    describe('tests with 2 version of modules installed', () => {
+        beforeEach(() => {
+            cy.runProvisioningScript({fileName: 'moduleStateProbe/install-dashboard.json'});
         });
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/uninstall-dashboard.json'});
+
+        afterEach(() => {
+            cy.runProvisioningScript({fileName: 'moduleStateProbe/uninstall-dashboard.json'});
+        });
+
+        it('Checks the module state probe is YELLOW', () => {
+            healthCheck('LOW').should(r => {
+                expect(r.status.health).to.eq('YELLOW');
+                expect(r.status.message).to.contain('jahia-dashboard');
+                const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
+                expect(moduleStateProbe.status.health).to.eq('YELLOW');
+                expect(moduleStateProbe.status.message).to.contain('jahia-dashboard');
+            });
+        });
+
+        it('Checks the module state probe is GREEN when module is not in whitelist', () => {
+            cy.runProvisioningScript({fileName: 'moduleStateProbe/enable-whitelist.json'});
+            cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-seo.json'});
+            healthCheck('MEDIUM').should(r => {
+                expect(r.status.health).to.eq('GREEN');
+                const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
+                expect(moduleStateProbe.status.health).to.eq('GREEN');
+            });
+        });
     });
 
     it('Checks that module state probe is in RED after stopping the module', () => {
@@ -50,17 +68,8 @@ describe('Module state probe test', () => {
         });
     });
 
-    it('Checks the module state probe is RED when we removed blacklist', () => {
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/disable-blacklist.json'});
-        healthCheck('MEDIUM').should(r => {
-            expect(r.status.health).to.eq('RED');
-            const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
-            expect(moduleStateProbe.status.health).to.eq('RED');
-        });
-    });
-
-    it('Checks the module state probe is GREEN when we started channels module and stopped SEO module, which is not inside whitelist', () => {
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-channels.json'});
+    it('Checks the module state probe is GREEN when we stopped SEO module, which is not inside whitelist', () => {
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/enable-whitelist.json'});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-seo.json'});
         healthCheck('MEDIUM').should(r => {
             expect(r.status.health).to.eq('GREEN');
@@ -69,7 +78,7 @@ describe('Module state probe test', () => {
         });
     });
 
-    after('Start location module back', () => {
+    afterEach(() => {
         cy.runProvisioningScript({fileName: 'moduleStateProbe/start-seo.json'});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/start-channels.json'});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/disable-blacklist.json'});
