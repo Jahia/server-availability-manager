@@ -11,18 +11,21 @@ describe('Health check', () => {
         errorMsg: 'Failed to verify configuration update'
     };
 
+    const waitUntilTestFcnDisable = (response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1;
+    const waitUntilTestFcnEnable = (response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1;
+
     after(() => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnDisable), waitUntilOptions);
     });
 
     it('Check healthcheck when everything is fine', () => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnDisable), waitUntilOptions);
 
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('GREEN');
@@ -34,7 +37,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnEnable), waitUntilOptions);
 
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('RED');
@@ -46,7 +49,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnEnable), waitUntilOptions);
 
         healthCheck('CRITICAL').should(r => {
             expect(r.status.health).to.eq('GREEN');
@@ -58,7 +61,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnDisable), waitUntilOptions);
 
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
@@ -81,7 +84,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnEnable), waitUntilOptions);
 
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
@@ -105,7 +108,7 @@ describe('Health check', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
-            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
+            .then(waitUntilTestFcnEnable), waitUntilOptions);
 
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
