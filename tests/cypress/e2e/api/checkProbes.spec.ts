@@ -5,24 +5,24 @@ describe('Health check', () => {
         'config:list "(service.pid=org.jahia.modules.sam.healthcheck.ProbesRegistry)"'
     ];
 
+    const waitUntilOptions = {
+        interval: 250,
+        timeout: 5000,
+        errorMsg: 'Failed to verify configuration update'
+    };
+
     after(() => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), waitUntilOptions);
     });
 
     it('Check healthcheck when everything is fine', () => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), waitUntilOptions);
 
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('GREEN');
@@ -33,11 +33,8 @@ describe('Health check', () => {
     it('Check healthcheck with one HIGH probe RED, asking low', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
 
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('RED');
@@ -48,11 +45,8 @@ describe('Health check', () => {
     it('Check healthcheck with one HIGH probe RED, asking critical', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
 
         healthCheck('CRITICAL').should(r => {
             expect(r.status.health).to.eq('GREEN');
@@ -63,11 +57,8 @@ describe('Health check', () => {
     it('Check healthcheck servlet when everything is fine', () => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = IGNORED') !== -1 && response.indexOf('probes.testProbe.status = GREEN') !== -1), waitUntilOptions);
 
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
@@ -89,11 +80,8 @@ describe('Health check', () => {
     it('Check healthcheck servlet with one HIGH probe RED, default severity, should return 503', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
 
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck`,
@@ -116,11 +104,8 @@ describe('Health check', () => {
     it('Check healthcheck servlet with one HIGH probe RED, asking critical', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
-        cy.waitUntil(() => cy.task('sshCommand', sshCommands).then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), {
-            interval: 250,
-            timeout: 5000,
-            errorMsg: 'Failed to verify configuration update'
-        });
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then((response: string) => response.indexOf('probes.testProbe.severity = HIGH') !== -1 && response.indexOf('probes.testProbe.status = RED') !== -1), waitUntilOptions);
 
         cy.request({
             url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
