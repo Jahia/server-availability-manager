@@ -19,6 +19,7 @@
     "@typescript-eslint/parser": "^5.48.1",
     "cypress": "^11.1.0",
     "cypress-multi-reporters": "^1.5.0",
+    "cypress-wait-until": "^1.7.2",
     "eslint": "^8.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-cypress": "^2.12.1",
@@ -31,6 +32,7 @@
     "mochawesome-merge": "^4.2.0",
     "mochawesome-report-generator": "^6.0.1",
     "prettier": "^2.4.0",
-    "typescript": "^4.4.2"
+    "typescript": "^4.4.2",
+    "node-ssh": "^12.0.4"
   }
 }

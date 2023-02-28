@@ -12,10 +12,27 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
+const sshCommand = require('./ssh')
+const env = require('./env');
+
 /**
  * @type {Cypress.PluginConfig}
  */
 module.exports = (on, config) => {
-    require('@jahia/cypress/dist/plugins/registerPlugins').registerPlugins(on, config)
+    env(on, config);
+
+    require('@jahia/cypress/dist/plugins/registerPlugins').registerPlugins(on, config);
+
+    on('task', {
+        sshCommand(commands) {
+            return sshCommand(commands, {
+                hostname: config.env.JAHIA_HOST,
+                port: config.env.JAHIA_PORT_KARAF,
+                username: config.env.JAHIA_USERNAME_TOOLS,
+                password: config.env.JAHIA_PASSWORD_TOOLS,
+            })
+        },
+    });
+
     return config;
 };
