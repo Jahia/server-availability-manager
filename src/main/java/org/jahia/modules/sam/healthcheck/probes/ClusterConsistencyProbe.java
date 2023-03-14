@@ -10,6 +10,7 @@ import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.osgi.BundleState;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.services.modulemanager.spi.BundleService;
+import org.jahia.utils.ClassLoaderUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,7 +62,7 @@ public class ClusterConsistencyProbe extends CellarSupport implements Probe {
             Map<String, Map<String, BundleService.BundleInformation>> result = clusteredBundleService.getAllInfos(clusterGroup);
 
             String baseClusterNodeId = result.keySet().iterator().next();
-            Map<String, BundleService.BundleInformation> baseResult  = result.get(baseClusterNodeId);
+            Map<String, BundleService.BundleInformation> baseResult = result.get(baseClusterNodeId);
             Map<String, JSONArray> findings = new HashMap<>();
 
             // Select node with most bundles to be the starting point
@@ -219,45 +220,47 @@ public class ClusterConsistencyProbe extends CellarSupport implements Probe {
     }
 
     public JSONArray getCellarStatus() {
-        Map<String, org.apache.karaf.cellar.bundle.BundleState> clusterBundles = clusterManager.getMap("org.apache.karaf.cellar.bundle.map.default");
+        return ClassLoaderUtils.executeWith(this.getClass().getClassLoader(), () -> {
+            Map<String, org.apache.karaf.cellar.bundle.BundleState> clusterBundles = clusterManager.getMap("org.apache.karaf.cellar.bundle.map.default");
 
-        Set<String> remainings = new HashSet<>(clusterBundles.keySet());
-        JSONArray arr = new JSONArray();
+            Set<String> remainings = new HashSet<>(clusterBundles.keySet());
+            JSONArray arr = new JSONArray();
 
-        try {
-            for (Bundle bundle : bundleContext.getBundles()) {
-                if (isAllowed(new Group(clusterGroup), "bundle", bundle.getLocation(), EventType.INBOUND)) {
-                    String key = bundle.getSymbolicName() + "/" + bundle.getVersion();
-                    if (clusterBundles.containsKey(key)) {
-                        remainings.remove(key);
-                        if (clusterBundles.get(key).getStatus() != bundle.getState()) {
+            try {
+                for (Bundle bundle : bundleContext.getBundles()) {
+                    if (isAllowed(new Group(clusterGroup), "bundle", bundle.getLocation(), EventType.INBOUND)) {
+                        String key = bundle.getSymbolicName() + "/" + bundle.getVersion();
+                        if (clusterBundles.containsKey(key)) {
+                            remainings.remove(key);
+                            if (clusterBundles.get(key).getStatus() != bundle.getState()) {
+                                JSONObject obj = new JSONObject();
+                                obj.put("module", key);
+                                obj.put("clusterState", BundleState.fromInt(clusterBundles.get(key).getStatus()).name());
+                                arr.put(obj);
+
+                                // Different state
+                            }
+                        } else {
+                            // Installed locally, not in cluster
                             JSONObject obj = new JSONObject();
                             obj.put("module", key);
-                            obj.put("clusterState", BundleState.fromInt(clusterBundles.get(key).getStatus()).name());
+                            obj.put("clusterState", BundleState.UNINSTALLED.name());
                             arr.put(obj);
-
-                            // Different state
                         }
-                    } else {
-                        // Installed locally, not in cluster
-                        JSONObject obj = new JSONObject();
-                        obj.put("module", key);
-                        obj.put("clusterState", BundleState.UNINSTALLED.name());
-                        arr.put(obj);
                     }
                 }
+                for (String remaining : remainings) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("module", remaining);
+                    obj.put("clusterState", BundleState.fromInt(clusterBundles.get(remaining).getStatus()).name());
+                    arr.put(obj);
+                }
+            } catch (JSONException e) {
+                logger.error("Failed to build json response for cluster status", e);
             }
-            for (String remaining : remainings) {
-                JSONObject obj = new JSONObject();
-                obj.put("module", remaining);
-                obj.put("clusterState", BundleState.fromInt(clusterBundles.get(remaining).getStatus()).name());
-                arr.put(obj);
-            }
-        } catch (JSONException e) {
-            logger.error("Failed to build json response for cluster status", e);
-        }
 
-        return arr;
+            return arr;
+        });
     }
 
 
