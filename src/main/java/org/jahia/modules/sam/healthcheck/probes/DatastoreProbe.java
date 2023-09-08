@@ -1,11 +1,7 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
+import org.apache.jackrabbit.core.JahiaSessionImpl;
 import org.apache.jackrabbit.core.SessionImpl;
-import org.apache.jackrabbit.core.persistence.PersistenceManager;
-import org.apache.jackrabbit.core.persistence.pool.BundleDbPersistenceManager;
-import org.apache.jackrabbit.core.version.InternalVersionManager;
-import org.apache.jackrabbit.core.version.InternalVersionManagerImpl;
-import org.apache.jackrabbit.core.version.InternalXAVersionManager;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
@@ -15,7 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
+import org.apache.jackrabbit.core.data.DataStore;
+import org.apache.jackrabbit.core.data.db.DbDataStore;
 
 @Component(service = Probe.class, immediate = true)
 public class DatastoreProbe implements Probe {
@@ -24,33 +25,29 @@ public class DatastoreProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        if (isDbPersistenceManager()) {
-            return new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN);
+
+        if (!isStoreFilesInDB()) {
+            final String datastoreHome = System.getProperty("jahia.jackrabbit.datastore.path");
+            Path datastorePath = Paths.get(datastoreHome);
+
+            return Files.exists(datastorePath) && Files.isWritable(datastorePath) ?
+                    new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN) :
+                    new ProbeStatus("Could not perform write operation", ProbeStatus.Health.RED);
         }
-        final String datastoreHome = System.getProperty("jahia.jackrabbit.datastore.path");
-        return (new File(datastoreHome)).canWrite() ?
-                new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN) :
-                new ProbeStatus("Could not perform write operation", ProbeStatus.Health.RED);
+
+        return new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN);
+
     }
 
-    private boolean isDbPersistenceManager() {
+    private boolean isStoreFilesInDB() {
         try {
             return JCRTemplate.getInstance().doExecuteWithSystemSessionAsUser(null, null, null, session -> {
                 final SessionImpl providerSession = (SessionImpl) session.getProviderSession(session.getNode("/").getProvider());
-                final InternalVersionManager vm = providerSession.getInternalVersionManager();
-                PersistenceManager pm;
-                if (vm instanceof InternalVersionManagerImpl) {
-                    pm = ((InternalVersionManagerImpl) vm).getPersistenceManager();
-                } else if (vm instanceof InternalXAVersionManager) {
-                    pm = ((InternalXAVersionManager) vm).getPersistenceManager();
-                } else {
-                    logger.warn("Unknown implementation of the InternalVersionManager: {}.", vm.getClass().getName());
-                    return false;
-                }
-                return pm instanceof BundleDbPersistenceManager;
+                DataStore dataStore = ((JahiaSessionImpl) providerSession).getContext().getDataStore();
+                return dataStore instanceof DbDataStore;
             });
         } catch (RepositoryException e) {
-            logger.error("Error trying to get persistence manager", e);
+            logger.error("Error trying to get dataStore information", e);
             return false;
         }
     }
