@@ -19,9 +19,9 @@ import org.apache.jackrabbit.core.data.DataStore;
 import org.apache.jackrabbit.core.data.db.DbDataStore;
 
 @Component(service = Probe.class, immediate = true)
-public class DatastoreProbe implements Probe {
+public class FileDatastoreProbe implements Probe {
 
-    private static final Logger logger = LoggerFactory.getLogger(DatastoreProbe.class);
+    private static final Logger logger = LoggerFactory.getLogger(FileDatastoreProbe.class);
 
     @Override
     public ProbeStatus getStatus() {
