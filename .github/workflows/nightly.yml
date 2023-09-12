@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         jahia_image: ["jahia/jahia-ee:8", "jahia/jahia-ee-dev:8-SNAPSHOT"]
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - uses: jahia/jahia-modules-action/helper@v2
       - uses: KengoTODA/actions-setup-docker-compose@main
@@ -26,6 +26,7 @@ jobs:
         with:
           module_id: server-availability-manager
           testrail_project: Server Availability Manager
+          timeout_minutes: 20
           tests_manifest: provisioning-manifest-snapshot.yml
           should_use_build_artifacts: false
           should_skip_artifacts: true
@@ -54,6 +55,6 @@ jobs:
         if: success() || failure()
         with:
           name: Tests Report (Standalone - ${{ matrix.jahia_image }})
-          path: tests/artifacts/results/xml_reports/*.xml
+          path: tests/artifacts/results/xml_reports/**/*.xml
           reporter: java-junit
           fail-on-error: 'false'
