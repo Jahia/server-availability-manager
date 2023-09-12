@@ -59,7 +59,7 @@ public class FileDatastoreProbe implements Probe {
 
     @Override
     public String getName() {
-        return "Datastore";
+        return "FileDatastore";
     }
 
     @Override
