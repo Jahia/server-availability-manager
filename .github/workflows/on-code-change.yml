@@ -65,7 +65,7 @@ jobs:
     name: Integration Tests (Standalone)
     needs: build
     runs-on: self-hosted
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - uses: jahia/jahia-modules-action/helper@v2
       - uses: KengoTODA/actions-setup-docker-compose@main
@@ -79,6 +79,7 @@ jobs:
         with:
           module_id: server-availability-manager
           testrail_project: Server Availability Manager
+          timeout_minutes: 20
           testrail_milestone: Default
           tests_manifest: provisioning-manifest-build.yml
           jahia_image: jahia/jahia-ee-dev:8-SNAPSHOT
