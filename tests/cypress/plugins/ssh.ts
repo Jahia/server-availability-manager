@@ -1,27 +1,39 @@
 import {NodeSSH} from 'node-ssh';
 
-interface Connection {
+interface connection {
     hostname: string
     port: string
     username: string
     password: string
 }
 
-const sshCommand = async (commands: Array<string>, connection: Connection) => {
-    const ssh = new NodeSSH();
-    console.log(connection);
-    console.log(`SSH connection to: ${connection.hostname}`);
-    await ssh.connect({
-        host: connection.hostname,
-        port: connection.port,
-        username: connection.username,
-        password: connection.password
+const sshCommand = (commands: Array<string>, connection: connection) => {
+    return new Promise((resolve, reject) => {
+        const ssh = new NodeSSH();
+        console.info('[SSH] connection to:', connection.hostname);
+        console.info('[SSH] commands:', commands);
+        console.info('[SSH] ', connection);
+        ssh.connect({
+            host: connection.hostname,
+            port: connection.port,
+            username: connection.username,
+            password: connection.password
+        })
+            .then(() => {
+                ssh.exec(commands.join(';'), [])
+                    .then(function (result) {
+                        resolve(result); // Resolve to command result
+                    })
+                    .catch(reason => {
+                        console.error('[SSH] Failed to execute commands: ', commands);
+                        reject(reason);
+                    });
+            })
+            .catch(reason => {
+                console.error('[SSH] Failed to execute commands: ', commands);
+                reject(reason);
+            });
     });
-
-    const response = await ssh.exec(commands.join(';'), []);
-    ssh.dispose();
-
-    return response;
 };
 
 module.exports = sshCommand;
