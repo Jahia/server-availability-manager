@@ -1,6 +1,2 @@
 - karafCommand: "bundle:list"
-# uninstall only if it exists, otherwise it throws an error
-# need to hardcode version for uninstall
-- if: org.jahia.osgi.BundleUtils.getBundleBySymbolicName('server-availability-manager',null) != null
-  do:
-    - uninstallBundle: 'mvn:org.jahia.modules/server-availability-manager/2.6.0'
+  
