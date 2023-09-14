@@ -71,7 +71,7 @@
         <jahia-module-signature>MCwCFBTVv9s8W5wba2LCK2xEsd0y2q+2AhREnoBqh1S1TN6qScm7ciF4Y9NPrg==</jahia-module-signature>
         <export-package>org.jahia.modules.sam</export-package>
         <import-package>
-            graphql.annotations.annotationTypes;version="[7.2,8)",
+            graphql.annotations.annotationTypes;version="[7.2,99)",
             graphql.schema;version="[13.0,14)",
             javax.inject,javax.jcr;version="[2.0,3)",
             javax.management,javax.servlet,
