@@ -1,12 +1,12 @@
 # This workflow is triggered every time a change is pushed to any branches
 # Github actions command reference: https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
-name: On merge to 3_x
+name: On merge to 2_x
 
 # The workflow could also be triggered on PRs
 on:
   push:
     branches:
-      - '3_x'
+      - '2_x'
     tags-ignore:
       - '**'
 
@@ -44,7 +44,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     container:
-      image: cyclonedx/cyclonedx-cli:0.24.2   
+      image: cyclonedx/cyclonedx-cli:0.24.2
     steps:
       - uses: jahia/jahia-modules-action/sbom-processing@v2
         with:
@@ -103,7 +103,7 @@ jobs:
   publish:
     name: Publish module
     needs: [integration-tests-standalone]
-    if: github.ref == 'refs/heads/3_x'
+    if: github.ref == 'refs/heads/2_x'
     runs-on: ubuntu-latest
     container:
       image: jahia/cimg-mvn-cache:ga_cimg_openjdk_8.0.312-node
