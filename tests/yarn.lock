@@ -220,7 +220,7 @@
     eslint-plugin-react "^7.16.0"
     eslint-plugin-react-hooks "^2.2.0"
 
-"@jahia/jahia-reporter@^1.0.7":
+"@jahia/jahia-reporter@^1.1.16":
   version "1.1.16"
   resolved "https://registry.yarnpkg.com/@jahia/jahia-reporter/-/jahia-reporter-1.1.16.tgz#4328c6846e40bb3b1decfc96940c4ac0cb6c3595"
   integrity sha512-a0R+3CmU/ZeGdE4hW95Y0bawM0nbIFwIO4uK54JLdOXbg9ynIHi26J8TpuJLXxbHDIxx8lqdVfjsX+HsUD+qZw==
