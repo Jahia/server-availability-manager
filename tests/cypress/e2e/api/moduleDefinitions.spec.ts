@@ -31,6 +31,7 @@ describe('Module definitions probe test', () => {
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
 
+        healthcheck().then(response => {console.log('response', response)})
         healthcheck().should(response => {
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.status).to.eq(200);
@@ -39,6 +40,7 @@ describe('Module definitions probe test', () => {
         cy.installBundle('moduleDefinitionsProbe/test-1.1-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.1.0.SNAPSHOT'}]);
 
+        healthcheck().then(response => {console.log('response', response)})
         healthcheck().should(response => {
             expect(response.body.status.health).to.eq('YELLOW');
             expect(response.status).to.eq(200);
@@ -46,6 +48,7 @@ describe('Module definitions probe test', () => {
 
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
 
+        healthcheck().then(response => {console.log('response', response)})
         healthcheck().should(response => {
             expect(response.body.status.health).to.eq('RED');
             expect(response.status).to.eq(503);
