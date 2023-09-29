@@ -55,7 +55,7 @@
     <name>Server Availability Manager</name>
     <version>4.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <description>This is the custom module (Server Availability Manager) for running on a Jahia server.</description>
+    <description>This is the custom module (Server Availability Manager) for running on a Jahia server.test</description>
 
     <scm>
         <connection>scm:git:git@github.com:Jahia/server-availability-manager.git</connection>
