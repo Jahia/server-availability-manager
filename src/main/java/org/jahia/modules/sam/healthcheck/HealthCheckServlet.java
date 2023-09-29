@@ -3,7 +3,6 @@ package org.jahia.modules.sam.healthcheck;
 import org.jahia.modules.graphql.provider.dxm.security.GqlAccessDeniedException;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.osgi.BundleUtils;
 import org.jahia.services.securityfilter.PermissionService;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -11,6 +10,8 @@ import org.json.JSONObject;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -29,6 +30,8 @@ public class HealthCheckServlet extends HttpServlet {
     private ProbeStatus.Health statusThreshold;
     private PermissionService permissionService;
     private int statusCode;
+
+    private static final Logger logger = LoggerFactory.getLogger(HealthCheckServlet.class);
 
     @Activate
     public void activate(Map<String, Object> config) {
@@ -105,6 +108,8 @@ public class HealthCheckServlet extends HttpServlet {
 
         try {
             String result = writer.getBuffer().toString();
+            logger.info("Display result:");
+            logger.info(result);
             JSONObject obj = new JSONObject(result);
             if (obj.has("errors") && obj.getJSONArray("errors").length() > 0) {
                 JSONArray errors = obj.getJSONArray("errors");
@@ -141,6 +146,7 @@ public class HealthCheckServlet extends HttpServlet {
                 }
             }
         } catch (JSONException e) {
+            logger.error("Error while reading json", e);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
