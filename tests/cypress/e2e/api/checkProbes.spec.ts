@@ -1,6 +1,6 @@
 import {healthCheck} from '../../support/gql';
 
-const moduleHealthcheck = (params: String = '') => {
+const moduleHealthcheck = (params = '') => {
     return cy.request({
         url: `${Cypress.config().baseUrl}/modules/healthcheck${params}`,
         headers: {
@@ -81,14 +81,15 @@ describe('Health check', () => {
         cy.waitUntil(() => moduleHealthcheck()
             .then(response => {
                 if (response?.body?.status?.health) {
-                    return response
+                    return response;
                 }
-                return false
+
+                return false;
             }), {
             interval: 1000,
             timeout: 10000,
             errorMsg: 'Failed to read healthcheck'
-        })
+        });
 
         moduleHealthcheck().should(response => {
             expect(response.body.status.health).to.eq('GREEN');
@@ -106,14 +107,15 @@ describe('Health check', () => {
         cy.waitUntil(() => moduleHealthcheck()
             .then(response => {
                 if (response?.body?.status?.health) {
-                    return response
+                    return response;
                 }
-                return false
+
+                return false;
             }), {
             interval: 1000,
             timeout: 10000,
             errorMsg: 'Failed to read healthcheck'
-        })
+        });
 
         moduleHealthcheck().should(response => {
             expect(response.body.status.health).to.eq('RED');
@@ -131,14 +133,15 @@ describe('Health check', () => {
         cy.waitUntil(() => moduleHealthcheck('?severity=critical')
             .then(response => {
                 if (response?.body?.status?.health) {
-                    return response
+                    return response;
                 }
-                return false
+
+                return false;
             }), {
             interval: 1000,
             timeout: 10000,
             errorMsg: 'Failed to read healthcheck'
-        })
+        });
 
         moduleHealthcheck('?severity=critical').should(response => {
             expect(response.body.status.health).to.eq('GREEN');

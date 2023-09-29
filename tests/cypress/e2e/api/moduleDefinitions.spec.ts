@@ -34,18 +34,20 @@ describe('Module definitions probe test', () => {
         cy.waitUntil(() => healthcheck()
             .then(response => {
                 if (response?.body?.status?.health) {
-                    return response
+                    return response;
                 }
-                return false
+
+                return false;
             }), {
             interval: 1000,
             timeout: 10000,
             errorMsg: 'Failed to read healthcheck (GREEN)'
-        })
-        healthcheck().then((response) => {
+        });
+
+        healthcheck().then(response => {
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.status).to.eq(200);
-        })
+        });
 
         cy.installBundle('moduleDefinitionsProbe/test-1.1-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.1.0.SNAPSHOT'}]);
@@ -53,14 +55,15 @@ describe('Module definitions probe test', () => {
         cy.waitUntil(() => healthcheck()
             .then(response => {
                 if (response?.body?.status?.health) {
-                    return response
+                    return response;
                 }
-                return false
+
+                return false;
             }), {
             interval: 1000,
             timeout: 10000,
             errorMsg: 'Failed to read healthcheck (YELLOW)'
-        })
+        });
 
         healthcheck().should(response => {
             expect(response.body.status.health).to.eq('YELLOW');
@@ -72,14 +75,15 @@ describe('Module definitions probe test', () => {
         cy.waitUntil(() => healthcheck()
             .then(response => {
                 if (response?.body?.status?.health) {
-                    return response
+                    return response;
                 }
-                return false
+
+                return false;
             }), {
             interval: 1000,
             timeout: 10000,
             errorMsg: 'Failed to read healthcheck (RED)'
-        })
+        });
         healthcheck().should(response => {
             expect(response.body.status.health).to.eq('RED');
             expect(response.status).to.eq(503);
