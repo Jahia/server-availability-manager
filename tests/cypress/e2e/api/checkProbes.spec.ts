@@ -1,5 +1,20 @@
 import {healthCheck} from '../../support/gql';
 
+const moduleHealthcheck = (params: String = '') => {
+    return cy.request({
+        url: `${Cypress.config().baseUrl}/modules/healthcheck${params}`,
+        headers: {
+            referer: Cypress.config().baseUrl
+        },
+        auth: {
+            user: 'root',
+            pass: Cypress.env('SUPER_USER_PASSWORD'),
+            sendImmediately: true
+        },
+        failOnStatusCode: false
+    });
+};
+
 describe('Health check', () => {
     const sshCommands = [
         'config:list "(service.pid=org.jahia.modules.sam.healthcheck.ProbesRegistry)"'
@@ -63,17 +78,19 @@ describe('Health check', () => {
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnDisable), waitUntilOptions);
 
-        cy.request({
-            url: `${Cypress.config().baseUrl}/modules/healthcheck`,
-            headers: {
-                referer: Cypress.config().baseUrl
-            },
-            auth: {
-                user: 'root',
-                pass: Cypress.env('SUPER_USER_PASSWORD'),
-                sendImmediately: true
-            }
-        }).should(response => {
+        cy.waitUntil(() => moduleHealthcheck()
+            .then(response => {
+                if (response?.body?.status?.health) {
+                    return response
+                }
+                return false
+            }), {
+            interval: 1000,
+            timeout: 10000,
+            errorMsg: 'Failed to read healthcheck'
+        })
+
+        moduleHealthcheck().should(response => {
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.body.probes.length).to.be.gte(6);
             expect(response.status).to.eq(200);
@@ -86,18 +103,19 @@ describe('Health check', () => {
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnEnable), waitUntilOptions);
 
-        cy.request({
-            url: `${Cypress.config().baseUrl}/modules/healthcheck`,
-            headers: {
-                referer: Cypress.config().baseUrl
-            },
-            auth: {
-                user: 'root',
-                pass: Cypress.env('SUPER_USER_PASSWORD'),
-                sendImmediately: true
-            },
-            failOnStatusCode: false
-        }).should(response => {
+        cy.waitUntil(() => moduleHealthcheck()
+            .then(response => {
+                if (response?.body?.status?.health) {
+                    return response
+                }
+                return false
+            }), {
+            interval: 1000,
+            timeout: 10000,
+            errorMsg: 'Failed to read healthcheck'
+        })
+
+        moduleHealthcheck().should(response => {
             expect(response.body.status.health).to.eq('RED');
             expect(response.body.probes.length).to.be.gte(7);
             expect(response.status).to.eq(503);
@@ -110,17 +128,19 @@ describe('Health check', () => {
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnEnable), waitUntilOptions);
 
-        cy.request({
-            url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=critical`,
-            headers: {
-                referer: Cypress.config().baseUrl
-            },
-            auth: {
-                user: 'root',
-                pass: Cypress.env('SUPER_USER_PASSWORD'),
-                sendImmediately: true
-            }
-        }).should(response => {
+        cy.waitUntil(() => moduleHealthcheck('?severity=critical')
+            .then(response => {
+                if (response?.body?.status?.health) {
+                    return response
+                }
+                return false
+            }), {
+            interval: 1000,
+            timeout: 10000,
+            errorMsg: 'Failed to read healthcheck'
+        })
+
+        moduleHealthcheck('?severity=critical').should(response => {
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.body.probes.length).to.eq(3);
             expect(response.status).to.eq(200);
