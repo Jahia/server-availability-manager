@@ -101,10 +101,11 @@ jobs:
           incident_google_api_key_base64: ${{ secrets.INCIDENT_GOOGLE_PRIVATE_KEY_BASE64 }}
           zencrepes_secret: ${{ secrets.ZENCREPES_WEBHOOK_SECRET }}
       - name: Test Report
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v12
         if: success() || failure()
         with:
           name: Tests Report (Standalone)
           path: tests/artifacts/results/xml_reports/*.xml
           reporter: java-junit
           fail-on-error: 'false'
+          output-to: 'checks'
