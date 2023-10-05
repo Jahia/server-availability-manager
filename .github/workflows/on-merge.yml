@@ -27,7 +27,7 @@ jobs:
     needs: update-signature
     runs-on: ubuntu-latest
     container:
-      image: jahia/cimg-mvn-cache:ga_cimg_openjdk_8.0.312-node
+      image: jahia/cimg-mvn-cache:ga_cimg_openjdk_11.0.20-node
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -39,16 +39,29 @@ jobs:
           nexus_password: ${{ secrets.NEXUS_PASSWORD }}
           module_id: server-availability-manager
 
+  sbom:
+    name: SBOM processing
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: cyclonedx/cyclonedx-cli:0.24.2   
+    steps:
+      - uses: jahia/jahia-modules-action/sbom-processing@v2
+        with:
+          dependencytrack_hostname: ${{ vars.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
+          sbom_artifacts: 'build-artifacts'
+
   integration-tests-standalone:
     name: Integration Tests (Standalone)
     needs: build
     runs-on: self-hosted
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - uses: jahia/jahia-modules-action/helper@v2
       - uses: KengoTODA/actions-setup-docker-compose@main
         with:
-          version: '1.29.2'
+          version: '2.15.1'
       - uses: actions/setup-node@v3
         with:
           node-version: 'lts/*'
@@ -57,6 +70,7 @@ jobs:
         with:
           module_id: server-availability-manager
           testrail_project: Server Availability Manager
+          timeout_minutes: 20
           tests_manifest: provisioning-manifest-build.yml
           jahia_image: jahia/jahia-ee-dev:8-SNAPSHOT
           should_use_build_artifacts: true
@@ -82,7 +96,7 @@ jobs:
         if: success() || failure()
         with:
           name: Tests Report (Standalone)
-          path: tests/artifacts/results/xml_reports/*.xml
+          path: tests/artifacts/results/xml_reports/**/*.xml
           reporter: java-junit
           fail-on-error: 'false'
 
@@ -92,7 +106,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     container:
-      image: jahia/cimg-mvn-cache:ga_cimg_openjdk_8.0.312-node
+      image: jahia/cimg-mvn-cache:ga_cimg_openjdk_11.0.20-node
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}

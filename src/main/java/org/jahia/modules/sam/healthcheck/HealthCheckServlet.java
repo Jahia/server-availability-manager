@@ -1,9 +1,9 @@
 package org.jahia.modules.sam.healthcheck;
 
+import org.apache.commons.io.output.WriterOutputStream;
 import org.jahia.modules.graphql.provider.dxm.security.GqlAccessDeniedException;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.osgi.BundleUtils;
 import org.jahia.services.securityfilter.PermissionService;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,11 +12,12 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import javax.servlet.ServletException;
+import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -61,6 +62,11 @@ public class HealthCheckServlet extends HttpServlet {
 
         HttpServletRequest requestWrapper = new HttpServletRequestWrapper(req) {
             @Override
+            public boolean isAsyncSupported() {
+                return false;
+            }
+
+            @Override
             public String getParameter(String name) {
                 if (name.equals("query")) {
                     return "{\n" +
@@ -90,6 +96,25 @@ public class HealthCheckServlet extends HttpServlet {
         StringWriter writer = new StringWriter();
         HttpServletResponse responseWrapper = new HttpServletResponseWrapper(resp) {
             @Override
+            public ServletOutputStream getOutputStream() throws IOException {
+                return new ServletOutputStream() {
+                    @Override
+                    public void write(int b) throws IOException {
+                        writer.write((char) b);
+                    }
+
+                    @Override
+                    public boolean isReady() {
+                        return true;
+                    }
+
+                    @Override
+                    public void setWriteListener(WriteListener writeListener) {
+                    }
+                };
+            }
+
+            @Override
             public PrintWriter getWriter() throws IOException {
                 return new PrintWriter(writer);
             }
@@ -100,7 +125,6 @@ public class HealthCheckServlet extends HttpServlet {
         };
 
         permissionService.addScopes(Collections.singleton("graphql"), req);
-
         gql.service(requestWrapper, responseWrapper);
 
         try {

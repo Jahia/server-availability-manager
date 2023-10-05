@@ -49,11 +49,11 @@
     <parent>
         <artifactId>jahia-modules</artifactId>
         <groupId>org.jahia.modules</groupId>
-        <version>8.1.2.0</version>
+        <version>8.2.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>server-availability-manager</artifactId>
     <name>Server Availability Manager</name>
-    <version>2.7.0-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (Server Availability Manager) for running on a Jahia server.</description>
 
@@ -68,11 +68,12 @@
         <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
-        <jahia-module-signature>MCwCFDrSQPuQPKwXqe13Y16vW6FdRwVOAhRfhPauSFi/cyGuRqqV3pfVHJcrwg==</jahia-module-signature>
+        <jahia-module-signature>MCwCFH1GmVjoQaPhyy0bAgoJSZGeH3aRAhR0UXCWgI2wD/GLC3UqYLbp3ATvZw==</jahia-module-signature>
+        <jahia.plugin.version>6.9</jahia.plugin.version>
         <export-package>org.jahia.modules.sam</export-package>
         <import-package>
-            graphql.annotations.annotationTypes;version="[7.2,8)",
-            graphql.schema;version="[13.0,14)",
+            graphql.annotations.annotationTypes;version="[7.2,99)",
+            graphql.schema;version="[13.0,22)",
             javax.inject,javax.jcr;version="[2.0,3)",
             javax.management,javax.servlet,
             javax.servlet.http,
@@ -113,17 +114,6 @@
         </import-package>
         <yarn.arguments>build:production</yarn.arguments>
     </properties>
-
-    <distributionManagement>
-        <repository>
-            <id>jahia-enterprise-releases</id>
-            <url>https://devtools.jahia.com/nexus/content/repositories/jahia-enterprise-releases</url>
-        </repository>
-        <snapshotRepository>
-            <id>jahia-enterprise-snapshots</id>
-            <url>https://devtools.jahia.com/nexus/content/repositories/jahia-enterprise-snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -207,6 +197,33 @@
                     <instructions>
                         <_dsannotations>*</_dsannotations>
                     </instructions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>2.7.9</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <projectType>library</projectType>
+                    <schemaVersion>1.4</schemaVersion>
+                    <includeBomSerialNumber>true</includeBomSerialNumber>
+                    <includeCompileScope>true</includeCompileScope>
+                    <includeProvidedScope>false</includeProvidedScope>
+                    <includeRuntimeScope>true</includeRuntimeScope>
+                    <includeSystemScope>false</includeSystemScope>
+                    <includeTestScope>false</includeTestScope>
+                    <includeLicenseText>false</includeLicenseText>
+                    <outputReactorProjects>true</outputReactorProjects>
+                    <outputFormat>json</outputFormat>
+                    <outputName>java-bom.cdx</outputName>
                 </configuration>
             </plugin>
         </plugins>
