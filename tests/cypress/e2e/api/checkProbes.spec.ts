@@ -74,7 +74,6 @@ describe('Health check', () => {
                 sendImmediately: true
             }
         }).should(response => {
-            cy.log(JSON.stringify(response));
             expect(response.status).to.eq(200);
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.body.probes.length).to.be.gte(6);
