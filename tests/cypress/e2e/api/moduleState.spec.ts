@@ -31,7 +31,7 @@ describe('Module state probe test', () => {
 
         it('Checks the module state probe is GREEN when module is not in whitelist', () => {
             cy.runProvisioningScript({fileName: 'moduleStateProbe/enable-whitelist.json'});
-            cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-seo.json'});
+            cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'seo'}});
             healthCheck('MEDIUM').should(r => {
                 expect(r.status.health).to.eq('GREEN');
                 const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
@@ -41,7 +41,7 @@ describe('Module state probe test', () => {
     });
 
     it('Checks that module state probe is in RED after stopping the module', () => {
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-channels.json'});
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'channels'}});
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('RED');
             expect(r.status.message).to.contain('channels');
@@ -70,7 +70,7 @@ describe('Module state probe test', () => {
 
     it('Checks the module state probe is GREEN when we stopped SEO module, which is not inside whitelist', () => {
         cy.runProvisioningScript({fileName: 'moduleStateProbe/enable-whitelist.json'});
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-seo.json'});
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'seo'}});
         healthCheck('MEDIUM').should(r => {
             expect(r.status.health).to.eq('GREEN');
             const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
@@ -79,8 +79,8 @@ describe('Module state probe test', () => {
     });
 
     afterEach(() => {
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-seo.json'});
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-channels.json'});
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'seo'}});
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'channels'}});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/disable-blacklist.json'});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/disable-whitelist.json'});
     });
