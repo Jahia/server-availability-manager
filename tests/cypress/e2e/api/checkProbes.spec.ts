@@ -126,4 +126,33 @@ describe('Health check', () => {
             expect(response.status).to.eq(200);
         });
     });
+
+    it.only('Check Probe coming from another bundle is accessible', () => {
+        cy.runProvisioningScript({fileName: 'test-disable.json'});
+
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then(waitUntilTestFcnDisable), waitUntilOptions);
+
+        cy.log('Should find the DummyState probe as the module is started');
+        healthCheck('LOW').should(r => {
+            const dummyProbe = r.probes.find(probe => probe.name === 'DummyState');
+            expect(dummyProbe).to.exist;
+            expect(dummyProbe.status.health).to.eq('GREEN');
+        });
+
+        cy.log('Should not find the DummyState probe as the module is not started');
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'server-availability-manager-test-module'}});
+        healthCheck('LOW').should(r => {
+            const dummyProbe = r.probes.find(probe => probe.name === 'DummyState');
+            expect(dummyProbe).to.not.exist;
+        });
+
+        cy.log('Should find again the DummyState probe as the module has been started again');
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'server-availability-manager-test-module'}});
+        healthCheck('LOW').should(r => {
+            const dummyProbe = r.probes.find(probe => probe.name === 'DummyState');
+            expect(dummyProbe).to.exist;
+            expect(dummyProbe.status.health).to.eq('GREEN');
+        });
+    });
 });
