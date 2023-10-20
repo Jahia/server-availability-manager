@@ -5,6 +5,6 @@
 
 - installBundle:
   - 'mvn:org.jahia.modules/server-availability-manager'
-  - 'mvn:org.jahia.modules/server-availability-manager-test-module'
+  - 'mvn:org.jahia.test/server-availability-manager-test-module'
   autoStart: true
   uninstallPreviousVersion: true
