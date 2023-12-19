@@ -127,7 +127,7 @@ describe('Health check', () => {
         });
     });
 
-    it.only('Check Probe coming from another bundle is accessible', () => {
+    it('Check Probe coming from another bundle is accessible', () => {
         cy.runProvisioningScript({fileName: 'test-disable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
