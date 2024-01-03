@@ -25,7 +25,7 @@ public class JahiaExceptionsProbe implements Probe {
 
     private String filePath;
 
-    private static MessageFormat yellowMessage = new MessageFormat("A total of {0} exceptions are present on the platform, exceptions are not expected in a production environment and we recommend reviewing these.");
+    private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} exceptions are present on the platform, exceptions are not expected in a production environment and we recommend reviewing these.");
 
     @Override
     public String getName() {
@@ -51,7 +51,7 @@ public class JahiaExceptionsProbe implements Probe {
             }
             return numberOfError == 0 ?
                     new ProbeStatus("No Exceptions are present on the platform", ProbeStatus.Health.GREEN) :
-                    new ProbeStatus(yellowMessage.format(numberOfError), ProbeStatus.Health.YELLOW);
+                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError}), ProbeStatus.Health.YELLOW);
         } catch (Exception e) {
             logger.debug("Error while reading the log file", e);
             return new ProbeStatus("Jahia exceptions can not be checked", ProbeStatus.Health.YELLOW);
