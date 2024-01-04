@@ -21,6 +21,7 @@ export default defineConfig({
         },
         excludeSpecPattern: '*.ignore.ts',
         specPattern: [
+            'cypress/e2e/api/*.spec.begin.ts',
             'cypress/e2e/api/*.spec.ts',
             'cypress/e2e/api/shutdown.spec.final.ts'
         ],

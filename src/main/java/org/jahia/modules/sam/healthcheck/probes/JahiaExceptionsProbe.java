@@ -25,6 +25,8 @@ public class JahiaExceptionsProbe implements Probe {
 
     private String filePath;
 
+    private ProbeSeverity severity = ProbeSeverity.LOW;
+
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} exceptions are present on the platform, exceptions are not expected in a production environment and we recommend reviewing these.");
 
     @Override
@@ -34,7 +36,7 @@ public class JahiaExceptionsProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "This is a simple configurable test probe";
+        return "Checks if there is errors in a log file";
     }
 
 
@@ -60,7 +62,7 @@ public class JahiaExceptionsProbe implements Probe {
 
     @Override
     public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.LOW;
+        return severity;
     }
 
     @Override
@@ -69,6 +71,11 @@ public class JahiaExceptionsProbe implements Probe {
             filePath = (String) config.get("filePath");
         } else {
             filePath = System.getProperty("jahia.log.dir") + "jahia.log";
+        }
+        if (config.containsKey("severity")) {
+            severity = ProbeSeverity.valueOf((String) config.get("severity"));
+        } else {
+            severity = ProbeSeverity.LOW;
         }
     }
 }
