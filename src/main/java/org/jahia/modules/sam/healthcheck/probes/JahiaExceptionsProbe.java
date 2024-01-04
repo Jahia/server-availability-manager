@@ -36,7 +36,7 @@ public class JahiaExceptionsProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Checks if there is errors in a log file";
+        return "Count the number of exceptions faced by Jahia";
     }
 
 

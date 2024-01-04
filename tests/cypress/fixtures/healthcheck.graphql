@@ -9,6 +9,7 @@ query($severity: GqlProbeSeverity) {
                 probes {
                     name
                     severity
+                    description
                     status {
                         health
                         message

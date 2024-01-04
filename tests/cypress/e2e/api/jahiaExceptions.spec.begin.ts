@@ -28,12 +28,20 @@ describe('Jahia exceptions probe test', () => {
             .then(waitUntilTestFcnDisable), waitUntilOptions);
     });
 
+    it('Check the the description of the probe', () => {
+        healthCheck('LOW').should(r => {
+            expect(r.status.health).to.eq('GREEN');
+            const jahiaExceptionsProbe = r.probes.find(probe => probe.name === 'JahiaExceptions');
+            expect(jahiaExceptionsProbe.description).to.eq('Count the number of exceptions faced by Jahia');
+        });
+    });
+
     it('Check that Jahia exceptions probe is present with GREEN status', () => {
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('GREEN');
-            const moduleStateProbe = r.probes.find(probe => probe.name === 'JahiaExceptions');
-            expect(moduleStateProbe.status.health).to.eq('GREEN');
-            expect(moduleStateProbe.severity).to.eq('LOW');
+            const jahiaExceptionsProbe = r.probes.find(probe => probe.name === 'JahiaExceptions');
+            expect(jahiaExceptionsProbe.status.health).to.eq('GREEN');
+            expect(jahiaExceptionsProbe.severity).to.eq('LOW');
         });
     });
 
@@ -41,10 +49,18 @@ describe('Jahia exceptions probe test', () => {
         cy.executeGroovy('groovy/simpleErrorLog.groovy');
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('YELLOW');
-            const moduleStateProbe = r.probes.find(probe => probe.name === 'JahiaExceptions');
-            expect(moduleStateProbe.status.health).to.eq('YELLOW');
-            expect(moduleStateProbe.severity).to.eq('LOW');
-            expect(moduleStateProbe.status.message).to.eq('A total of 1 exceptions are present on the platform, exceptions are not expected in a production environment and we recommend reviewing these.');
+            const jahiaExceptionsProbe = r.probes.find(probe => probe.name === 'JahiaExceptions');
+            expect(jahiaExceptionsProbe.status.health).to.eq('YELLOW');
+            expect(jahiaExceptionsProbe.severity).to.eq('LOW');
+            expect(jahiaExceptionsProbe.status.message).to.eq('A total of 1 exceptions are present on the platform, exceptions are not expected in a production environment and we recommend reviewing these.');
+        });
+    });
+
+    it('Check that Jahia exceptions probe is not present when severity equals to MEDIUM', () => {
+        healthCheck('MEDIUM').should(r => {
+            expect(r.status.health).to.eq('GREEN');
+            const jahiaExceptionsProbe = r.probes.find(probe => probe.name === 'JahiaExceptions');
+            expect(jahiaExceptionsProbe).to.be.undefined;
         });
     });
 });
