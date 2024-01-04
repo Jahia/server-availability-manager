@@ -2,7 +2,7 @@
   {
     "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
     "properties": {
-      "probes.ModuleState.whitelist": "channels"
+      "probes.ModuleState.whitelist": "contentRetrieval"
     }
   }
 ]

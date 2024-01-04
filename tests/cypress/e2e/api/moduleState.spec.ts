@@ -41,10 +41,10 @@ describe('Module state probe test', () => {
     });
 
     it('Checks that module state probe is in RED after stopping the module', () => {
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'channels'}});
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'contentRetrieval'}});
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('RED');
-            expect(r.status.message).to.contain('channels');
+            expect(r.status.message).to.contain('contentRetrieval');
             const moduleStateProbe = r.probes.find(probe => probe.name === 'ModuleState');
             expect(moduleStateProbe.status.health).to.eq('RED');
         });
@@ -80,7 +80,7 @@ describe('Module state probe test', () => {
 
     afterEach(() => {
         cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'seo'}});
-        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'channels'}});
+        cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'contentRetrieval'}});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/disable-blacklist.json'});
         cy.runProvisioningScript({fileName: 'moduleStateProbe/disable-whitelist.json'});
     });
