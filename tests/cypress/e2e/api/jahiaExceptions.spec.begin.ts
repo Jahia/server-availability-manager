@@ -1,7 +1,6 @@
 import {healthCheck} from '../../support/gql';
 
 describe('Jahia exceptions probe test', () => {
-
     const sshCommands = [
         'config:list "(service.pid=org.jahia.modules.sam.healthcheck.ProbesRegistry)"'
     ];
@@ -13,14 +12,14 @@ describe('Jahia exceptions probe test', () => {
     };
 
     const waitUntilTestFcnDisable = (response: string) => response.indexOf('probes.JahiaExceptions.severity = IGNORED') !== -1;
-    const waitUntilTestFcnEnable = (response: string) => response.indexOf('probes.JahiaExceptions.severity = LOW') !== -1
+    const waitUntilTestFcnEnable = (response: string) => response.indexOf('probes.JahiaExceptions.severity = LOW') !== -1;
 
     before('Activate the probe', () => {
         cy.runProvisioningScript({fileName: 'jahiaExceptionsProbe/enable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnEnable), waitUntilOptions);
-    })
+    });
 
     after(() => {
         cy.runProvisioningScript({fileName: 'jahiaExceptionsProbe/disable.json'});
