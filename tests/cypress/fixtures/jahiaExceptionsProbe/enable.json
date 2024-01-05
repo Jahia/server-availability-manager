@@ -1,8 +1,0 @@
-[
-  {
-    "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
-    "properties": {
-      "probes.JahiaExceptions.severity": "LOW"
-    }
-  }
-]

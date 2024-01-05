@@ -13,30 +13,30 @@ import java.text.MessageFormat;
 import java.util.Map;
 
 /**
- * Probe to be used to get the number of exceptions in a log file.
+ * Probe to be used to get the number of ERROR in a log file.
  * This probe have a LOW severity level.
  * The probe returns a yellow level if there is at least one ERROR found in the log file.
  * By default the log file which is used is located to System.getProperty("jahia.log.dir") + "jahia.log"
  */
 @Component(immediate = true, service = Probe.class)
-public class JahiaExceptionsProbe implements Probe {
+public class JahiaErrorsProbe implements Probe {
 
-    private static final Logger logger = LoggerFactory.getLogger(JahiaExceptionsProbe.class);
+    private static final Logger logger = LoggerFactory.getLogger(JahiaErrorsProbe.class);
 
-    private String filePath;
+    private String jahiaLogFilepath;
 
     private ProbeSeverity severity = ProbeSeverity.LOW;
 
-    private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} exceptions are present on the platform, exceptions are not expected in a production environment and we recommend reviewing these.");
+    private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.");
 
     @Override
     public String getName() {
-        return "JahiaExceptions";
+        return "JahiaErrors";
     }
 
     @Override
     public String getDescription() {
-        return "Count the number of exceptions faced by Jahia";
+        return "Count the number of errors faced by Jahia";
     }
 
 
@@ -44,7 +44,7 @@ public class JahiaExceptionsProbe implements Probe {
     public ProbeStatus getStatus() {
         int numberOfError = 0;
         try {
-            BufferedReader br = new BufferedReader(new FileReader(filePath));
+            BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath));
             String currentLine;
             while ((currentLine = br.readLine()) != null) {
                 if (currentLine.contains("ERROR")) {
@@ -52,11 +52,11 @@ public class JahiaExceptionsProbe implements Probe {
                 }
             }
             return numberOfError == 0 ?
-                    new ProbeStatus("No Exceptions are present on the platform", ProbeStatus.Health.GREEN) :
+                    new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN) :
                     new ProbeStatus(yellowMessage.format(new Object[]{numberOfError}), ProbeStatus.Health.YELLOW);
         } catch (Exception e) {
-            logger.debug("Error while reading the log file", e);
-            return new ProbeStatus("Jahia exceptions can not be checked", ProbeStatus.Health.YELLOW);
+            logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
+            return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
         }
     }
 
@@ -67,10 +67,10 @@ public class JahiaExceptionsProbe implements Probe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey("filePath")) {
-            filePath = (String) config.get("filePath");
+        if (config.containsKey("jahiaLogFilepath")) {
+            jahiaLogFilepath = (String) config.get("jahiaLogFilepath");
         } else {
-            filePath = System.getProperty("jahia.log.dir") + "jahia.log";
+            jahiaLogFilepath = System.getProperty("jahia.log.dir") + "jahia.log";
         }
         if (config.containsKey("severity")) {
             severity = ProbeSeverity.valueOf((String) config.get("severity"));
