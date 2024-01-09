@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <content xmlns:j="http://www.jahia.org/jahia/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0">
     <modules jcr:primaryType="jnt:modules">
-        <siteimprove-connector-test-module j:dependencies="default"
+        <server-availability-manager-test-module j:dependencies="default"
                                            j:installedModules="siteimprove-connector-test-module"
                                            j:modulePriority="0"
                                            j:moduleType="templatesSet"
@@ -69,6 +69,6 @@
                                   jcr:primaryType="jnt:translation"
                                   jcr:title="Home"/>
             </home>
-        </siteimprove-connector-test-module>
+        </server-availability-manager-test-module>
     </modules>
 </content>
