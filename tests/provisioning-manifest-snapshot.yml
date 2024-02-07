@@ -4,7 +4,6 @@
   password: ${env:NEXUS_PASSWORD}
 
 - installBundle:
-  - 'mvn:org.jahia.modules/server-availability-manager'
   - 'mvn:org.jahia.test/server-availability-manager-test-module'
   autoStart: true
   uninstallPreviousVersion: true
