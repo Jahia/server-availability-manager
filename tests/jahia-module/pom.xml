@@ -55,7 +55,7 @@
     <groupId>org.jahia.test</groupId>
     <artifactId>server-availability-manager-test-module</artifactId>
     <name>Test module for Server availability manager</name>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module for running on a Jahia server.</description>
 
