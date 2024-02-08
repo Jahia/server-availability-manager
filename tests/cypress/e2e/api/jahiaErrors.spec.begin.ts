@@ -20,8 +20,9 @@ describe('Jahia errors probe test', () => {
             .then(waitUntilTestFcnDisable), waitUntilOptions);
     });
 
-    it('Check the the description of the probe', () => {
+    it('Check the description of the probe', () => {
         healthCheck('LOW').should(r => {
+            console.log(r)
             expect(r.status.health).to.eq('GREEN');
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.description).to.eq('Count the number of errors faced by Jahia');
