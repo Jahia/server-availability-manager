@@ -17,7 +17,7 @@ export default defineConfig({
         // You may want to clean this up later by importing tcleahese.
         setupNodeEvents(on, config) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            require('cypress-terminal-report/src/installLogsPrinter')(on);            
+            require('cypress-terminal-report/src/installLogsPrinter')(on);
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             return require('./cypress/plugins/index.js')(on, config);
         },
