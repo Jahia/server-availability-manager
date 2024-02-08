@@ -7,9 +7,6 @@ describe('Test for GraphQL schema description', () => {
     // These descriptions should be added in their respective codebases
     const noDescBlacklist = [
         // Missing but provided by: https://github.com/Jahia/server-availability-manager
-        'JahiaAdminQuery/healthCheck',
-        'JahiaAdminQuery/GqlHealthCheck',
-        'JahiaAdminQuery/load',
     ];
 
     const entryNodes = ['JahiaAdminQuery'];

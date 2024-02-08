@@ -45,9 +45,11 @@ public class GqlHealthCheck {
     }
 
     @GraphQLField
+    @GraphQLDescription("Probes registered in SAM for the requested severity")
     public List<GqlProbe> getProbes() {
         return probesRegistry.getProbes().stream()
-                .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= ProbeSeverity.valueOf(severityThreshold.name()).ordinal())
+                .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= ProbeSeverity
+                        .valueOf(severityThreshold.name()).ordinal())
                 .map(GqlProbe::new).collect(Collectors.toList());
     }
 }
