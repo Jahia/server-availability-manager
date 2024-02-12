@@ -9,6 +9,7 @@ import org.jahia.modules.sam.healthcheck.ProbesRegistry;
 
 import javax.inject.Inject;
 
+@GraphQLDescription("Probes registered with SAM")
 public class GqlProbe {
 
     private Probe probe;
@@ -46,6 +47,7 @@ public class GqlProbe {
     @GraphQLDescription("Status reported by the probe (GREEN to RED)")
     public GqlProbeStatus getStatus() {
         ProbeStatus status = probe.getStatus();
-        return new GqlProbeStatus(status.getMessage(), GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
+        return new GqlProbeStatus(status.getMessage(),
+                GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
     }
 }
