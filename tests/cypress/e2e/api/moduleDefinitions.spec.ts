@@ -52,11 +52,11 @@ describe('Module definitions probe test', () => {
         });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         cy.login();
         cy.visit('/tools/osgi/console/bundles');
         cy.get('.filter').first().type('test');
         cy.get('.filterApply').first().click();
-        cy.get('.ui-icon-trash', {timeout: 500}).click({multiple: true});
+        cy.get('.ui-icon-trash', {timeout: 500}).click({multiple: true, force: true});
     });
 });
