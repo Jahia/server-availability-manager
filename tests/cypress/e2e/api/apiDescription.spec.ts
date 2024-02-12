@@ -7,7 +7,7 @@ describe('Test for GraphQL schema description', () => {
     // These descriptions should be added in their respective codebases
     const noDescBlacklist = [
         // Currently missing but out of scope for SAM
-        'GqlBackgroundJob/jobState/GqlBackgroundJobState'
+        'GqlBackgroundJob'
     ];
 
     const entryNodes = ['JahiaAdminQuery'];
