@@ -57,6 +57,8 @@ describe('Module definitions probe test', () => {
         cy.visit('/tools/osgi/console/bundles');
         cy.get('.filter').first().type('test');
         cy.get('.filterApply').first().click();
-        cy.get('.ui-icon-trash', {timeout: 500}).click({multiple: true, force: true});
+        for (let i = 0; i < 5; i++) {
+            cy.get('.ui-icon-trash', {timeout: 500}).click({multiple: true, force: true});
+        }
     });
 });
