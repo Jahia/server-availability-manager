@@ -20,7 +20,7 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
                 dryRun: true
             },
             mutationFile: 'shutdown.graphql'
-        }).should(response => {
+        }).then(response => {
             cy.log('Requested shutdown');
             expect(response.data.admin.jahia.shutdown).to.be.false;
             const completeShutdown = new Date().getTime();
@@ -41,7 +41,7 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
                 timeout: 2
             },
             mutationFile: 'shutdown.graphql'
-        }).should(response => {
+        }).then(response => {
             cy.log('Requested shutdown');
             expect(response.data.admin.jahia.shutdown).to.be.false;
             const completeShutdown = new Date().getTime();
@@ -61,7 +61,7 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
                 force: true
             },
             mutationFile: 'shutdown.graphql'
-        }).should(response => {
+        }).then(response => {
             expect(response.data.admin.jahia.shutdown).to.be.true;
             const completeShutdown = new Date().getTime();
             const executionTime = completeShutdown - startShutdown;
@@ -79,7 +79,7 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
                 force: true
             },
             mutationFile: 'shutdown.graphql'
-        }).should(response => {
+        }).then(response => {
             cy.log('Requested shutdown');
             expect(response.data.admin.jahia.shutdown).to.be.true;
             const completeShutdown = new Date().getTime();

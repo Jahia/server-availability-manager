@@ -58,5 +58,6 @@ describe('Module definitions probe test', () => {
         cy.get('.filter').first().type('test');
         cy.get('.filterApply').first().click();
         cy.get('.ui-icon-trash', {timeout: 2000}).click({multiple: true, force: true});
+        cy.log('Cleared previously installed test bundles');
     });
 });
