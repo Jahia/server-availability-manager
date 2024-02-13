@@ -54,8 +54,9 @@ describe('Module definitions probe test', () => {
 
     afterEach(() => {
         cy.login();
-        cy.runProvisioningScript([{uninstallBundle: 'test/1.0.0.SNAPSHOT'}]);
-        cy.runProvisioningScript([{uninstallBundle: 'test/1.1.0.SNAPSHOT'}]);
-        cy.runProvisioningScript([{uninstallBundle: 'test/1.2.0.SNAPSHOT'}]);
+        cy.visit('/tools/osgi/console/bundles');
+        cy.get('.filter').first().type('test');
+        cy.get('.filterApply').first().click();
+        cy.get('.ui-icon-trash', {timeout: 2000}).click({multiple: true, force: true});
     });
 });
