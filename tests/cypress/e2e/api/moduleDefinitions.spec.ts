@@ -57,10 +57,10 @@ describe('Module definitions probe test', () => {
         cy.visit('/tools/osgi/console/bundles');
         cy.get('.filter').first().type('test');
         cy.get('.filterApply').first().click();
-        cy.get('.ui-icon-trash').each(($el) => {
-            cy.wrap($el).click()
+        cy.get('.ui-icon-trash').each($el => {
+            cy.wrap($el).click();
         });
-        // cy.get('.ui-icon-trash', {timeout: 2000}).click({multiple: true, force: true});
+        // Cy.get('.ui-icon-trash', {timeout: 2000}).click({multiple: true, force: true});
         cy.log('Cleared previously installed test bundles');
     });
 });
