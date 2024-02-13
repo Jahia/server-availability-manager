@@ -8,7 +8,10 @@ import org.jahia.utils.LoadAverage;
 @GraphQLDescription("Load value")
 public class LoadValue {
 
-    public enum LoadInterval { ONE,FIVE,FIFTEEN }
+    @GraphQLDescription("Interval expressed in minutes")
+    public enum LoadInterval {
+        ONE, FIVE, FIFTEEN
+    }
 
     private LoadAverage loadAverage;
 
@@ -24,7 +27,8 @@ public class LoadValue {
 
     @GraphQLField
     @GraphQLDescription("Exponential moving average")
-    public double getAverage(@GraphQLName("interval") LoadInterval interval) {
+    public double getAverage(
+            @GraphQLName("interval") @GraphQLDescription("Interval between collection of load metrics") LoadInterval interval) {
         if (interval == null) {
             return loadAverage.getFifteenMinuteLoad();
         }

@@ -21,8 +21,10 @@ const env = require('./env');
 module.exports = (on, config) => {
     env(on, config);
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('@jahia/cypress/dist/plugins/registerPlugins').registerPlugins(on, config);
 
+    // custom tasks (Useful to run code in Node from cypress tests)
     on('task', {
         sshCommand(commands) {
             return sshCommand(commands, {
@@ -33,6 +35,6 @@ module.exports = (on, config) => {
             })
         },
     });
-
+  
     return config;
 };

@@ -15,6 +15,7 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+import addContext from 'mochawesome/addContext'
 
 require('cypress-terminal-report/src/installLogsCollector')()
 require('@jahia/cypress/dist/support/registerSupport').registerSupport()
@@ -34,3 +35,14 @@ if (Cypress.browser.family === 'chromium') {
         params: { cacheDisabled: true },
     })
 }
+
+Cypress.on('test:after:run', (test, runnable) => {
+    let videoName = Cypress.spec.relative;
+    videoName = videoName.replace('/.cy.*', '').replace('cypress/e2e/', '');
+    const videoUrl = 'videos/' + videoName + '.mp4';
+    addContext({test}, videoUrl);
+    if (test.state === 'failed') {
+        const screenshot = `screenshots/${Cypress.spec.relative.replace('cypress/e2e/', '')}/${runnable.parent.title} -- ${test.title} (failed).png`;
+        addContext({test}, screenshot);
+    }
+});

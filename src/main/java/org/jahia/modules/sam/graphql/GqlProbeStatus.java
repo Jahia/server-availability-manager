@@ -5,6 +5,7 @@ import graphql.annotations.annotationTypes.GraphQLField;
 
 @GraphQLDescription("Probe status")
 public class GqlProbeStatus {
+    @GraphQLDescription("Available health statuses for a probe")
     public enum GqlProbeHealth {
         GREEN, YELLOW, RED;
     }
