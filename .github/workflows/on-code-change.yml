@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: "lts/*"
       - uses: actions/checkout@v3
-      - uses: jahia/jahia-modules-action/integration-tests@v2
+      - uses: jahia/jahia-modules-action/integration-tests@ssh-debug
         with:
           module_id: server-availability-manager
           testrail_project: Server Availability Manager
