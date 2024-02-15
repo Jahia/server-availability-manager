@@ -21,18 +21,18 @@ describe('Jahia errors probe test', () => {
     });
 
     it('Check the description of the probe', () => {
-        healthCheck('LOW').should(r => {
+        healthCheck('LOW').then(r => {
             cy.log(JSON.stringify(r));
-            expect(r.status.health).to.eq('GREEN');
+            cy.then(() => expect(r.status.health).to.eq('GREEN'));
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.description).to.eq('Count the number of errors faced by Jahia');
         });
     });
 
     it('Check that Jahia errors probe is present with GREEN status', () => {
-        healthCheck('LOW').should(r => {
+        healthCheck('LOW').then(r => {
             cy.log(JSON.stringify(r));
-            expect(r.status.health).to.eq('GREEN');
+            cy.then(() => expect(r.status.health).to.eq('GREEN'));
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.status.health).to.eq('GREEN');
             expect(jahiaErrorsProbe.severity).to.eq('LOW');
@@ -41,7 +41,7 @@ describe('Jahia errors probe test', () => {
 
     it('Check that Jahia errors probe is YELLOW when there is an error log', () => {
         cy.executeGroovy('groovy/simpleErrorLog.groovy');
-        healthCheck('LOW').should(r => {
+        healthCheck('LOW').then(r => {
             expect(r.status.health).to.eq('YELLOW');
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.status.health).to.eq('YELLOW');
@@ -51,8 +51,9 @@ describe('Jahia errors probe test', () => {
     });
 
     it('Check that Jahia errors probe is not present when severity equals to MEDIUM', () => {
-        healthCheck('MEDIUM').should(r => {
-            expect(r.status.health).to.eq('GREEN');
+        healthCheck('MEDIUM').then(r => {
+            cy.log(JSON.stringify(r));
+            cy.then(() => expect(r.status.health).to.eq('GREEN'));
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe).to.be.undefined;
         });
