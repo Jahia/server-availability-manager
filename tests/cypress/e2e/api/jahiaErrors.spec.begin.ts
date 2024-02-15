@@ -22,6 +22,7 @@ describe('Jahia errors probe test', () => {
 
     it('Check the description of the probe', () => {
         healthCheck('LOW').should(r => {
+            cy.log(JSON.stringify(r));
             expect(r.status.health).to.eq('GREEN');
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.description).to.eq('Count the number of errors faced by Jahia');
@@ -30,6 +31,7 @@ describe('Jahia errors probe test', () => {
 
     it('Check that Jahia errors probe is present with GREEN status', () => {
         healthCheck('LOW').should(r => {
+            cy.log(JSON.stringify(r));
             expect(r.status.health).to.eq('GREEN');
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.status.health).to.eq('GREEN');
