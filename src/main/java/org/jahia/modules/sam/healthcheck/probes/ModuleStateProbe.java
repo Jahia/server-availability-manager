@@ -1,21 +1,20 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
 import org.apache.commons.lang.StringUtils;
+import org.jahia.data.templates.JahiaTemplatesPackage;
 import org.jahia.data.templates.ModuleState;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.services.templates.JahiaTemplateManagerService;
+import org.jahia.services.templates.ModuleVersion;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -55,6 +54,7 @@ public class ModuleStateProbe implements Probe {
     public ProbeStatus getStatus() {
         Map<Bundle, ModuleState> notStartedModules = getNotStartedModules();
         Map<Bundle, ModuleState> invalidLevelModules = getModulesWithInvalidStartLevel();
+        Set<String> wiringIssues = hasWiringIssues();
 
         Bundle singleNotStarted = notStartedModules.keySet().stream().filter(entry -> !hasAnotherVersionStarted(entry)).findFirst().orElse(null);
 
@@ -77,6 +77,11 @@ public class ModuleStateProbe implements Probe {
             return new ProbeStatus(String.format("At least one module is not started. Module %s is in %s state.",
                     bundle.getSymbolicName(),
                     notStartedModules.get(bundle).getState().toString()),
+                    ProbeStatus.Health.YELLOW);
+        }
+
+        if (!wiringIssues.isEmpty()) {
+            return new ProbeStatus(String.format("At least one module has wiring issues: %s", wiringIssues),
                     ProbeStatus.Health.YELLOW);
         }
 
@@ -128,5 +133,30 @@ public class ModuleStateProbe implements Probe {
         } else {
             whitelist = Collections.emptyList();
         }
+    }
+
+    private Map<String, SortedMap<ModuleVersion, JahiaTemplatesPackage>> getAllModuleVersions() {
+        Map<String, SortedMap<ModuleVersion, JahiaTemplatesPackage>> result = new TreeMap<>();
+        Map<Bundle, ModuleState> moduleStatesByBundle = templateManagerService.getModuleStates();
+        for (Bundle bundle : moduleStatesByBundle.keySet()) {
+            JahiaTemplatesPackage module = BundleUtils.getModule(bundle);
+            SortedMap<ModuleVersion, JahiaTemplatesPackage> modulesByVersion = result.computeIfAbsent(module.getId(), k -> new TreeMap<>());
+            modulesByVersion.put(module.getVersion(), module);
+        }
+        return result;
+    }
+
+    private Set<String> hasWiringIssues() {
+        Set<String> result = new HashSet<>();
+        getAllModuleVersions().forEach((moduleId, versions) -> versions.forEach((version, module) -> {
+            if(module.isActiveVersion()) {
+                List<JahiaTemplatesPackage> moduleDependenciesWithoutVersion = module.getDependencies();
+                Set<JahiaTemplatesPackage> moduleDependenciesWithVersion = module.getModuleDependenciesWithVersion();
+                if(moduleDependenciesWithVersion.isEmpty() && !moduleDependenciesWithoutVersion.isEmpty()) {
+                    result.add(String.format("Module %s has no versioned dependencies but has %s unversioned dependencies (from j:dependencies in repository.xml probably or an empty jahia-depends header)", moduleId, moduleDependenciesWithoutVersion.size()));
+                }
+            }
+        }));
+        return result;
     }
 }
