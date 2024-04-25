@@ -1,7 +1,6 @@
-import { healthCheck } from '../../support/gql';
+import {healthCheck} from '../../support/gql';
 
 describe('Supported Stack JDK', () => {
-
     it('should be good for latest setup', () => {
         cy.login();
         healthCheck('MEDIUM').should(r => {
@@ -10,5 +9,5 @@ describe('Supported Stack JDK', () => {
             expect(supportedStackJDKProbe.status.health).to.eq('GREEN');
         });
         cy.logout();
-    })
+    });
 });
