@@ -11,6 +11,7 @@ import org.jahia.services.templates.JahiaTemplateManagerService;
 import org.jahia.services.templates.ModuleVersion;
 import org.jahia.settings.SettingsBean;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -19,6 +20,8 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -28,6 +31,7 @@ import java.util.*;
 @Component(service = ProbeActivator.class, immediate = true)
 public class SnapshotInProductionProbe implements Probe, ProbeActivator {
 
+    private static final Logger logger = LoggerFactory.getLogger(SnapshotInProductionProbe.class);
     public static final String PROBE_NAME = "Snapshot";
     private JahiaTemplateManagerService templateManagerService;
     private ServiceRegistration<Probe> serviceRegistration = null;
@@ -68,7 +72,13 @@ public class SnapshotInProductionProbe implements Probe, ProbeActivator {
 
     @Override
     public ProbeStatus getStatus() {
-        String report = getJsonReport();
+        String report = null;
+
+        try {
+            report = getJsonReport();
+        } catch (JSONException e) {
+            logger.error("Failed to get json report", e);
+        }
 
         if (report != null) {
             return new ProbeStatus(report, ProbeStatus.Health.YELLOW);
@@ -87,7 +97,7 @@ public class SnapshotInProductionProbe implements Probe, ProbeActivator {
         // Do nothing
     }
 
-    private String getJsonReport() {
+    private String getJsonReport() throws JSONException {
         String jsonReport = null;
         JSONArray snapshots = new JSONArray();
         Map<Bundle, ModuleState> moduleStatesByBundle = templateManagerService.getModuleStates();
@@ -104,7 +114,7 @@ public class SnapshotInProductionProbe implements Probe, ProbeActivator {
             }
         }
 
-        if (!snapshots.isEmpty()) {
+        if (snapshots.length() > 0) {
             JSONObject report = new JSONObject();
             report.put("snapshotCount", snapshots.length());
             report.put("snapshots", snapshots);
