@@ -4,11 +4,13 @@ import org.apache.commons.lang.StringUtils;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.jahia.utils.JCRNodeCacheLoadAverage;
 import org.jahia.utils.JCRSessionLoadAverage;
 import org.jahia.utils.RequestLoadAverage;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 
 @Component(service = Probe.class, immediate = true)
@@ -20,17 +22,22 @@ public class ServerLoadProbe implements Probe {
     private int requestLoadRedThreshold = 70;
     private int sessionLoadYellowThreshold = 40;
     private int sessionLoadRedThreshold = 70;
+    private int nodeCacheLoadYellowThreshold = 1000;
+    private int nodeCacheLoadRedThreshold = 2000;
 
     private static final String REQUEST_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY = "requestLoadYellowThreshold";
     private static final String REQUEST_LOAD_RED_THRESHOLD_CONFIG_PROPERTY = "requestLoadRedThreshold";
     private static final String SESSION_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY = "sessionLoadYellowThreshold";
     private static final String SESSION_LOAD_RED_THRESHOLD_CONFIG_PROPERTY = "sessionLoadRedThreshold";
+    private static final String NODECACHE_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY = "nodeCacheLoadYellowThreshold";
+    private static final String NODECACHE_LOAD_RED_THRESHOLD_CONFIG_PROPERTY = "nodeCacheLoadRedThreshold";
 
     @Override
     public ProbeStatus getStatus() {
 
         double oneMinuteRequestLoadAverage = RequestLoadAverage.getInstance().getOneMinuteLoad();
         double oneMinuteCurrentSessionLoad = JCRSessionLoadAverage.getInstance().getOneMinuteLoad();
+        double oneMinuteNodeCacheLoad = JCRNodeCacheLoadAverage.getInstance().getOneMinuteLoad();
 
         logger.debug("requestYellowThreshold: {}, requestRedThreshold: {}, sessionYellowThreshold: {}, sessionRedThreshold: {}",
                 requestLoadYellowThreshold,
@@ -38,10 +45,10 @@ public class ServerLoadProbe implements Probe {
                 sessionLoadYellowThreshold,
                 sessionLoadRedThreshold);
 
-        if (oneMinuteRequestLoadAverage < requestLoadYellowThreshold && oneMinuteCurrentSessionLoad < sessionLoadYellowThreshold) {
+        if (oneMinuteRequestLoadAverage < requestLoadYellowThreshold && oneMinuteCurrentSessionLoad < sessionLoadYellowThreshold && oneMinuteNodeCacheLoad < nodeCacheLoadYellowThreshold) {
             return new ProbeStatus("Serverload is normal", ProbeStatus.Health.GREEN);
         }
-        if (oneMinuteRequestLoadAverage < requestLoadRedThreshold && oneMinuteCurrentSessionLoad < sessionLoadRedThreshold) {
+        if (oneMinuteRequestLoadAverage < requestLoadRedThreshold && oneMinuteCurrentSessionLoad < sessionLoadRedThreshold && oneMinuteNodeCacheLoad < nodeCacheLoadRedThreshold) {
             return new ProbeStatus("Serverload is above normal", ProbeStatus.Health.YELLOW);
         }
 
@@ -76,6 +83,12 @@ public class ServerLoadProbe implements Probe {
         }
         if (config.containsKey(SESSION_LOAD_RED_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(SESSION_LOAD_RED_THRESHOLD_CONFIG_PROPERTY)))) {
             sessionLoadRedThreshold = Integer.parseInt(String.valueOf(config.get(SESSION_LOAD_RED_THRESHOLD_CONFIG_PROPERTY)));
+        }
+        if (config.containsKey(NODECACHE_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(NODECACHE_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY)))) {
+            nodeCacheLoadYellowThreshold = Integer.parseInt(String.valueOf(config.get(NODECACHE_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY)));
+        }
+        if (config.containsKey(NODECACHE_LOAD_RED_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(NODECACHE_LOAD_RED_THRESHOLD_CONFIG_PROPERTY)))) {
+            nodeCacheLoadRedThreshold = Integer.parseInt(String.valueOf(config.get(NODECACHE_LOAD_RED_THRESHOLD_CONFIG_PROPERTY)));
         }
     }
 }

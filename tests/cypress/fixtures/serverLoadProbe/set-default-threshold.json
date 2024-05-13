@@ -5,7 +5,9 @@
       "probes.ServerLoad.requestLoadYellowThreshold": "40",
       "probes.ServerLoad.requestLoadRedThreshold": "70",
       "probes.ServerLoad.sessionLoadYellowThreshold": "40",
-      "probes.ServerLoad.sessionLoadRedThreshold": "70"
+      "probes.ServerLoad.sessionLoadRedThreshold": "70",
+      "probes.ServerLoad.nodeCacheLoadYellowThreshold": "1000",
+      "probes.ServerLoad.nodeCacheLoadRedThreshold": "2000"
     }
   }
 ]
