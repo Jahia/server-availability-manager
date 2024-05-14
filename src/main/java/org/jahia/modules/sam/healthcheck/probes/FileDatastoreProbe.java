@@ -5,8 +5,10 @@ import org.apache.jackrabbit.core.SessionImpl;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.jahia.modules.sam.healthcheck.ProbesRegistry;
 import org.jahia.services.content.JCRTemplate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,13 @@ public class FileDatastoreProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(FileDatastoreProbe.class);
 
+    private ProbesRegistry probesRegistry;
+
+    @Reference
+    public void setProbesRegistry(ProbesRegistry probesRegistry) {
+        this.probesRegistry = probesRegistry;
+    }
+
     @Override
     public ProbeStatus getStatus() {
 
@@ -33,6 +42,15 @@ public class FileDatastoreProbe implements Probe {
             return Files.exists(datastorePath) && Files.isWritable(datastorePath) ?
                     new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN) :
                     new ProbeStatus("Could not perform write operation", ProbeStatus.Health.RED);
+
+        // check db connectivity if datastore in db; reuse DBConnectivityProbe
+        } else {
+            DBConnectivityProbe dbConnectivityProbe = (DBConnectivityProbe) probesRegistry.getProbes().stream()
+                    .filter(probe -> probe.getName().equals("DBConnectivity"))
+                    .findFirst().orElse(null);
+            if (dbConnectivityProbe != null && dbConnectivityProbe.getStatus().getHealth().equals(ProbeStatus.Health.RED)) {
+                return new ProbeStatus("Database not available for db datastore", ProbeStatus.Health.RED);
+            }
         }
 
         return new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN);
