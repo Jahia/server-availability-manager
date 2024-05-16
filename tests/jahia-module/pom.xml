@@ -50,7 +50,7 @@
     <parent>
         <groupId>org.jahia.modules</groupId>
         <artifactId>jahia-modules</artifactId>
-        <version>8.2.0.0-SNAPSHOT</version>
+        <version>8.2.0.0</version>
     </parent>
     <groupId>org.jahia.test</groupId>
     <artifactId>server-availability-manager-test-module</artifactId>
