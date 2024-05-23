@@ -5,7 +5,6 @@ import org.apache.jackrabbit.core.SessionImpl;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.modules.sam.healthcheck.ProbesRegistry;
 import org.jahia.services.content.JCRTemplate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -25,12 +24,8 @@ public class FileDatastoreProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(FileDatastoreProbe.class);
 
-    private ProbesRegistry probesRegistry;
-
-    @Reference
-    public void setProbesRegistry(ProbesRegistry probesRegistry) {
-        this.probesRegistry = probesRegistry;
-    }
+    @Reference(service=Probe.class, target="(component.name=org.jahia.modules.sam.healthcheck.probes.DBConnectivityProbe)")
+    private Probe dbConnectivityProbe;
 
     @Override
     public ProbeStatus getStatus() {
@@ -43,18 +38,15 @@ public class FileDatastoreProbe implements Probe {
                     new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN) :
                     new ProbeStatus("Could not perform write operation", ProbeStatus.Health.RED);
 
+        } else if (dbConnectivityProbe == null) {
+            return new ProbeStatus("Unable to check database connectivity for db datastore", ProbeStatus.Health.YELLOW);
+            
         // check db connectivity if datastore in db; reuse DBConnectivityProbe
-        } else {
-            DBConnectivityProbe dbConnectivityProbe = (DBConnectivityProbe) probesRegistry.getProbes().stream()
-                    .filter(probe -> probe.getName().equals("DBConnectivity"))
-                    .findFirst().orElse(null);
-            if (dbConnectivityProbe != null && dbConnectivityProbe.getStatus().getHealth().equals(ProbeStatus.Health.RED)) {
-                return new ProbeStatus("Database not available for db datastore", ProbeStatus.Health.RED);
-            }
+        } else if (dbConnectivityProbe.getStatus().getHealth().equals(ProbeStatus.Health.RED)) {
+            return new ProbeStatus("Database not available for db datastore", ProbeStatus.Health.RED);
         }
 
         return new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN);
-
     }
 
     private boolean isStoreFilesInDB() {
