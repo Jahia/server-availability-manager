@@ -82,7 +82,7 @@ jobs:
           timeout_minutes: 20
           testrail_milestone: Default
           tests_manifest: provisioning-manifest-build.yml
-          jahia_image: jahia/jahia-ee:8
+          jahia_image: jahia/jahia-ee:8.1
           should_use_build_artifacts: true
           should_skip_testrail: true
           github_artifact_name: sam-artifacts-${{ github.run_number }}
