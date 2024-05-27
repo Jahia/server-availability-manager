@@ -33,6 +33,43 @@ describe('Health check', () => {
         });
     });
 
+    it('Filters with "includes" parameter', () => {
+        cy.runProvisioningScript({fileName: 'test-disable.json'});
+        
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then(waitUntilTestFcnDisable), waitUntilOptions);
+
+        console.log("Return with blank filter");
+        healthCheck('LOW', []).should(r => {
+            expect(r.probes).to.be.empty;
+        });
+
+        console.log("Return one probe");
+        healthCheck('LOW', 'FileDatastore').should(r => {
+            expect(r.probes.length).to.be.eq(1);
+            expect(r.probes[0].name).to.be.eq("FileDatastore");
+        });
+
+        console.log("Return more than one probe");
+        healthCheck('LOW', ['FileDatastore', 'DBConnectivity']).should(r => {
+            expect(r.probes.length).to.be.eq(2);
+            const probeNames = r.probes?.map(r => r.name);
+            expect('FileDatastore').to.be.oneOf(probeNames);
+            expect('DBConnectivity').to.be.oneOf(probeNames);
+        });
+
+        console.log("Filter with only invalid probe");
+        healthCheck('LOW', ['UndefinedProbe']).should(r => {
+            expect(r.probes).to.be.empty;
+        });
+
+        console.log("Filter invalid probe");
+        healthCheck('LOW', ['FileDatastore', 'UndefinedProbe']).should(r => {
+            expect(r.probes.length).to.be.eq(1);
+            expect(r.probes[0].name).to.be.eq("FileDatastore");
+        });
+    });
+
     it('Check healthcheck with one HIGH probe RED, asking low', () => {
         cy.runProvisioningScript({fileName: 'test-enable.json'});
 
