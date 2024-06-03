@@ -3,26 +3,26 @@ package org.jahia.modules.sam.graphql;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
-import org.jahia.utils.LoadAverage;
+import org.jahia.utils.load.LoadEntryProvider;
 
-@GraphQLDescription("Load value")
-public class LoadValue {
+@GraphQLDescription("Load provider")
+public class LoadProvider {
 
     @GraphQLDescription("Interval expressed in minutes")
     public enum LoadInterval {
         ONE, FIVE, FIFTEEN
     }
 
-    private LoadAverage loadAverage;
+    private LoadEntryProvider loadProvider;
 
-    public LoadValue(LoadAverage loadAverage) {
-        this.loadAverage = loadAverage;
+    public LoadProvider(LoadEntryProvider loadProvider) {
+        this.loadProvider = loadProvider;
     }
 
     @GraphQLField
-    @GraphQLDescription("Instantaneous count")
-    public int getCount() {
-        return (int) loadAverage.getCount();
+    @GraphQLDescription("Instantaneous value")
+    public double getValue() {
+        return loadProvider.getValue();
     }
 
     @GraphQLField
@@ -30,16 +30,16 @@ public class LoadValue {
     public double getAverage(
             @GraphQLName("interval") @GraphQLDescription("Interval between collection of load metrics") LoadInterval interval) {
         if (interval == null) {
-            return loadAverage.getFifteenMinuteLoad();
+            return loadProvider.getEntry().getFifteenMinuteLoad();
         }
         switch (interval) {
             case ONE:
-                return loadAverage.getOneMinuteLoad();
+                return loadProvider.getEntry().getOneMinuteLoad();
             case FIVE:
-                return loadAverage.getFiveMinuteLoad();
+                return loadProvider.getEntry().getFiveMinuteLoad();
             case FIFTEEN:
             default:
-                return loadAverage.getFifteenMinuteLoad();
+                return loadProvider.getEntry().getFifteenMinuteLoad();
         }
     }
 
