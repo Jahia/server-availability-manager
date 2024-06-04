@@ -21,7 +21,7 @@ describe('Module definitions probe test', () => {
 
         cy.login();
         cy.visit('/tools/osgi/console/bundles');
-        cy.get('.filter').first().type('test');
+        cy.get('.filter').first().type('(Bundle-Name=test)');
         cy.get('.filterApply').first().click();
         cy.get('td').contains('1.0.0.SNAPSHOT');
         cy.get('td').contains('1.2.0.SNAPSHOT').should('not.exist');

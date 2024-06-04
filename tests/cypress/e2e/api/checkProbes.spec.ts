@@ -53,7 +53,7 @@ describe('Health check', () => {
 
         healthCheck('CRITICAL').should(r => {
             expect(r.status.health).to.eq('GREEN');
-            expect(r.probes.length).to.eq(3);
+            expect(r.probes.length).to.eq(4);
         });
     });
 
@@ -122,7 +122,7 @@ describe('Health check', () => {
             }
         }).should(response => {
             expect(response.body.status.health).to.eq('GREEN');
-            expect(response.body.probes.length).to.eq(3);
+            expect(response.body.probes.length).to.eq(4);
             expect(response.status).to.eq(200);
         });
     });

@@ -15,6 +15,7 @@ describe('Jahia errors probe test', () => {
     const waitUntilTestFcnEnable = (response: string) => response.indexOf('probes.JahiaErrors.severity = LOW') !== -1;
 
     before(() => {
+        // cy.exec('docker exec -i $DOCKER_CONTAINER_NAME /bin/bash -c "truncate -s 0 /var/log/jahia/jahia.log"');
         cy.runProvisioningScript({fileName: 'jahiaErrorsProbe/enable.json'});
 
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)

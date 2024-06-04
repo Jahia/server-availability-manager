@@ -13,18 +13,11 @@
 <%--@elvariable id="currentResource" type="org.jahia.services.render.Resource"--%>
 <%--@elvariable id="url" type="org.jahia.services.render.URLGenerator"--%>
 
-<c:if test="${renderContext.editMode}">
-    <legend>${fn:escapeXml(jcr:label(currentNode.primaryNodeType, currentResource.locale))}</legend>
-</c:if>
+<legend>Included properly</legend>
 
-<!-- CSS Jahia Theme -->
-<template:theme/>
 <c:set var="text" value="${currentNode.properties['text'].string}"/>
 <c:set var="title" value="${currentNode.properties['jcr:title'].string}"/>
 <div>
-	<span>${text}</span>
+    <span>${text}</span>
 </div>
 
-<template:include templateType="html" view="included" />
-
-<jsp:include page="/modules/tools/index.jsp"/>
