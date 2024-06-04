@@ -4,9 +4,10 @@ import org.apache.commons.lang.StringUtils;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.utils.JCRNodeCacheLoadAverage;
-import org.jahia.utils.JCRSessionLoadAverage;
-import org.jahia.utils.RequestLoadAverage;
+import org.jahia.utils.load.JCRNodeCacheLoadAverage;
+import org.jahia.utils.load.JCRSessionLoadAverage;
+import org.jahia.utils.load.LoadAverageMonitor;
+import org.jahia.utils.load.RequestLoadAverage;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +36,12 @@ public class ServerLoadProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
 
-        double oneMinuteRequestLoadAverage = RequestLoadAverage.getInstance().getOneMinuteLoad();
-        double oneMinuteCurrentSessionLoad = JCRSessionLoadAverage.getInstance().getOneMinuteLoad();
-        double oneMinuteNodeCacheLoad = JCRNodeCacheLoadAverage.getInstance().getOneMinuteLoad();
+        LoadAverageMonitor monitor = LoadAverageMonitor.getInstance();
+
+        double oneMinuteRequestLoadAverage = monitor.findProviderForName(RequestLoadAverage.NAME).get().getEntry().getOneMinuteLoad();
+        double oneMinuteCurrentSessionLoad = monitor.findProviderForName(JCRSessionLoadAverage.NAME).get().getEntry().getOneMinuteLoad();
+        double oneMinuteNodeCacheLoad = monitor.findProviderForName(JCRNodeCacheLoadAverage.NAME).get().getEntry().getOneMinuteLoad();
+        //double oneMinuteThreadLoad = monitor.findProviderForName(ThreadLoadAverage.NAME).get().getEntry().getOneMinuteLoad();
 
         logger.debug("requestYellowThreshold: {}, requestRedThreshold: {}, sessionYellowThreshold: {}, sessionRedThreshold: {}",
                 requestLoadYellowThreshold,

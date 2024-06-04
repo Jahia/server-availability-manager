@@ -26,6 +26,13 @@ public class LoadProvider {
     }
 
     @GraphQLField
+    @GraphQLDescription("Load Entry")
+    public String getEntry() {
+        return loadProvider.getEntry().toString();
+    }
+
+
+    @GraphQLField
     @GraphQLDescription("Exponential moving average")
     public double getAverage(
             @GraphQLName("interval") @GraphQLDescription("Interval between collection of load metrics") LoadInterval interval) {
