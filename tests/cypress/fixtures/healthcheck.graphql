@@ -1,7 +1,7 @@
-query($severity: GqlProbeSeverity) {
+query($severity: GqlProbeSeverity, $includes: [String!]) {
     admin {
         jahia {
-            healthCheck(severity: $severity) {
+            healthCheck(severity: $severity, includes: $includes) {
                 status {
                     health
                     message
