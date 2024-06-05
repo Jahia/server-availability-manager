@@ -3,7 +3,7 @@ package org.jahia.modules.sam.graphql;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
-import org.jahia.utils.load.LoadEntryProvider;
+import org.jahia.modules.sam.load.LoadAverageProvider;
 
 @GraphQLDescription("Load provider")
 public class LoadProvider {
@@ -13,9 +13,9 @@ public class LoadProvider {
         ONE, FIVE, FIFTEEN
     }
 
-    private LoadEntryProvider loadProvider;
+    private LoadAverageProvider loadProvider;
 
-    public LoadProvider(LoadEntryProvider loadProvider) {
+    public LoadProvider(LoadAverageProvider loadProvider) {
         this.loadProvider = loadProvider;
     }
 
@@ -28,7 +28,7 @@ public class LoadProvider {
     @GraphQLField
     @GraphQLDescription("Load Entry")
     public String getEntry() {
-        return loadProvider.getEntry().toString();
+        return loadProvider.getAverage().toString();
     }
 
 
@@ -37,16 +37,16 @@ public class LoadProvider {
     public double getAverage(
             @GraphQLName("interval") @GraphQLDescription("Interval between collection of load metrics") LoadInterval interval) {
         if (interval == null) {
-            return loadProvider.getEntry().getFifteenMinuteLoad();
+            return loadProvider.getAverage().getFifteenMinuteLoad();
         }
         switch (interval) {
             case ONE:
-                return loadProvider.getEntry().getOneMinuteLoad();
+                return loadProvider.getAverage().getOneMinuteLoad();
             case FIVE:
-                return loadProvider.getEntry().getFiveMinuteLoad();
+                return loadProvider.getAverage().getFiveMinuteLoad();
             case FIFTEEN:
             default:
-                return loadProvider.getEntry().getFifteenMinuteLoad();
+                return loadProvider.getAverage().getFifteenMinuteLoad();
         }
     }
 
