@@ -118,12 +118,10 @@ public abstract class LoadAverageProvider implements Runnable {
         getAverage().setLastRun(System.currentTimeMillis());
     }
 
-    //TODO Move that to a SAM probe
     public void tickCallback() {
         if (getLoggingTriggerValue() > 0 && average.getOneMinuteLoad() > getLoggingTriggerValue()) {
             LOGGER.info(average.toString());
             if (isThreadDumpOnHighLoad() && average.getOneMinuteLoad() > getThreadDumpTriggerValue()) {
-                //TODO Replace this with a probe in SAM when migrated to SAM
                 ThreadMonitor.getInstance().dumpThreadInfo(false, true);
             }
         }
