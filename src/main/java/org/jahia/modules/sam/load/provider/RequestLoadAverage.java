@@ -68,6 +68,5 @@ public class RequestLoadAverage extends LoadAverageProvider {
     public double getValue() {
         return (double) JahiaContextLoaderListener.getRequestCount();
     }
-
 }
 

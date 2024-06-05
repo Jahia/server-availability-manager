@@ -42,6 +42,7 @@
  */
 package org.jahia.modules.sam.load;
 
+import org.jahia.services.observation.JahiaEventService;
 import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
