@@ -45,12 +45,7 @@ package org.jahia.modules.sam.load.provider;
 import org.jahia.bin.listeners.JahiaContextLoaderListener;
 import org.jahia.modules.sam.load.LoadAverageProvider;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
-
-import java.util.Map;
 
 /**
  * Request load average tool.
@@ -59,10 +54,6 @@ import java.util.Map;
 public class RequestLoadAverage extends LoadAverageProvider {
 
     private static final String NAME = "Jahia Request Load";
-    private static final double HIGH_LOAD_BOUNDARY = 10.0;
-    @Reference
-    private EventAdmin eventAdmin;
-
 
     public RequestLoadAverage() {
         super(NAME);
@@ -78,16 +69,5 @@ public class RequestLoadAverage extends LoadAverageProvider {
         return (double) JahiaContextLoaderListener.getRequestCount();
     }
 
-    @Override
-    public void tickCallback() {
-        super.tickCallback();
-        boolean highLoad = getAverage().getOneMinuteLoad() > HIGH_LOAD_BOUNDARY;
-        if (highLoad) {
-            Event event = new Event("server-load", Map.of("request.load.average.one-minute", getAverage().getOneMinuteLoad()));
-            if (eventAdmin != null) {
-                eventAdmin.postEvent(event);
-            }
-        }
-    }
 }
 

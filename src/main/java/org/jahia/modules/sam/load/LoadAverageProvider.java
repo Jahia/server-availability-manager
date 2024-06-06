@@ -56,7 +56,6 @@ import static org.jahia.modules.sam.load.LoadAverageValue.*;
  * and m = time in minutes over which to perform the average
  *
  */
-
 public abstract class LoadAverageProvider implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadAverageProvider.class);
@@ -118,6 +117,11 @@ public abstract class LoadAverageProvider implements Runnable {
         getAverage().setLastRun(System.currentTimeMillis());
     }
 
+    //TODO This callback is not the best option to trigger some log or dump about load average
+    // the load average should only be used to gather information about the system load and populate values
+    // a specific probe should exist to define a higher level of aggregation and trigger actions
+    // thus, an internal probe polling Executor should be able to check some probes (PollableProbe) and apply actions regarding thresholds
+    // this way, all trigger information included in LoadAverage should be removed to a specific probe
     public void tickCallback() {
         if (getLoggingTriggerValue() > 0 && average.getOneMinuteLoad() > getLoggingTriggerValue()) {
             LOGGER.info(average.toString());
