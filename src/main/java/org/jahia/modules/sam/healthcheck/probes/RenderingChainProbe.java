@@ -60,7 +60,7 @@ public class RenderingChainProbe implements Probe {
             RenderContext renderContext = new RenderContext(request, response, sessionFactory.getCurrentUser());
             JahiaSite defaultSite = jahiaSitesService.getDefaultSite();
             if (defaultSite == null) {
-                return new ProbeStatus("No site installed, postponing rendering test.", ProbeStatus.Health.YELLOW);
+                return new ProbeStatus("No site installed, postponing rendering test.", ProbeStatus.Health.GREEN);
             }
             String textTest = MessageFormat.format("Rendering Chain Test done at {0}", ISO8601.format(Calendar.getInstance()));
             JCRSessionWrapper currentUserSession = sessionFactory.getCurrentUserSession(Constants.LIVE_WORKSPACE, Locale.forLanguageTag(defaultSite.getDefaultLanguage()));
