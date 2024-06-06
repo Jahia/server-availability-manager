@@ -2,6 +2,7 @@ package org.jahia.modules.sam.graphql;
 
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
+import graphql.schema.DataFetchingEnvironment;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.healthcheck.ProbesRegistry;
@@ -37,10 +38,10 @@ public class GqlHealthCheck {
 
     @GraphQLField
     @GraphQLDescription("Highest reported status across all probes")
-    public GqlProbeStatus getStatus() {
+    public GqlProbeStatus getStatus(DataFetchingEnvironment environment) {
         Function<GqlProbeStatus, Integer> keyExtractor = (GqlProbeStatus status) -> status.getHealth().ordinal();
         return getProbes()
-                .stream().map(GqlProbe::getStatus)
+                .stream().map(gqlProbe -> gqlProbe.getStatus(environment))
                 .filter(status -> !status.getHealth().equals(GqlProbeStatus.GqlProbeHealth.GREEN))
                 .max(Comparator.comparing(keyExtractor))
                 .orElse(new GqlProbeStatus("All probes are healthy", GqlProbeStatus.GqlProbeHealth.GREEN));

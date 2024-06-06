@@ -14,15 +14,20 @@ const healthcheck = () => {
 };
 
 describe('Module definitions probe test', () => {
-    it('should fail when installing incompatible definitions', function () {
+    it('should fail when installing incompatible definitions', {retries: 5}, function () {
+        cy.login();
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
+        healthcheck().should(response => {
+            expect(response.body.status.health).to.eq('GREEN');
+            expect(response.status).to.eq(200);
+        });
         cy.installBundle('moduleDefinitionsProbe/test-1.2-SNAPSHOT.jar');
 
-        cy.login();
         cy.visit('/tools/osgi/console/bundles');
-        cy.get('.filter').first().type('test');
+        cy.get('.filter').first().type('(Bundle-Name=test)');
         cy.get('.filterApply').first().click();
+        cy.get('.reloadButton').first().click();
         cy.get('td').contains('1.0.0.SNAPSHOT');
         cy.get('td').contains('1.2.0.SNAPSHOT').should('not.exist');
     });

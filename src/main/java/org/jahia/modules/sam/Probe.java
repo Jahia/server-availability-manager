@@ -1,5 +1,7 @@
 package org.jahia.modules.sam;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 public interface Probe {
@@ -39,4 +41,11 @@ public interface Probe {
         //
     }
 
+    default boolean needsHttpContext() {
+        return false;
+    }
+
+    default ProbeStatus getStatus(HttpServletRequest request, HttpServletResponse response) {
+        return getStatus(); // default implementation does not use request/response
+    }
 }

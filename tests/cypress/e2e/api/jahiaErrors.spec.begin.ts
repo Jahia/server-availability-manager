@@ -12,6 +12,14 @@ describe('Jahia errors probe test', () => {
     };
 
     const waitUntilTestFcnDisable = (response: string) => response.indexOf('probes.JahiaErrors.severity = IGNORED') !== -1;
+    const waitUntilTestFcnEnable = (response: string) => response.indexOf('probes.JahiaErrors.severity = LOW') !== -1;
+
+    before(() => {
+        cy.runProvisioningScript({fileName: 'jahiaErrorsProbe/enable.json'});
+
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then(waitUntilTestFcnEnable), waitUntilOptions);
+    });
 
     after(() => {
         cy.runProvisioningScript({fileName: 'jahiaErrorsProbe/disable.json'});

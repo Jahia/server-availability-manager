@@ -92,6 +92,8 @@
             org.jahia.modules.graphql.provider.dxm.admin;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.osgi.annotations;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.security;version="[2.7,4)",
+            org.jahia.modules.graphql.provider.dxm.node;version="[2.7,4)",
+            org.jahia.modules.graphql.provider.dxm.util;version="[2.7,4)",
             org.jahia.osgi,
             org.jahia.services.content,
             org.jahia.services.templates,

@@ -43,8 +43,7 @@ public class JahiaErrorsProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
         int numberOfError = 0;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath));
+        try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
             String currentLine;
             while ((currentLine = br.readLine()) != null) {
                 if (currentLine.contains("ERROR")) {
