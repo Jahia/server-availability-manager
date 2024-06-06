@@ -1,13 +1,11 @@
 package org.jahia.modules.sam.graphql;
 
-import graphql.annotations.annotationTypes.GraphQLDescription;
-import graphql.annotations.annotationTypes.GraphQLField;
-import graphql.annotations.annotationTypes.GraphQLName;
-import graphql.annotations.annotationTypes.GraphQLTypeExtension;
+import graphql.annotations.annotationTypes.*;
 import org.jahia.modules.graphql.provider.dxm.admin.GqlJahiaAdminQuery;
 import org.jahia.modules.sam.TasksIdentificationService;
 import org.jahia.osgi.BundleUtils;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,8 +28,9 @@ public class ServerAvailabilityQuery {
     @GraphQLField
     @GraphQLDescription("HealthCheck node")
     public GqlHealthCheck getHealthCheck(
-            @GraphQLName("severity") @GraphQLDescription("Returns SAM probes with this severity or higher") GqlProbeSeverity severity) {
-        return new GqlHealthCheck(severity);
+            @GraphQLName("severity") @GraphQLDescription("Returns SAM probes with this severity or higher") GqlProbeSeverity severity,
+            @GraphQLName("includes") @GraphQLDescription("Returns only SAM probes with probe names included in this list") Collection<@GraphQLNonNull String> includes) {
+        return new GqlHealthCheck(severity, includes);
     }
 
     @GraphQLField

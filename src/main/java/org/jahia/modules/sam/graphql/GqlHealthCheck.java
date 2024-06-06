@@ -8,6 +8,7 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.healthcheck.ProbesRegistry;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -17,15 +18,16 @@ import java.util.stream.Collectors;
 public class GqlHealthCheck {
 
     private ProbesRegistry probesRegistry;
-    private GqlProbeSeverity severityThreshold;
+    private final GqlProbeSeverity severityThreshold;
+    private final Collection<String> includes;
 
-    public GqlHealthCheck(GqlProbeSeverity severityThreshold) {
+    public GqlHealthCheck(GqlProbeSeverity severityThreshold, Collection<String> includes) {
+        this.includes = includes;
         if (severityThreshold != null) {
             this.severityThreshold = severityThreshold;
         } else {
             this.severityThreshold = GqlProbeSeverity.MEDIUM;
         }
-
     }
 
     @Inject
@@ -49,8 +51,8 @@ public class GqlHealthCheck {
     @GraphQLDescription("Probes registered in SAM for the requested severity")
     public List<GqlProbe> getProbes() {
         return probesRegistry.getProbes().stream()
-                .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= ProbeSeverity
-                        .valueOf(severityThreshold.name()).ordinal())
+                .filter(p -> includes == null || includes.contains(p.getName()))
+                .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= ProbeSeverity.valueOf(severityThreshold.name()).ordinal())
                 .map(GqlProbe::new).collect(Collectors.toList());
     }
 }
