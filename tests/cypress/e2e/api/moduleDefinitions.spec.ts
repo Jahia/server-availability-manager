@@ -14,8 +14,8 @@ const healthcheck = () => {
 };
 
 describe('Module definitions probe test', () => {
-    it('should fail when installing incompatible definitions', {retries: 5},  function () {
-        cy.login()
+    it('should fail when installing incompatible definitions', {retries: 5}, function () {
+        cy.login();
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
         healthcheck().should(response => {
@@ -24,7 +24,6 @@ describe('Module definitions probe test', () => {
         });
         cy.installBundle('moduleDefinitionsProbe/test-1.2-SNAPSHOT.jar');
 
-        cy.login();
         cy.visit('/tools/osgi/console/bundles');
         cy.get('.filter').first().type('(Bundle-Name=test)');
         cy.get('.filterApply').first().click();
