@@ -53,14 +53,14 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Component(immediate = true, service = LoadAverageService.class)
+@Component(immediate = true, service = LoadAverageService.class, scope = ServiceScope.SINGLETON)
 public class LoadAverageServiceImpl implements LoadAverageService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadAverageService.class);
-    private static final ScheduledExecutorService executor =  Executors.newSingleThreadScheduledExecutor();
     @Reference(service = LoadAverageProvider.class, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
             bind = "addProvider", unbind = "removeProvider")
     private volatile List<LoadAverageProvider> providers = new ArrayList<>();
+    private final ScheduledExecutorService executor =  Executors.newSingleThreadScheduledExecutor();
     private final Map<String, ScheduledFuture<?>> schedules = new HashMap<>();
     private long calcFreqMillis = 5000;
     private boolean running = false;
@@ -72,7 +72,7 @@ public class LoadAverageServiceImpl implements LoadAverageService {
             schedules.get(provider.getClass().getName()).cancel(false);
             schedules.remove(provider.getClass().getName());
         }
-        if (running && !executor.isShutdown() && !executor.isTerminated()) {
+        if (running) {
             ScheduledFuture<?> scheduledFuture =
                     executor.scheduleAtFixedRate(provider, 0, calcFreqMillis, TimeUnit.MILLISECONDS);
             schedules.put(provider.getClass().getName(), scheduledFuture);
