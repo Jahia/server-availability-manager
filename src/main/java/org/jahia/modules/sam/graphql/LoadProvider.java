@@ -20,8 +20,8 @@ public class LoadProvider {
     }
 
     @GraphQLField
-    @GraphQLDescription("Instantaneous value")
-    public double getValue() {
+    @GraphQLDescription("Instantaneous count")
+    public double getCount() {
         return loadProvider.getValue();
     }
 
