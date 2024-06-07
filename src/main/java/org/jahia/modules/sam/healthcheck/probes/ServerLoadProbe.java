@@ -75,8 +75,6 @@ public class ServerLoadProbe implements Probe {
         }
 
         return new ProbeStatus("Serverload is very high", ProbeStatus.Health.RED);
-
-        //TODO If present in core, set the ServerLoadFlag
     }
 
     @Override
