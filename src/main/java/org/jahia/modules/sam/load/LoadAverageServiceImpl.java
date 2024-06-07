@@ -128,16 +128,17 @@ public class LoadAverageServiceImpl implements LoadAverageService {
             });
             running = true;
         }
+        LOGGER.info("Load average started.");
     }
 
     @Deactivate
     public void stop() {
-        LOGGER.info("Stopping load average service");
+        LOGGER.info("Stopping load average service...");
         if (running) {
             running = false;
             try {
                 executor.shutdown();
-                if (!executor.awaitTermination(200, TimeUnit.MILLISECONDS)) { //optional *
+                if (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) { //optional *
                     LOGGER.info("Load Average Service did not terminate in the specified time."); //optional *
                     List<Runnable> droppedTasks = executor.shutdownNow(); //optional **
                     LOGGER.info("Load Average Service was abruptly shut down. " + droppedTasks.size() + " tasks will not be executed."); //optional **
@@ -147,5 +148,6 @@ public class LoadAverageServiceImpl implements LoadAverageService {
             }
             schedules.clear();
         }
+        LOGGER.info("Load average service stopped.");
     }
 }
