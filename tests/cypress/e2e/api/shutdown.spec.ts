@@ -22,7 +22,6 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
             mutationFile: 'shutdown.graphql'
         }).should(response => {
             cy.log('Requested shutdown');
-            // eslint-disable-next-line no-unused-expressions
             expect(response.data.admin.jahia.shutdown).to.be.false;
             const completeShutdown = new Date().getTime();
             const executionTime = completeShutdown - startShutdown;
@@ -44,7 +43,6 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
             mutationFile: 'shutdown.graphql'
         }).should(response => {
             cy.log('Requested shutdown');
-            // eslint-disable-next-line no-unused-expressions
             expect(response.data.admin.jahia.shutdown).to.be.false;
             const completeShutdown = new Date().getTime();
             const executionTime = completeShutdown - startShutdown;
@@ -64,7 +62,6 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
             },
             mutationFile: 'shutdown.graphql'
         }).should(response => {
-            // eslint-disable-next-line no-unused-expressions
             expect(response.data.admin.jahia.shutdown).to.be.true;
             const completeShutdown = new Date().getTime();
             const executionTime = completeShutdown - startShutdown;
@@ -84,7 +81,6 @@ describe('Shutdown via API - mutation.admin.jahia.shutdown', () => {
             mutationFile: 'shutdown.graphql'
         }).should(response => {
             cy.log('Requested shutdown');
-            // eslint-disable-next-line no-unused-expressions
             expect(response.data.admin.jahia.shutdown).to.be.true;
             const completeShutdown = new Date().getTime();
             const executionTime = completeShutdown - startShutdown;
