@@ -42,7 +42,6 @@
  */
 package org.jahia.modules.sam.load;
 
-import org.jahia.services.observation.JahiaEventService;
 import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +72,7 @@ public class LoadAverageServiceImpl implements LoadAverageService {
             schedules.get(provider.getClass().getName()).cancel(false);
             schedules.remove(provider.getClass().getName());
         }
-        if (running) {
+        if (running && !executor.isShutdown() && !executor.isTerminated()) {
             ScheduledFuture<?> scheduledFuture =
                     executor.scheduleAtFixedRate(provider, 0, calcFreqMillis, TimeUnit.MILLISECONDS);
             schedules.put(provider.getClass().getName(), scheduledFuture);
