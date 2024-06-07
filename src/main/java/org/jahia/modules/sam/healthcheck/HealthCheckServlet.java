@@ -17,16 +17,21 @@ import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"java:S2226", "java:S1989"})
 @Component(service = {javax.servlet.http.HttpServlet.class, javax.servlet.Servlet.class}, property = {"alias=/healthcheck", "allow-api-token=true"})
 public class HealthCheckServlet extends HttpServlet {
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
+    private String defaultIncludes;
     private ProbeStatus.Health statusThreshold;
+
+    @Reference(service = ProbesRegistry.class)
+    private ProbesRegistry probesRegistry;
+
     private PermissionService permissionService;
     private int statusCode;
 
@@ -34,6 +39,7 @@ public class HealthCheckServlet extends HttpServlet {
     public void activate(Map<String, Object> config) {
         //setting default values for probes
         defaultSeverity = (config.get("severity.default")!=null ? ProbeSeverity.valueOf((String) config.get("severity.default")) : ProbeSeverity.MEDIUM);
+        defaultIncludes = (config.get("includes.default") != null) ? (String) config.get("includes.default") : "";
         statusThreshold = (config.get("status.threshold")!=null ? ProbeStatus.Health.valueOf((String) config.get("status.threshold")) : ProbeStatus.Health.RED);
         statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
     }
@@ -59,14 +65,28 @@ public class HealthCheckServlet extends HttpServlet {
             return;
         }
 
+        // Filter 'includes' param (or default includes) against valid probe names
+        String includesParam = Optional.ofNullable(req.getParameter("includes")).orElse(defaultIncludes);
+        String tmpIncludes = null;
+        if (!includesParam.isEmpty()) {
+            Set<String> includeSet = Stream.of(includesParam.split(",")).collect(Collectors.toCollection(HashSet::new));
+            tmpIncludes = probesRegistry.getProbes().stream()
+                    .filter(b -> includeSet.contains(b.getName()))
+                    .map(b -> "\"" + b.getName() + "\"")
+                    .collect(Collectors.joining(","));
+        }
+        String includes = tmpIncludes;
+
         HttpServletRequest requestWrapper = new HttpServletRequestWrapper(req) {
             @Override
             public String getParameter(String name) {
                 if (name.equals("query")) {
+                    String params = "severity: " + severity
+                            + ((includes != null) ? String.format(", includes: [%s]", includes) : "");
                     return "{\n" +
                             "  admin {\n" +
                             "    jahia {\n" +
-                            "      healthCheck(severity:" + severity + ") {\n" +
+                            "      healthCheck(" + params + ") {\n" +
                             "        status {\n" +
                             "          health\n" +
                             "          message\n" +
