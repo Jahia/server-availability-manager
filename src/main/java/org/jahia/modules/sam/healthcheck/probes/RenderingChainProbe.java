@@ -88,14 +88,14 @@ public class RenderingChainProbe implements Probe {
             response.setCharacterEncoding(SettingsBean.getInstance().getCharacterEncoding());
             renderingResult = renderService.render(r, renderContext);
             if (!renderingResult.contains(textTest)) {
-                return new ProbeStatus(MessageFormat.format("Error rendering test, result should have contained {0} but was {1}",textTest, renderingResult), ProbeStatus.Health.RED );
+                return new ProbeStatus(MessageFormat.format("Rendering Chain test result should have contained '{0}' but was '{1}'", textTest, renderingResult), ProbeStatus.Health.RED);
             }
         } catch (Exception e) {
-            return new ProbeStatus(MessageFormat.format("Error rendering test: {0}",e.getMessage()), ProbeStatus.Health.RED);
+            return new ProbeStatus(MessageFormat.format("Rendering Chain test returns an error: '{0}'", e.getMessage()), ProbeStatus.Health.RED);
         }
         logger.debug("Rendering result: {}", renderingResult);
 
-        return new ProbeStatus(MessageFormat.format("All good: {0}", renderingResult), ProbeStatus.Health.GREEN);
+        return new ProbeStatus(MessageFormat.format("Rendering Chain works properly: '{0}'", renderingResult), ProbeStatus.Health.GREEN);
     }
 
     @Override
