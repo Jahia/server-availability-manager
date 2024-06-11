@@ -28,8 +28,8 @@ public class ServerLoadProbe implements Probe {
     private int sessionLoadRedThreshold = 70;
     private int nodeCacheLoadYellowThreshold = 1000;
     private int nodeCacheLoadRedThreshold = 2000;
-    private int threadLoadYellowThreshold = 300;
-    private int threadLoadRedThreshold = 450;
+    private int threadLoadYellowThreshold = 1000;
+    private int threadLoadRedThreshold = 1500;
 
     private static final String REQUEST_LOAD_YELLOW_THRESHOLD_CONFIG_PROPERTY = "requestLoadYellowThreshold";
     private static final String REQUEST_LOAD_RED_THRESHOLD_CONFIG_PROPERTY = "requestLoadRedThreshold";
