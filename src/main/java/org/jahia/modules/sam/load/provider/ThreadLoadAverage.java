@@ -56,7 +56,6 @@ public class ThreadLoadAverage extends LoadAverageProvider {
 
     public ThreadLoadAverage() {
         super(NAME);
-        setLoggingTriggerValue(200.0);
     }
 
     @Override
