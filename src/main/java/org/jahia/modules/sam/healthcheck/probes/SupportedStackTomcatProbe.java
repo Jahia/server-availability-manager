@@ -28,15 +28,15 @@ public class SupportedStackTomcatProbe implements Probe {
         String usedVersion = SettingsBean.getInstance().getServletContext().getServerInfo();
         Version currentVersion = new Version(usedVersion.split("/")[1]);
 
-        if (supportedTomcatVersion.compareTo(currentVersion) == 0) {
+        if (currentVersion.compareTo(supportedTomcatVersion) == 0) {
             return new ProbeStatus("Jahia is deployed on the latest supported Tomcat 9 version", ProbeStatus.Health.GREEN);
         }
 
-        if (supportedTomcatVersion.compareTo(currentVersion) < 0) {
+        if (currentVersion.compareTo(supportedTomcatVersion) > 0) {
             return new ProbeStatus("Jahia is deployed on a Tomcat 9 version that has not been validated by Jahia", ProbeStatus.Health.YELLOW);
         }
 
-        if (supportedTomcatVersion.compareTo(currentVersion) > 0 && currentVersion.getMajorVersion() > supportedTomcatVersion.getMajorVersion()) {
+        if (currentVersion.compareTo(supportedTomcatVersion) < 0 && currentVersion.getMajorVersion() == supportedTomcatVersion.getMajorVersion()) {
             return new ProbeStatus("Jahia is deployed on a supported Tomcat 9 version but not the latest one supported by Jahia, we encourage you to upgrade to use version", ProbeStatus.Health.YELLOW);
         }
 
