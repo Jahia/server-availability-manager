@@ -48,11 +48,6 @@ public class SupportedStackTomcatProbe implements Probe {
     }
 
     @Override
-    public void setConfig(Map<String, Object> config) {
-        // Do nothing
-    }
-
-    @Override
     public ProbeSeverity getDefaultSeverity() {
         return ProbeSeverity.MEDIUM;
     }
