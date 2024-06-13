@@ -12,7 +12,8 @@ import java.util.Map;
 @Component(immediate = true, service = Probe.class)
 public class SupportedStackTomcatProbe implements Probe {
 
-    Version supportedTomcatVersion = new Version("9.0.85");
+    Version supportedTomcatVersion = new Version("9.0.89");
+
     @Override
     public String getName() {
         return "SupportedStackTomcat";
