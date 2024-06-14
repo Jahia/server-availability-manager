@@ -16,6 +16,7 @@ pom.xml.versionsBackup
 /node_modules
 /node
 /src/main/resources/javascript/apps
+/src/main/resources/maven.properties
 junit.xml
 
 # Jahia DX Studio
