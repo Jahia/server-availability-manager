@@ -1,7 +1,6 @@
 import {healthCheck} from '../../support/gql';
 
 describe('Jahia errors probe test', () => {
-
     it('Check the description of the probe', () => {
         healthCheck('DEBUG').then(r => {
             cy.log(JSON.stringify(r));
