@@ -46,6 +46,8 @@ import org.jahia.modules.sam.load.LoadAverageProvider;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
 
+import java.lang.management.ManagementFactory;
+
 /**
  * Load average class based on active thread count.
  */
@@ -65,7 +67,7 @@ public class ThreadLoadAverage extends LoadAverageProvider {
 
     @Override
     public double getValue() {
-        return Thread.getAllStackTraces().keySet().size();
+        return ManagementFactory.getThreadMXBean().getThreadCount();
     }
 
 }
