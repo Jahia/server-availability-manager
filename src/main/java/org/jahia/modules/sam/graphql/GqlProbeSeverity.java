@@ -1,5 +1,5 @@
 package org.jahia.modules.sam.graphql;
 
 public enum GqlProbeSeverity {
-    LOW, MEDIUM, HIGH, CRITICAL
+    DEBUG, LOW, MEDIUM, HIGH, CRITICAL
 }
