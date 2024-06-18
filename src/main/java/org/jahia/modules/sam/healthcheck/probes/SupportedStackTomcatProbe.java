@@ -19,7 +19,7 @@ public class SupportedStackTomcatProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(SupportedStackTomcatProbe.class);
 
-    private int maxPatchVersionDiff = 10;
+    private int maxPatchVersionDiff = 25;
 
     @Override
     public String getName() {
