@@ -68,8 +68,7 @@
         <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
-        <jahia-module-signature>MCwCFEwhp/H+gei+K9vfTwJTPsmF2/ObAhQeySzkRJV+eiwgTm80yWqikI0tbw==</jahia-module-signature>
-        <jahia.plugin.version>6.9</jahia.plugin.version>
+        <jahia-module-signature>MCwCFBBKI2ZClWJmrUfUb8GQJP2kqEeMAhQ3huksKlBGF5mCCP+2a6Eq1T33JQ==</jahia-module-signature>
         <export-package>org.jahia.modules.sam</export-package>
         <import-package>
             graphql.annotations.annotationTypes;version="[7.2,99)",
@@ -93,6 +92,8 @@
             org.jahia.modules.graphql.provider.dxm.admin;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.osgi.annotations;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.security;version="[2.7,4)",
+            org.jahia.modules.graphql.provider.dxm.node;version="[2.7,4)",
+            org.jahia.modules.graphql.provider.dxm.util;version="[2.7,4)",
             org.jahia.osgi,
             org.jahia.services.content,
             org.jahia.services.templates,

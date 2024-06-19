@@ -3,6 +3,7 @@ package org.jahia.modules.sam.healthcheck.probes;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Probe to be used to get the number of ERROR in a log file.
@@ -25,29 +27,32 @@ public class JahiaErrorsProbe implements Probe {
 
     private String jahiaLogFilepath;
 
-    private ProbeSeverity severity = ProbeSeverity.LOW;
-
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.");
+    private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
     @Override
     public String getName() {
         return "JahiaErrors";
     }
 
+    @Activate
+    protected void activate() {
+        jahiaLogFilepath = System.getProperty("jahia.log.dir") + "jahia.log";
+    }
+
     @Override
     public String getDescription() {
-        return "Count the number of errors faced by Jahia";
+        return "Count the number of errors faced by Jahia. This probe is useful in a CI/CD context during the startup and provisioning phase of Jahia to detect errors triggered during the installation of modules. ";
     }
 
 
     @Override
     public ProbeStatus getStatus() {
         int numberOfError = 0;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath));
+        try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
             String currentLine;
             while ((currentLine = br.readLine()) != null) {
-                if (currentLine.contains("ERROR")) {
+                if (logPattern.matcher(currentLine).matches()){
                     numberOfError++;
                 }
             }
@@ -62,20 +67,7 @@ public class JahiaErrorsProbe implements Probe {
 
     @Override
     public ProbeSeverity getDefaultSeverity() {
-        return severity;
+        return ProbeSeverity.DEBUG;
     }
 
-    @Override
-    public void setConfig(Map<String, Object> config) {
-        if (config.containsKey("jahiaLogFilepath")) {
-            jahiaLogFilepath = (String) config.get("jahiaLogFilepath");
-        } else {
-            jahiaLogFilepath = System.getProperty("jahia.log.dir") + "jahia.log";
-        }
-        if (config.containsKey("severity")) {
-            severity = ProbeSeverity.valueOf((String) config.get("severity"));
-        } else {
-            severity = ProbeSeverity.LOW;
-        }
-    }
 }

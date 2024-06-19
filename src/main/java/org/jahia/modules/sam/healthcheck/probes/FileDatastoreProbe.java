@@ -7,6 +7,7 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.services.content.JCRTemplate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,9 @@ public class FileDatastoreProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(FileDatastoreProbe.class);
 
+    @Reference(service=Probe.class, target="(component.name=org.jahia.modules.sam.healthcheck.probes.DBConnectivityProbe)")
+    private Probe dbConnectivityProbe;
+
     @Override
     public ProbeStatus getStatus() {
 
@@ -33,10 +37,16 @@ public class FileDatastoreProbe implements Probe {
             return Files.exists(datastorePath) && Files.isWritable(datastorePath) ?
                     new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN) :
                     new ProbeStatus("Could not perform write operation", ProbeStatus.Health.RED);
+
+        } else if (dbConnectivityProbe == null) {
+            return new ProbeStatus("Unable to check database connectivity for db datastore", ProbeStatus.Health.YELLOW);
+            
+        // check db connectivity if datastore in db; reuse DBConnectivityProbe
+        } else if (dbConnectivityProbe.getStatus().getHealth().equals(ProbeStatus.Health.RED)) {
+            return new ProbeStatus("Database not available for db datastore", ProbeStatus.Health.RED);
         }
 
         return new ProbeStatus("Datastore is healthy", ProbeStatus.Health.GREEN);
-
     }
 
     private boolean isStoreFilesInDB() {

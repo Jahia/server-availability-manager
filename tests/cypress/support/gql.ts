@@ -37,7 +37,7 @@ export const deleteTask = (taskService: string, taskName: string, auth?: AuthMet
     });
 };
 
-export const healthCheck = (severity: string, auth?: AuthMethod): Chainable<any> => {
+export const healthCheck = (severity: string, includes?: [string?], auth?: AuthMethod): Chainable<any> => {
     if (auth) {
         cy.apolloClient(auth);
     }
@@ -45,9 +45,7 @@ export const healthCheck = (severity: string, auth?: AuthMethod): Chainable<any>
     return cy
         .apollo({
             queryFile: 'healthcheck.graphql',
-            variables: {
-                severity
-            },
+            variables: {severity, includes},
             errorPolicy: 'all'
         })
         .then((response: any) => {
