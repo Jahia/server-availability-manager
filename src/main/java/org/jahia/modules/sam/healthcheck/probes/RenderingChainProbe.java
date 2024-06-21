@@ -12,6 +12,7 @@ import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.JCRSessionFactory;
 import org.jahia.services.content.JCRSessionWrapper;
 import org.jahia.services.content.decorator.JCRSiteNode;
+import org.jahia.services.events.JournalEventReader;
 import org.jahia.services.render.RenderContext;
 import org.jahia.services.render.RenderService;
 import org.jahia.services.render.Resource;
@@ -19,6 +20,7 @@ import org.jahia.services.sites.JahiaSite;
 import org.jahia.services.sites.JahiaSitesService;
 import org.jahia.settings.SettingsBean;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,13 @@ public class RenderingChainProbe implements Probe {
 
     private Logger logger = LoggerFactory.getLogger(RenderingChainProbe.class);
 
+    private JournalEventReader journalEventReader;
+
+    @Reference
+    public void setJournalEventReader(JournalEventReader journalEventReader) {
+        this.journalEventReader = journalEventReader;
+    }
+
     @Override
     public String getName() {
         return "RenderingChain";
@@ -45,6 +54,12 @@ public class RenderingChainProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus(HttpServletRequest request, HttpServletResponse response) {
+        String nodeSuffix = "";
+
+        if (SettingsBean.getInstance().isClusterActivated() && journalEventReader != null) {
+            nodeSuffix = journalEventReader.getNodeId();
+        }
+
         RenderService renderService = (RenderService) SpringContextSingleton.getBean("RenderService");
         JahiaSitesService jahiaSitesService = (JahiaSitesService) SpringContextSingleton.getBean("JahiaSitesService");
         if (renderService == null) {
@@ -65,14 +80,14 @@ public class RenderingChainProbe implements Probe {
             String textTest = MessageFormat.format("Rendering Chain Test done at {0}", ISO8601.format(Calendar.getInstance()));
             JCRSessionWrapper currentUserSession = sessionFactory.getCurrentUserSession(Constants.LIVE_WORKSPACE, Locale.forLanguageTag(defaultSite.getDefaultLanguage()));
             JCRNodeWrapper testNode;
-            if (!currentUserSession.nodeExists("/sites/systemsite/home/renderingChainTest")) {
+            if (!currentUserSession.nodeExists("/sites/systemsite/home/renderingChainTest" + nodeSuffix)) {
                 JCRNodeWrapper home = currentUserSession.getNode("/sites/systemsite/home");
-                testNode = home.addNode("renderingChainTest", "sam:renderingChain");
+                testNode = home.addNode("renderingChainTest" + nodeSuffix, "sam:renderingChain");
                 testNode.setProperty("text", textTest);
                 testNode.setProperty("jcr:title", "Rendering Chain Test Node");
                 currentUserSession.save();
             } else {
-                testNode = currentUserSession.getNode("/sites/systemsite/home/renderingChainTest");
+                testNode = currentUserSession.getNode("/sites/systemsite/home/renderingChainTest" + nodeSuffix);
                 testNode.setProperty("text", textTest);
                 currentUserSession.save();
             }
@@ -88,14 +103,14 @@ public class RenderingChainProbe implements Probe {
             response.setCharacterEncoding(SettingsBean.getInstance().getCharacterEncoding());
             renderingResult = renderService.render(r, renderContext);
             if (!renderingResult.contains(textTest)) {
-                return new ProbeStatus(MessageFormat.format("Rendering Chain test result should have contained '{0}' but was '{1}'", textTest, renderingResult), ProbeStatus.Health.RED);
+                return new ProbeStatus(MessageFormat.format("Rendering Chain test result should have contained {0} but was {1}", textTest, renderingResult), ProbeStatus.Health.RED);
             }
         } catch (Exception e) {
-            return new ProbeStatus(MessageFormat.format("Rendering Chain test returns an error: '{0}'", e.getMessage()), ProbeStatus.Health.RED);
+            return new ProbeStatus(MessageFormat.format("Rendering Chain test returns an error: {0}", e.getMessage()), ProbeStatus.Health.RED);
         }
         logger.debug("Rendering result: {}", renderingResult);
 
-        return new ProbeStatus(MessageFormat.format("Rendering Chain works properly: '{0}'", renderingResult), ProbeStatus.Health.GREEN);
+        return new ProbeStatus(MessageFormat.format("Rendering Chain works properly: {0}", renderingResult), ProbeStatus.Health.GREEN);
     }
 
     @Override
