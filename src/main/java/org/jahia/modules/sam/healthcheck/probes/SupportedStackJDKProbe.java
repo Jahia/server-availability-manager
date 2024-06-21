@@ -27,8 +27,7 @@ public class SupportedStackJDKProbe implements Probe {
         Version jdkVersion = new Version(System.getProperty("java.version", "Unknown"));
 
         ProbeStatus status =  new ProbeStatus("Jahia version and your JVM version are compatible", ProbeStatus.Health.GREEN);
-
-        if (jahiaVersion.compareTo(new Version("8.2.0.O")) < 0) {
+        if (jahiaVersion.compareTo(new Version("8.2.0.0")) < 0) {
             if (jdkVersion.compareTo(new Version("1.8")) >= 0 && jdkVersion.compareTo(new Version("11")) <= 0) {
                 status = updateStatus(status,"Jahia version and JVM version are not compatible, use version 8 or version 11", ProbeStatus.Health.RED);
             }
