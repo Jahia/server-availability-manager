@@ -192,4 +192,11 @@ describe('Health check', () => {
             expect(dummyProbe.status.health).to.eq('GREEN');
         });
     });
+
+    it('Checks if RenderingChain is green', () => {
+        healthCheck('CRITICAL', ['RenderingChain']).should(r => {
+            expect(r.status.health).to.eq('GREEN');
+            expect(r.probes.length).to.be.eq(1);
+        });
+    });
 });
