@@ -2,7 +2,7 @@ import {healthCheck} from '../../support/gql';
 
 describe('Jahia errors probe test', () => {
     it('Check the description of the probe', () => {
-        healthCheck('DEBUG').then(r => {
+        healthCheck({severity: 'DEBUG'}).then(r => {
             cy.log(JSON.stringify(r));
             cy.then(() => expect(r.status.health).to.eq('GREEN'));
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
@@ -11,7 +11,7 @@ describe('Jahia errors probe test', () => {
     });
 
     it('Check that Jahia errors probe is present with GREEN status', () => {
-        healthCheck('DEBUG').then(r => {
+        healthCheck({severity: 'DEBUG'}).then(r => {
             cy.log(JSON.stringify(r));
             cy.then(() => expect(r.status.health).to.eq('GREEN'));
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
@@ -22,7 +22,7 @@ describe('Jahia errors probe test', () => {
 
     it('Check that Jahia errors probe is YELLOW when there is an error log', () => {
         cy.executeGroovy('groovy/simpleErrorLog.groovy');
-        healthCheck('DEBUG').then(r => {
+        healthCheck({severity: 'DEBUG'}).then(r => {
             expect(r.status.health).to.eq('YELLOW');
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.status.health).to.eq('YELLOW');
@@ -33,7 +33,7 @@ describe('Jahia errors probe test', () => {
 
     it('Check that Jahia errors probe is YELLOW when there is a fatal log', () => {
         cy.executeGroovy('groovy/simpleFatalLog.groovy');
-        healthCheck('DEBUG').then(r => {
+        healthCheck({severity: 'DEBUG'}).then(r => {
             expect(r.status.health).to.eq('YELLOW');
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
             expect(jahiaErrorsProbe.status.health).to.eq('YELLOW');
@@ -43,7 +43,7 @@ describe('Jahia errors probe test', () => {
     });
 
     it('Check that Jahia errors probe is not present when severity equals to LOW', () => {
-        healthCheck('LOW').then(r => {
+        healthCheck({severity: 'LOW'}).then(r => {
             cy.log(JSON.stringify(r));
             cy.then(() => expect(r.status.health).to.eq('GREEN'));
             const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');

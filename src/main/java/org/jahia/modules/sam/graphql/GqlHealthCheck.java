@@ -2,6 +2,7 @@ package org.jahia.modules.sam.graphql;
 
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
+import graphql.annotations.annotationTypes.GraphQLName;
 import graphql.schema.DataFetchingEnvironment;
 import org.jahia.modules.graphql.provider.dxm.osgi.annotations.GraphQLOsgiService;
 import org.jahia.modules.sam.ProbeSeverity;
@@ -40,7 +41,7 @@ public class GqlHealthCheck {
     @GraphQLDescription("Highest reported status across all probes")
     public GqlProbeStatus getStatus(DataFetchingEnvironment environment) {
         Function<GqlProbeStatus, Integer> keyExtractor = (GqlProbeStatus status) -> status.getHealth().ordinal();
-        return getProbes()
+        return getProbes(null, environment)
                 .stream().map(gqlProbe -> gqlProbe.getStatus(environment))
                 .filter(status -> !status.getHealth().equals(GqlProbeStatus.GqlProbeHealth.GREEN))
                 .max(Comparator.comparing(keyExtractor))
@@ -49,10 +50,15 @@ public class GqlHealthCheck {
 
     @GraphQLField
     @GraphQLDescription("Probes registered in SAM for the requested severity")
-    public List<GqlProbe> getProbes() {
+    public List<GqlProbe> getProbes(
+            @GraphQLName("health") @GraphQLDescription("Return probes matching this status or above") GqlProbeStatus.GqlProbeHealth health,
+            DataFetchingEnvironment environment) {
+
         return probesRegistry.getProbes().stream()
                 .filter(p -> includes == null || includes.contains(p.getName()))
                 .filter(p -> probesRegistry.getProbeSeverity(p).ordinal() >= ProbeSeverity.valueOf(severityThreshold.name()).ordinal())
-                .map(GqlProbe::new).collect(Collectors.toList());
+                .map(GqlProbe::new)
+                .filter(p -> health == null || p.getStatus(environment).getHealth().ordinal() >= health.ordinal())
+                .collect(Collectors.toList());
     }
 }
