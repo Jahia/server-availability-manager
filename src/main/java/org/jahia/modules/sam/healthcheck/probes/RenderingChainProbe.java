@@ -51,17 +51,10 @@ public class RenderingChainProbe implements Probe {
     @Activate
     public void start() throws RepositoryException {
         textTest = "Rendering Chain Test initialized at " + ISO8601.format(Calendar.getInstance());
-        JahiaSitesService jahiaSitesService = (JahiaSitesService) SpringContextSingleton.getBean("JahiaSitesService");
-
-        Locale locale = JCRTemplate.getInstance().doExecuteWithSystemSession(session -> {
-            JCRSessionFactory sessionFactory = JCRSessionFactory.getInstance();
-            JahiaSite defaultSite = jahiaSitesService.getDefaultSite(session);
-            return Locale.forLanguageTag(defaultSite.getDefaultLanguage());
-        });
 
         boolean isClusterActivated = SettingsBean.getInstance().isClusterActivated();
         String nodeSuffix = (isClusterActivated && journalEventReader != null) ? journalEventReader.getNodeId() : "";
-        JCRTemplate.getInstance().doExecuteWithSystemSessionAsUser(null, Constants.LIVE_WORKSPACE, locale, session -> {
+        JCRTemplate.getInstance().doExecuteWithSystemSessionAsUser(null, Constants.LIVE_WORKSPACE, null, session -> {
             String parentPath = "/sites/systemsite/home";
             String nodeName = "renderingChainTest" + nodeSuffix;
             nodePath = parentPath + "/" + nodeName;
@@ -124,12 +117,7 @@ public class RenderingChainProbe implements Probe {
         try {
             JCRSessionFactory sessionFactory = JCRSessionFactory.getInstance();
             RenderContext renderContext = new RenderContext(request, response, sessionFactory.getCurrentUser());
-            JahiaSite defaultSite = jahiaSitesService.getDefaultSite();
-            if (defaultSite == null) {
-                return new ProbeStatus("No site installed, postponing rendering test.", ProbeStatus.Health.GREEN);
-            }
-
-            JCRSessionWrapper currentUserSession = sessionFactory.getCurrentUserSession(Constants.LIVE_WORKSPACE, Locale.forLanguageTag(defaultSite.getDefaultLanguage()));
+            JCRSessionWrapper currentUserSession = sessionFactory.getCurrentUserSession(Constants.LIVE_WORKSPACE, null);
             if (!currentUserSession.nodeExists(nodePath)) {
                 // something wrong happened in the setup/activate, not necessarily with the rendering chain
                 return new ProbeStatus("Rendering Chain test node not found", ProbeStatus.Health.YELLOW);
