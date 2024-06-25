@@ -27,9 +27,36 @@ describe('Health check', () => {
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnDisable), waitUntilOptions);
 
-        healthCheck('LOW').should(r => {
+        healthCheck({severity: 'LOW'}).should(r => {
             expect(r.status.health).to.eq('GREEN');
             expect(r.probes.length).to.be.gte(6);
+        });
+    });
+
+    it('Filters with "health" parameter', () => {
+        cy.runProvisioningScript({fileName: 'test-enable.json'});
+
+        cy.waitUntil(() => cy.task('sshCommand', sshCommands)
+            .then(waitUntilTestFcnEnable), waitUntilOptions);
+
+        console.log('Return with blank filter');
+        healthCheck({severity: 'LOW'}).should(r => {
+            expect(r.probes.length).to.be.gte(6);
+        });
+
+        console.log('Return with green filter');
+        healthCheck({severity: 'LOW', health: 'GREEN'}).should(r => {
+            expect(r.probes.length).to.be.gte(6);
+        });
+
+        console.log('Return with yellow filter');
+        healthCheck({severity: 'LOW', health: 'YELLOW'}).should(r => {
+            expect(r.probes.length).to.be.gte(1);
+        });
+
+        console.log('Return with red filter');
+        healthCheck({severity: 'LOW', health: 'RED'}).should(r => {
+            expect(r.probes.length).to.be.gte(1);
         });
     });
 
@@ -40,18 +67,18 @@ describe('Health check', () => {
             .then(waitUntilTestFcnDisable), waitUntilOptions);
 
         console.log('Return with blank filter');
-        healthCheck('LOW', []).should(r => {
+        healthCheck({severity: 'LOW', includes: []}).should(r => {
             expect(r.probes).to.be.empty;
         });
 
         console.log('Return one probe');
-        healthCheck('LOW', 'FileDatastore').should(r => {
+        healthCheck({severity: 'LOW', includes: 'FileDatastore'}).should(r => {
             expect(r.probes.length).to.be.eq(1);
             expect(r.probes[0].name).to.be.eq('FileDatastore');
         });
 
         console.log('Return more than one probe');
-        healthCheck('LOW', ['FileDatastore', 'DBConnectivity']).should(r => {
+        healthCheck({severity: 'LOW', includes: ['FileDatastore', 'DBConnectivity']}).should(r => {
             expect(r.probes.length).to.be.eq(2);
             const probeNames = r.probes?.map(p => p.name);
             expect('FileDatastore').to.be.oneOf(probeNames);
@@ -59,12 +86,12 @@ describe('Health check', () => {
         });
 
         console.log('Filter with only invalid probe');
-        healthCheck('LOW', ['UndefinedProbe']).should(r => {
+        healthCheck({severity: 'LOW', includes: ['UndefinedProbe']}).should(r => {
             expect(r.probes).to.be.empty;
         });
 
         console.log('Filter invalid probe');
-        healthCheck('LOW', ['FileDatastore', 'UndefinedProbe']).should(r => {
+        healthCheck({severity: 'LOW', includes: ['FileDatastore', 'UndefinedProbe']}).should(r => {
             expect(r.probes.length).to.be.eq(1);
             expect(r.probes[0].name).to.be.eq('FileDatastore');
         });
@@ -76,7 +103,7 @@ describe('Health check', () => {
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnEnable), waitUntilOptions);
 
-        healthCheck('LOW').should(r => {
+        healthCheck({severity: 'LOW'}).should(r => {
             expect(r.status.health).to.eq('RED');
             expect(r.probes.length).to.be.gte(7);
         });
@@ -88,7 +115,7 @@ describe('Health check', () => {
         cy.waitUntil(() => cy.task('sshCommand', sshCommands)
             .then(waitUntilTestFcnEnable), waitUntilOptions);
 
-        healthCheck('CRITICAL').should(r => {
+        healthCheck({severity: 'CRITICAL'}).should(r => {
             expect(r.status.health).to.eq('GREEN');
             expect(r.probes.length).to.eq(4);
         });
@@ -171,7 +198,7 @@ describe('Health check', () => {
             .then(waitUntilTestFcnDisable), waitUntilOptions);
 
         cy.log('Should find the DummyState probe as the module is started');
-        healthCheck('LOW').should(r => {
+        healthCheck({severity: 'LOW'}).should(r => {
             const dummyProbe = r.probes.find(probe => probe.name === 'DummyState');
             expect(dummyProbe).to.exist;
             expect(dummyProbe.status.health).to.eq('GREEN');
@@ -179,14 +206,14 @@ describe('Health check', () => {
 
         cy.log('Should not find the DummyState probe as the module is not started');
         cy.runProvisioningScript({fileName: 'moduleStateProbe/stop-bundle.json', replacements: {BUNDLE_NAME: 'server-availability-manager-test-module'}});
-        healthCheck('LOW').should(r => {
+        healthCheck({severity: 'LOW'}).should(r => {
             const dummyProbe = r.probes.find(probe => probe.name === 'DummyState');
             expect(dummyProbe).to.not.exist;
         });
 
         cy.log('Should find again the DummyState probe as the module has been started again');
         cy.runProvisioningScript({fileName: 'moduleStateProbe/start-bundle.json', replacements: {BUNDLE_NAME: 'server-availability-manager-test-module'}});
-        healthCheck('LOW').should(r => {
+        healthCheck({severity: 'LOW'}).should(r => {
             const dummyProbe = r.probes.find(probe => probe.name === 'DummyState');
             expect(dummyProbe).to.exist;
             expect(dummyProbe.status.health).to.eq('GREEN');
@@ -194,7 +221,7 @@ describe('Health check', () => {
     });
 
     it('Checks if RenderingChain is green', () => {
-        healthCheck('CRITICAL', ['RenderingChain']).should(r => {
+        healthCheck({severity: 'CRITICAL', includes: ['RenderingChain']}).should(r => {
             expect(r.status.health).to.eq('GREEN');
             expect(r.probes.length).to.be.eq(1);
         });
