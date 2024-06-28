@@ -1,5 +1,6 @@
 package org.jahia.modules.sam.graphql;
 
+import graphql.annotations.annotationTypes.GraphQLDeprecate;
 import graphql.annotations.annotationTypes.GraphQLDescription;
 import graphql.annotations.annotationTypes.GraphQLField;
 
@@ -19,6 +20,7 @@ public class GqlProbeStatus {
 
     @GraphQLField
     @GraphQLDescription("Message explaining probe status")
+    @GraphQLDeprecate("When multiple probe return the same error status (YELLOW or RED), the message does not guarantee which of the probe will get its message returned. We recommend using the \"health\" parameter and corresponding individual probe message instead.")
     public String getMessage() {
         return message;
     }
