@@ -32,10 +32,10 @@ public class SupportedStackJSModulesProbe implements Probe {
             status = updateStatus(status, "The environment is not running JS modules", ProbeStatus.Health.GREEN);
         } else {
             if (!vmVendor.contains("GraalVM")) {
-                status = updateStatus(status, "GraalVM not detected on the environment", ProbeStatus.Health.RED);
+                status = updateStatus(status, String.format("GraalVM not detected on the environment (detected: %s)", vmVendor), ProbeStatus.Health.RED);
             }
             if (jdkVersion.compareTo(new Version("17")) >= 0) {
-                status = updateStatus(status, "Incorrect JDK version detected, please use GraalVM with 17 or newer", ProbeStatus.Health.RED);
+                status = updateStatus(status, String.format("GraalVM with JDK 17 or newer required (detected: %s)", jdkVersion), ProbeStatus.Health.RED);
             }            
             if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
                 status = updateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);

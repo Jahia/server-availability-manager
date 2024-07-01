@@ -23,20 +23,20 @@ public class SupportedStackJDKProbe implements Probe {
         Version jahiaVersion = new Version(Jahia.VERSION);
         Version jdkVersion = new Version(System.getProperty("java.version", "Unknown"));
 
-        ProbeStatus status =  new ProbeStatus("Jahia version and your JVM version are compatible", ProbeStatus.Health.GREEN);
+        ProbeStatus status =  new ProbeStatus(String.format("Jahia version and your JVM version are compatible (detected %s - JDK: %s)", vmVendor, jdkVersion), ProbeStatus.Health.GREEN);
         if (jahiaVersion.compareTo(new Version("8.2.0.0")) < 0) {
             if (jdkVersion.compareTo(new Version("1.8")) >= 0 && jdkVersion.compareTo(new Version("11")) <= 0) {
-                status = updateStatus(status, "Jahia version and JVM version are not compatible, use version 8 or 11", ProbeStatus.Health.RED);
+                status = updateStatus(status, String.format("Unsuported JDK version, use version 8 or 11 (detected: %s)", jdkVersion), ProbeStatus.Health.RED);
             }
             if (!vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
-                status = updateStatus(status, "Current Jahia version is compatible with Eclipse Adoptium or Oracle jvm vendors", ProbeStatus.Health.YELLOW);
+                status = updateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
             }
         } else {
             if (jdkVersion.compareTo(new Version("11")) < 0) {
-                status = updateStatus(status, "Jahia version and JVM version are not compatible, use version 11 or newer", ProbeStatus.Health.RED);
+                status = updateStatus(status, String.format("Unsuported JDK version, use version 11 or newer (detected: %s)", jdkVersion), ProbeStatus.Health.RED);
             }
             if(!vmVendor.contains("GraalVM") && !vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
-                status = updateStatus(status, "Current Jahia version is compatible with GraalVM, Oracle or Eclipse Adoptium jvm vendors", ProbeStatus.Health.YELLOW);
+                status = updateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
             }
         }
         return status;
@@ -44,7 +44,7 @@ public class SupportedStackJDKProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Checks if Jahia is running on a platform with the correct JDK version installed.";
+        return "Checks if Jahia is running on a platform with a supported JDK version installed.";
     }
 
     @Override
