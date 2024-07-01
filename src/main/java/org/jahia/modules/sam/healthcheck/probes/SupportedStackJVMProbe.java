@@ -19,25 +19,16 @@ public class SupportedStackJVMProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        String vmVendor = System.getProperty("java.vm.vendor");
+        String vmVendor = System.getProperty("java.vm.vendor", "Unknown");
         Version jahiaVersion = new Version(Jahia.VERSION);
         Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
 
         ProbeStatus status =  new ProbeStatus(String.format("Jahia version and your JVM version are compatible (detected %s - JVM: %s)", vmVendor, jvmVersion), ProbeStatus.Health.GREEN);
-        if (jahiaVersion.compareTo(new Version("8.2.0.0")) < 0) {
-            if (jvmVersion.compareTo(new Version("1.8")) <= 0 && jvmVersion.compareTo(new Version("11")) >= 0) {
-                status = updateStatus(status, String.format("Unsuported JVM version, use version 8 or 11 (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
-            }
-            if (!vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
-                status = updateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
-            }
-        } else {
-            if (jvmVersion.compareTo(new Version("11")) < 0) {
-                status = updateStatus(status, String.format("Unsuported JVM version, use version 11 or newer (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
-            }
-            if(!vmVendor.contains("GraalVM") && !vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
-                status = updateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
-            }
+        if (jvmVersion.compareTo(new Version("11")) < 0) {
+            status = updateStatus(status, String.format("Unsuported JVM version, use version 11 or newer (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
+        }
+        if(!vmVendor.contains("GraalVM") && !vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
+            status = updateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
         }
         return status;
     }

@@ -22,7 +22,7 @@ public class SupportedStackJSModulesProbe implements Probe {
         Bundle npmModulesEngineBundle = BundleUtils.getBundleBySymbolicName("npm-modules-engine", null);
         boolean isNpmModulesEngineStarted = npmModulesEngineBundle != null && npmModulesEngineBundle.getState() == Bundle.ACTIVE;
 
-        String vmVendor = System.getProperty("java.vm.vendor");
+        String vmVendor = System.getProperty("java.vm.vendor", "Unknown");
         Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
 
         // This probe is only relevant for Jahia 8.2.0.0+ in which npm-modules-engine is available. 
