@@ -6,6 +6,7 @@ import org.jahia.commons.Version;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
+import org.jahia.modules.sam.core.ProbeStatusUtils;
 import org.jahia.osgi.BundleUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
@@ -25,20 +26,22 @@ public class SupportedStackJSModulesProbe implements Probe {
         String vmVendor = System.getProperty("java.vm.vendor", "Unknown");
         Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
 
+        ProbeStatusUtils probStatusUtils = ProbeStatusUtils.getInstance();
+
         // This probe is only relevant for Jahia 8.2.0.0+ in which npm-modules-engine is available. 
         // Not testing Jahia version since it is not to be backported to older versions of SAM.
         ProbeStatus status = new ProbeStatus("No issues to report", ProbeStatus.Health.GREEN);
         if (!isNpmModulesEngineStarted) {
-            status = aggregateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
+            status = probStatusUtils.aggregateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
         } else {
             if (!vmVendor.contains("GraalVM")) {
-                status = aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s), after switching to GraalVM make sure to enable the Javascript extension", vmVendor), ProbeStatus.Health.RED);
+                status = probStatusUtils.aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s), after switching to GraalVM make sure to enable the Javascript extension", vmVendor), ProbeStatus.Health.RED);
             }
             if (jvmVersion.compareTo(new Version("17")) <= 0) {
-                status = aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
+                status = probStatusUtils.aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
             }            
             if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
-                status = aggregateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
+                status = probStatusUtils.aggregateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
             }
         }
         return status;
@@ -64,18 +67,5 @@ public class SupportedStackJSModulesProbe implements Probe {
             return context.getEngine().getLanguages().containsKey("js");
 
         }
-    }
-
-    private ProbeStatus aggregateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
-        if (status.getHealth() == ProbeStatus.Health.GREEN) {
-            status.setMessage(message);
-            status.setHealth(health);
-        } else {
-            if(health == ProbeStatus.Health.RED) {
-                status.setHealth(health);
-            }
-            status.setMessage(status.getMessage() + " - " + message);
-        }
-        return status;
     }
 }
