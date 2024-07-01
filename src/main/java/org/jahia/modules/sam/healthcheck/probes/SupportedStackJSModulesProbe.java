@@ -23,7 +23,7 @@ public class SupportedStackJSModulesProbe implements Probe {
         boolean isNpmModulesEngineStarted = npmModulesEngineBundle != null && npmModulesEngineBundle.getState() == Bundle.ACTIVE;
 
         String vmVendor = System.getProperty("java.vm.vendor");
-        Version jdkVersion = new Version(System.getProperty("java.version", "Unknown"));
+        Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
 
         // This probe is only relevant for Jahia 8.2.0.0+ in which npm-modules-engine is available. 
         // Not testing Jahia version since it is not to be backported to older versions of SAM.
@@ -34,8 +34,8 @@ public class SupportedStackJSModulesProbe implements Probe {
             if (!vmVendor.contains("GraalVM")) {
                 status = updateStatus(status, String.format("GraalVM not detected on the environment (detected: %s)", vmVendor), ProbeStatus.Health.RED);
             }
-            if (jdkVersion.compareTo(new Version("17")) <= 0) {
-                status = updateStatus(status, String.format("GraalVM with JDK 17 or newer required (detected: %s)", jdkVersion), ProbeStatus.Health.RED);
+            if (jvmVersion.compareTo(new Version("17")) <= 0) {
+                status = updateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
             }            
             if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
                 status = updateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
