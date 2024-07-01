@@ -32,7 +32,7 @@ public class SupportedStackJSModulesProbe implements Probe {
             status = updateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
         } else {
             if (!vmVendor.contains("GraalVM")) {
-                status = updateStatus(status, String.format("GraalVM not detected on the environment (detected: %s)", vmVendor), ProbeStatus.Health.RED);
+                status = updateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s), after switching to GraalVM make sure to enable the Javascript extension", vmVendor), ProbeStatus.Health.RED);
             }
             if (jvmVersion.compareTo(new Version("17")) <= 0) {
                 status = updateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
@@ -46,7 +46,7 @@ public class SupportedStackJSModulesProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Check if your Jahia environment is ready to run JS modules.";
+        return "Validates the capacity of the Jahia environment to run JS modules.";
     }
 
     @Override
