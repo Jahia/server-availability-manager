@@ -29,12 +29,12 @@ public class SupportedStackJSModulesProbe implements Probe {
         // Not testing Jahia version since it is not to be backported to older versions of SAM.
         ProbeStatus status = new ProbeStatus("No issues to report", ProbeStatus.Health.GREEN);
         if (!isNpmModulesEngineStarted) {
-            status = updateStatus(status, "The environment is not running JS modules", ProbeStatus.Health.GREEN);
+            status = updateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
         } else {
             if (!vmVendor.contains("GraalVM")) {
                 status = updateStatus(status, String.format("GraalVM not detected on the environment (detected: %s)", vmVendor), ProbeStatus.Health.RED);
             }
-            if (jdkVersion.compareTo(new Version("17")) >= 0) {
+            if (jdkVersion.compareTo(new Version("17")) <= 0) {
                 status = updateStatus(status, String.format("GraalVM with JDK 17 or newer required (detected: %s)", jdkVersion), ProbeStatus.Health.RED);
             }            
             if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
