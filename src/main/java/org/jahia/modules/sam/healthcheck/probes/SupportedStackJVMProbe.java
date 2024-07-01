@@ -25,10 +25,10 @@ public class SupportedStackJVMProbe implements Probe {
 
         ProbeStatus status =  new ProbeStatus(String.format("Jahia version and your JVM version are compatible (detected %s - JVM: %s)", vmVendor, jvmVersion), ProbeStatus.Health.GREEN);
         if (jvmVersion.compareTo(new Version("11")) < 0) {
-            status = updateStatus(status, String.format("Unsuported JVM version, use version 11 or newer (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
+            status = aggregateStatus(status, String.format("Unsuported JVM version, use version 11 or newer (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
         }
         if(!vmVendor.contains("GraalVM") && !vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
-            status = updateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
+            status = aggregateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
         }
         return status;
     }
@@ -48,7 +48,7 @@ public class SupportedStackJVMProbe implements Probe {
         return ProbeSeverity.MEDIUM;
     }
 
-    private ProbeStatus updateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
+    private ProbeStatus aggregateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
         if (status.getHealth() == ProbeStatus.Health.GREEN) {
             status.setMessage(message);
             status.setHealth(health);

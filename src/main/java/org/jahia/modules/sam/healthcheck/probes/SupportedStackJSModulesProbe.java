@@ -29,16 +29,16 @@ public class SupportedStackJSModulesProbe implements Probe {
         // Not testing Jahia version since it is not to be backported to older versions of SAM.
         ProbeStatus status = new ProbeStatus("No issues to report", ProbeStatus.Health.GREEN);
         if (!isNpmModulesEngineStarted) {
-            status = updateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
+            status = aggregateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
         } else {
             if (!vmVendor.contains("GraalVM")) {
-                status = updateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s), after switching to GraalVM make sure to enable the Javascript extension", vmVendor), ProbeStatus.Health.RED);
+                status = aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s), after switching to GraalVM make sure to enable the Javascript extension", vmVendor), ProbeStatus.Health.RED);
             }
             if (jvmVersion.compareTo(new Version("17")) <= 0) {
-                status = updateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
+                status = aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
             }            
             if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
-                status = updateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
+                status = aggregateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
             }
         }
         return status;
@@ -66,7 +66,7 @@ public class SupportedStackJSModulesProbe implements Probe {
         }
     }
 
-    private ProbeStatus updateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
+    private ProbeStatus aggregateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
         if (status.getHealth() == ProbeStatus.Health.GREEN) {
             status.setMessage(message);
             status.setHealth(health);
