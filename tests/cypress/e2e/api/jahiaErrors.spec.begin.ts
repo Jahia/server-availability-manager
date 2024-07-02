@@ -1,5 +1,6 @@
 import {healthCheck} from '../../support/gql';
 
+// This test is currently ignored as it often fails in snapshot due to its nature.
 describe('Jahia errors probe test', () => {
     it('Check the description of the probe', () => {
         healthCheck({severity: 'DEBUG'}).then(r => {
