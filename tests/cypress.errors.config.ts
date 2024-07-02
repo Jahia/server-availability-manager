@@ -21,11 +21,9 @@ export default defineConfig({
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             return require('./cypress/plugins/index.js')(on, config);
         },
-        excludeSpecPattern: ['*.ignore.ts', 'cypress/e2e/api/jahiaErrors.spec.begin.ts'],
+        excludeSpecPattern: ['*.ignore.ts'],
         specPattern: [
-            'cypress/e2e/api/*.spec.begin.ts',
-            'cypress/e2e/api/*.spec.ts',
-            'cypress/e2e/api/shutdown.spec.final.ts'
+            'cypress/e2e/api/jahiaErrors.spec.begin.ts'
         ],
         baseUrl: 'http://localhost:8080',
         experimentalSessionAndOrigin: false
