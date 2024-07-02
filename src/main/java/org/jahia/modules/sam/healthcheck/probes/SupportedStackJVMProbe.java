@@ -24,13 +24,12 @@ public class SupportedStackJVMProbe implements Probe {
         Version jahiaVersion = new Version(Jahia.VERSION);
         Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
 
-        ProbeStatusUtils probStatusUtils = ProbeStatusUtils.getInstance();
         ProbeStatus status = new ProbeStatus(String.format("Jahia version and your JVM version are compatible (detected %s - JVM: %s)", vmVendor, jvmVersion), ProbeStatus.Health.GREEN);
         if (jvmVersion.compareTo(new Version("11")) < 0) {
-            status = probStatusUtils.aggregateStatus(status, String.format("Unsuported JVM version, use version 11 or newer (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
+            status = ProbeStatusUtils.aggregateStatus(status, String.format("Unsuported JVM version, use version 11 or newer (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
         }
         if(!vmVendor.contains("GraalVM") && !vmVendor.contains("Oracle") && !vmVendor.contains("Eclipse")) {
-            status = probStatusUtils.aggregateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
+            status = ProbeStatusUtils.aggregateStatus(status, String.format("Unsupported JVM vendor, use Eclipse Adoptium, GraalVM or Oracle (detected: %s)", vmVendor), ProbeStatus.Health.YELLOW);
         }
         return status;
     }
