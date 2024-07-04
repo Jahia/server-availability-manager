@@ -28,16 +28,13 @@ import org.jahia.modules.sam.healthcheck.probes.RenderingChainProbe;
 import org.jahia.services.content.DefaultEventListener;
 import org.jahia.services.content.JCRObservationManager;
 import org.jahia.settings.SettingsBean;
-import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
-import javax.jcr.observation.EventListener;
 import java.util.Set;
 
-@Component(service = EventListener.class, immediate = true)
 public class SystemSiteHomeEventListener extends DefaultEventListener {
     private final Logger logger = LoggerFactory.getLogger(SystemSiteHomeEventListener.class);
 

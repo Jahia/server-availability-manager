@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.observation.EventListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.MessageFormat;
@@ -40,8 +39,7 @@ public class RenderingChainProbe implements Probe {
     private final Logger logger = LoggerFactory.getLogger(RenderingChainProbe.class);
     private JournalEventReader journalEventReader;
     private JahiaTemplateManagerService templateManagerService;
-    @Reference(service = EventListener.class, target="(component.name=org.jahia.modules.sam.events.SystemSiteHomeEventListener)")
-    private EventListener eventListener;
+    private final SystemSiteHomeEventListener eventListener = new SystemSiteHomeEventListener();
 
     private final String testText = "Rendering Chain Test initialized";
     private final String siteHomePath = "/sites/" + JahiaSitesService.SYSTEM_SITE_KEY + "/home";
@@ -56,19 +54,14 @@ public class RenderingChainProbe implements Probe {
     @Activate
     public void start() throws RepositoryException {
         templateManagerService = BundleUtils.getOsgiService(JahiaTemplateManagerService.class, null);
-        logger.info("TestText: {}", testText);
         initNodePathName();
 
         // register for system site listener if rendering chain test node not yet created
         JCRTemplate.getInstance().doExecuteWithSystemSessionAsUser(null, Constants.LIVE_WORKSPACE, null, session -> {
             if (!session.nodeExists(getSiteHomePath())) {
-                if (eventListener != null) {
-                    logger.debug("Rendering Chain test node not found, registering for SystemSiteEventListener");
-                    ((SystemSiteHomeEventListener) eventListener).setProbe(this);
-                    templateManagerService.getTemplatePackageRegistry().handleJCREventListener(eventListener, true);
-                } else {
-                    logger.error("Unable to register SystemSiteHomeEventListener - missing eventListener service");
-                }
+                logger.debug("Rendering Chain test node not found, registering for SystemSiteEventListener");
+                eventListener.setProbe(this);
+                templateManagerService.getTemplatePackageRegistry().handleJCREventListener(eventListener, true);
             } else {
                 createRenderingTestNode();
             }
@@ -97,7 +90,6 @@ public class RenderingChainProbe implements Probe {
                     JCRNodeWrapper home = session.getNode(siteHomePath);
                     testNode = home.addNode(nodeName, "sam:renderingChain");
                     testNode.setProperty("jcr:title", "Rendering Chain Test Node");
-                    logger.info("TestText: {}", testText);
                     testNode.setProperty("text", testText);
                     session.save();
 
