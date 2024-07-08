@@ -41,7 +41,7 @@ public class SupportedStackJSModulesProbe implements Probe {
             if (jvmVersion.compareTo(new Version("17")) <= 0) {
                 status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected JVM version: %s)", jvmVersion), ProbeStatus.Health.RED);
             }            
-            if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
+            if (!isJavaScriptModuleInstalled()) {
                 status = ProbeStatusUtils.aggregateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
             }
         }
