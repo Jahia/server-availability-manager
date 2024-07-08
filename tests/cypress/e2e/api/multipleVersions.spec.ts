@@ -7,13 +7,13 @@ describe('Multiple (Bundle|Module) probe test', () => {
         healthCheck('LOW').should(r => {
             expect(r.status.health).to.eq('GREEN');
 
-            let probe = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
-            expect(probe.status.health).to.eq('GREEN');
-            expect(probe.severity).to.eq('CRITICAL');
+            let probeToCheck = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
+            expect(probeToCheck.status.health).to.eq('GREEN');
+            expect(probeToCheck.severity).to.eq('CRITICAL');
 
-            probe = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
-            expect(probe.status.health).to.eq('GREEN');
-            expect(probe.severity).to.eq('MEDIUM');
+            probeToCheck = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
+            expect(probeToCheck.status.health).to.eq('GREEN');
+            expect(probeToCheck.severity).to.eq('MEDIUM');
         });
     });
 
@@ -28,13 +28,13 @@ describe('Multiple (Bundle|Module) probe test', () => {
 
         it('Checks the MultipleModuleVersions is reporting duplicate', () => {
             healthCheck('LOW').should(r => {
-                let probe = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
-                expect(probe.status.health).to.eq('GREEN');
+                let probeToCheck = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
+                expect(probeToCheck.status.health).to.eq('GREEN');
 
-                probe = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
-                expect(probe.status.health).to.eq(isDevelopmentOperatingMode ? 'GREEN' : 'YELLOW');
-                expect(probe.status.message).to.contain('jahia-dashboard');
-                expect(probe.status.message).to.contain('1.3.0: INSTALLED');
+                probeToCheck = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
+                expect(probeToCheck.status.health).to.eq(isDevelopmentOperatingMode ? 'GREEN' : 'YELLOW');
+                expect(probeToCheck.status.message).to.contain('jahia-dashboard');
+                expect(probeToCheck.status.message).to.contain('1.3.0: INSTALLED');
             });
         });
     });
@@ -50,13 +50,13 @@ describe('Multiple (Bundle|Module) probe test', () => {
 
         it('Checks the MultipleBundleVersions is reporting duplicate', () => {
             healthCheck('LOW').should(r => {
-                let probe = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
-                expect(probe.status.health).to.eq(isDevelopmentOperatingMode ? 'YELLOW' : 'RED');
-                expect(probe.status.message).to.contain('org.jahia.bundles.maintenancefilter');
-                expect(probe.status.message).to.contain('8.2.0.4: INSTALLED');
+                let probeToCheck = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
+                expect(probeToCheck.status.health).to.eq(isDevelopmentOperatingMode ? 'YELLOW' : 'RED');
+                expect(probeToCheck.status.message).to.contain('org.jahia.bundles.maintenancefilter');
+                expect(probeToCheck.status.message).to.contain('8.2.0.4: INSTALLED');
 
-                probe = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
-                expect(probe.status.health).to.eq('GREEN');
+                probeToCheck = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
+                expect(probeToCheck.status.health).to.eq('GREEN');
             });
         });
     });
