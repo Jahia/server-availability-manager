@@ -3,16 +3,18 @@ import {healthCheck} from '../../support/gql';
 describe('Jahia errors probe test', () => {
     it('Checks that JahiaErrors probe is functional', () => {
         healthCheck({severity: 'DEBUG'}).then(r => {
-            cy.log(JSON.stringify(r));
-            const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
-            expect(jahiaErrorsProbe.description).to.contain('Count the number of errors faced by Jahia');
-            expect(jahiaErrorsProbe.severity).to.eq('DEBUG');
-
-            if (jahiaErrorsProbe.status.health === 'YELLOW') {
-                expect(jahiaErrorsProbe.status.message).to.contain('errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.');
-            } else {
-                expect(jahiaErrorsProbe.status.message).to.contain('No errors are present on the platform');
-            }
+            cy.log(JSON.stringify(r.data?.admin?.jahia?.healthCheck?.probes.filter(probe => probe.status?.health !== 'GREEN')));
+            cy.then(() => {
+                const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
+                expect(jahiaErrorsProbe.description).to.contain('Count the number of errors faced by Jahia');
+                expect(jahiaErrorsProbe.severity).to.eq('DEBUG');
+    
+                if (jahiaErrorsProbe.status.health === 'YELLOW') {
+                    expect(jahiaErrorsProbe.status.message).to.contain('errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.');
+                } else {
+                    expect(jahiaErrorsProbe.status.message).to.contain('No errors are present on the platform');
+                }    
+            });
         });
     });
 
