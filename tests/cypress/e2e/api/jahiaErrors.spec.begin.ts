@@ -22,7 +22,7 @@ describe('Jahia errors probe test', () => {
         cy.executeGroovy('groovy/simpleErrorLog.groovy');
         healthCheck({severity: 'DEBUG'}).then(r => {
             cy.log('Probes not returning GREEN: ' + JSON.stringify(r.data?.admin?.jahia?.healthCheck?.probes.filter(probe => probe.status?.health !== 'GREEN')));
-            cy.then(() => {            
+            cy.then(() => {
                 expect(r.status.health).to.eq('YELLOW');
                 const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
                 expect(jahiaErrorsProbe.status.health).to.eq('YELLOW');
@@ -30,21 +30,21 @@ describe('Jahia errors probe test', () => {
                 // Hard to predict exact number of errors
                 expect(jahiaErrorsProbe.status.message).to.contain('errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.');
             });
-        });        
+        });
     });
 
     it('Check that Jahia errors probe is YELLOW when there is a fatal log', () => {
         cy.executeGroovy('groovy/simpleFatalLog.groovy');
         healthCheck({severity: 'DEBUG'}).then(r => {
             cy.log('Probes not returning GREEN: ' + JSON.stringify(r.data?.admin?.jahia?.healthCheck?.probes.filter(probe => probe.status?.health !== 'GREEN')));
-            cy.then(() => {                
+            cy.then(() => {
                 expect(r.status.health).to.eq('YELLOW');
                 const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
                 expect(jahiaErrorsProbe.status.health).to.eq('YELLOW');
                 expect(jahiaErrorsProbe.severity).to.eq('DEBUG');
                 // Hard to predict exact number of errors
                 expect(jahiaErrorsProbe.status.message).to.contains('errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.');
-            });                
+            });
         });
     });
 
