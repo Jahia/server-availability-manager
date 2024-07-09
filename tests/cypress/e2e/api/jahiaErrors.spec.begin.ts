@@ -8,12 +8,12 @@ describe('Jahia errors probe test', () => {
                 const jahiaErrorsProbe = r.probes.find(probe => probe.name === 'JahiaErrors');
                 expect(jahiaErrorsProbe.description).to.contain('Count the number of errors faced by Jahia');
                 expect(jahiaErrorsProbe.severity).to.eq('DEBUG');
-    
+
                 if (jahiaErrorsProbe.status.health === 'YELLOW') {
                     expect(jahiaErrorsProbe.status.message).to.contain('errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.');
                 } else {
                     expect(jahiaErrorsProbe.status.message).to.contain('No errors are present on the platform');
-                }    
+                }
             });
         });
     });
