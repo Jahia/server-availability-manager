@@ -12,5 +12,6 @@ module.exports = (on, config) => {
     config.env.JAHIA_USERNAME_TOOLS = process.env.JAHIA_USERNAME_TOOLS;
     config.env.JAHIA_PASSWORD_TOOLS = process.env.JAHIA_PASSWORD_TOOLS;
     config.env.WORKSPACE_EDIT = process.env.WORKSPACE_EDIT;
+    config.env.OPERATING_MODE = process.env.OPERATING_MODE;
     return config
 }
