@@ -19,7 +19,7 @@ describe('Absence of errors in SAM at startup', () => {
 
         healthCheck({severity: 'MEDIUM'}).then(r => {
             cy.then(() => {
-                expect(r.status.health).to.eq('DEBUG');
+                expect(r.status.health).to.eq('GREEN');
             });
         });
     });
