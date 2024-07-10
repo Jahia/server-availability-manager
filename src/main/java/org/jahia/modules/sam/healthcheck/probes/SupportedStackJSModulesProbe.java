@@ -35,7 +35,7 @@ public class SupportedStackJSModulesProbe implements Probe {
         } else if (System.getProperty("org.graalvm.version") == null) {
             status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s with JVM version: %s), after switching to GraalVM 22.3.3+ with JVM version 17+, make sure to enable the Javascript extension", vmVendor, jvmVersion), ProbeStatus.Health.RED);
         } else { 
-            if (graalVMVersion.compareTo(new Version("22.3.3")) <= 0) {
+            if (graalVMVersion.compareTo(new Version("22.3")) <= 0) {
                 status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM version 22.3.3 or newer required (detected GraalVM version: %s)", graalVMVersion), ProbeStatus.Health.RED);
             }
             if (jvmVersion.compareTo(new Version("17")) <= 0) {
