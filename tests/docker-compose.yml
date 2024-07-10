@@ -6,6 +6,7 @@ services:
         environment:
             - SUPER_USER_PASSWORD=${SUPER_USER_PASSWORD}        
             - MAX_RAM_PERCENTAGE=95
+            - OPERATING_MODE=${OPERATING_MODE}
         ports:
             - '8080:8080'
         extra_hosts:
