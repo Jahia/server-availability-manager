@@ -25,20 +25,23 @@ public class SupportedStackJSModulesProbe implements Probe {
 
         String vmVendor = System.getProperty("java.vm.vendor", "Unknown");
         Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
+        Version graalVMVersion = new Version(System.getProperty("org.graalvm.version", "Unknown"));
 
         // This probe is only relevant for Jahia 8.2.0.0+ in which npm-modules-engine is available. 
         // Not testing Jahia version since it is not to be backported to older versions of SAM.
         ProbeStatus status = new ProbeStatus("No issues to report", ProbeStatus.Health.GREEN);
         if (!isNpmModulesEngineStarted) {
             status = ProbeStatusUtils.aggregateStatus(status, "The environment is not running JS modules (npm-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
-        } else {
-            if (!vmVendor.contains("GraalVM")) {
-                status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s), after switching to GraalVM make sure to enable the Javascript extension", vmVendor), ProbeStatus.Health.RED);
+        } else if (System.getProperty("org.graalvm.version") == null) {
+            status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s with JVM version: %s), after switching to GraalVM 22.3.3+ with JVM version 17+, make sure to enable the Javascript extension", vmVendor, jvmVersion), ProbeStatus.Health.RED);
+        } else { 
+            if (graalVMVersion.compareTo(new Version("22.3")) <= 0) {
+                status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM version 22.3.3 or newer required (detected GraalVM version: %s)", graalVMVersion), ProbeStatus.Health.RED);
             }
             if (jvmVersion.compareTo(new Version("17")) <= 0) {
-                status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected: %s)", jvmVersion), ProbeStatus.Health.RED);
+                status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected JVM version: %s)", jvmVersion), ProbeStatus.Health.RED);
             }            
-            if (vmVendor.contains("GraalVM") && !isJavaScriptModuleInstalled()) {
+            if (!isJavaScriptModuleInstalled()) {
                 status = ProbeStatusUtils.aggregateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
             }
         }
