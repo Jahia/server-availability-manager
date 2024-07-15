@@ -53,7 +53,7 @@ describe('Multiple (Bundle|Module) probe test', () => {
                 let probeToCheck = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
                 expect(probeToCheck.status.health).to.eq(isDevelopmentOperatingMode ? 'YELLOW' : 'RED');
                 expect(probeToCheck.status.message).to.contain('org.jahia.bundles.maintenancefilter');
-                expect(probeToCheck.status.message).to.contain('8.2.0.4: INSTALLED');
+                expect(probeToCheck.status.message).to.contain('8.2.0.3: INSTALLED');
 
                 probeToCheck = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
                 expect(probeToCheck.status.health).to.eq('GREEN');
