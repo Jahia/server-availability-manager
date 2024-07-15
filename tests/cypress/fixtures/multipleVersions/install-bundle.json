@@ -1,5 +1,5 @@
 [
   {
-    "installBundle": "mvn:org.jahia.bundles/org.jahia.bundles.maintenancefilter/8.2.0.4"
+    "installBundle": "mvn:org.jahia.bundles/org.jahia.bundles.maintenancefilter/8.2.0.3"
   }
 ]
