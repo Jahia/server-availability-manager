@@ -51,7 +51,7 @@ public class ModulesSpringUsageProbe implements Probe {
 
     @Override
     public String getName() {
-        return "ModulesSpringUsageProbe";
+        return "ModulesSpringUsage";
     }
 
     @Override
