@@ -130,7 +130,7 @@ public class ModulesSpringUsageProbe implements Probe {
         private String usage;
 
         public SpringUsageInfo(Bundle bundle, String usage) {
-            this.module = "[".concat(String.valueOf(bundle.getBundleId())).concat("] ").concat(bundle.getSymbolicName())
+            this.module = "(id:".concat(String.valueOf(bundle.getBundleId())).concat(") ").concat(bundle.getSymbolicName())
                     .concat(" - ").concat(bundle.getVersion().toString());
             this.usage = usage;
         }
