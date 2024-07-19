@@ -9,7 +9,7 @@ describe('Multiple (Bundle|Module) probe test', () => {
 
             let probeToCheck = r.probes.find(probe => probe.name === 'MultipleBundleVersions');
             expect(probeToCheck.status.health).to.eq('GREEN');
-            expect(probeToCheck.severity).to.eq('CRITICAL');
+            expect(probeToCheck.severity).to.eq('HIGH');
 
             probeToCheck = r.probes.find(probe => probe.name === 'MultipleModuleVersions');
             expect(probeToCheck.status.health).to.eq('GREEN');
