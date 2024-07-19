@@ -82,6 +82,7 @@ public class ModulesSpringUsageProbe implements Probe {
         if (config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)))) {
             excludeJahiaModules = Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
         }
+        bundlesModificationCheksum = "";
     }
 
     protected void searchForSpringUsageInBundles() {
