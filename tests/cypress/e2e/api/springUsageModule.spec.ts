@@ -26,7 +26,7 @@ describe('Module Spring Usage probe test', () => {
             expect(moduleSpringUsageProbe.status.message).to.contains('(Jahia modules not checked)');
         });
 
-        cy.runProvisioningScript([{uninstallBundle: 'no-spring-module/8.2.0.'}]);
+        cy.runProvisioningScript([{uninstallBundle: 'no-spring-module/8.2.0.0'}]);
         cy.logout();
     });
 
