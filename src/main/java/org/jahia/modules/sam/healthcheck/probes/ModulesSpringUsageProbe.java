@@ -73,8 +73,8 @@ public class ModulesSpringUsageProbe implements Probe {
             return new ProbeStatus(configMessage.concat("No modules using spring found "), ProbeStatus.Health.GREEN);
         }
         String springUsageMessage = springUsages.stream().map(SpringUsageInfo::toString).collect(Collectors.joining(", "));
-        LOGGER.info(configMessage.concat("Found modules using spring: ").concat(springUsageMessage));
-        return new ProbeStatus(configMessage.concat("Found modules using spring: ").concat(springUsageMessage), ProbeStatus.Health.YELLOW);
+        LOGGER.info(configMessage.concat("Found modules that are using spring, that jahia doesn't support anymore. Details:   ").concat(springUsageMessage));
+        return new ProbeStatus(configMessage.concat("Found modules that are using spring, that jahia doesn't support anymore. Details:   ").concat(springUsageMessage), ProbeStatus.Health.YELLOW);
     }
 
     @Override
@@ -153,7 +153,7 @@ public class ModulesSpringUsageProbe implements Probe {
         }
 
         @Override public String toString() {
-            return "module[" + module + "] " + usage;
+            return "module[" + module + "] " + usage + "   ";
         }
     }
 
