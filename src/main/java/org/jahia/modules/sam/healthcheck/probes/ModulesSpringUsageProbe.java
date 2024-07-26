@@ -30,8 +30,10 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.osgi.FrameworkService;
-import org.osgi.framework.Bundle;
+import org.osgi.framework.*;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +42,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
-public class ModulesSpringUsageProbe implements Probe {
+public class ModulesSpringUsageProbe implements Probe, BundleListener, BundleActivator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesSpringUsageProbe.class);
     private static final String EXCLUDE_JAHIA_MODULES_PROPERTY = "excludeJahiaModules";
     private static final List<SpringUsageInfo> springUsages = new ArrayList<>();
-    private static String bundlesModificationCheksum = "";
+    private static final Set<Integer> refreshEvents = Set.of(BundleEvent.INSTALLED, BundleEvent.UNINSTALLED);
+    private static boolean needRefresh = true;
+    private static String bundlesModificationChecksum = "";
 
     private boolean excludeJahiaModules = true;
 
@@ -69,11 +73,9 @@ public class ModulesSpringUsageProbe implements Probe {
         this.searchForSpringUsageInBundles();
         String configMessage = "(Jahia modules " + (excludeJahiaModules ? "not " : "") + "checked) ";
         if (springUsages.isEmpty()) {
-            LOGGER.info(configMessage.concat("No modules using spring found "));
             return new ProbeStatus(configMessage.concat("No modules using spring found "), ProbeStatus.Health.GREEN);
         }
         String springUsageMessage = springUsages.stream().map(SpringUsageInfo::toString).collect(Collectors.joining(", "));
-        LOGGER.info(configMessage.concat("Found modules that are using spring, that jahia doesn't support anymore. Details:   ").concat(springUsageMessage));
         return new ProbeStatus(configMessage.concat("Found modules that are using spring, that jahia doesn't support anymore. Details:   ").concat(springUsageMessage), ProbeStatus.Health.YELLOW);
     }
 
@@ -82,46 +84,72 @@ public class ModulesSpringUsageProbe implements Probe {
         if (config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)))) {
             excludeJahiaModules = Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
         }
-        bundlesModificationCheksum = "";
+        bundlesModificationChecksum = "";
+    }
+
+    @Activate
+    public void start(BundleContext ctx) {
+        LOGGER.info("Starting ModulesSpringUsageProbe");
+        ctx.addBundleListener(this);
+    }
+
+    @Deactivate
+    public void stop(BundleContext ctx) {
+        LOGGER.info("Stopping ModulesSpringUsageProbe");
+        ctx.removeBundleListener(this);
+    }
+
+    @Override
+    public void bundleChanged(BundleEvent event) {
+        if (refreshEvents.contains(event.getType())) {
+            LOGGER.debug("Setting need refresh flag.");
+            needRefresh = true;
+        }
     }
 
     protected void searchForSpringUsageInBundles() {
-        Bundle[] bundles = FrameworkService.getBundleContext().getBundles();
-        String checksum = checksum(bundles);
-        if (StringUtils.isEmpty(bundlesModificationCheksum) || !checksum.equals(bundlesModificationCheksum)) {
-            bundlesModificationCheksum = checksum;
-            springUsages.clear();
+        if (needRefresh) {
+            synchronized (springUsages) {
+                Bundle[] bundles = FrameworkService.getBundleContext().getBundles();
+                String checksum = checksum(bundles);
+                if (StringUtils.isEmpty(bundlesModificationChecksum) || !checksum.equals(bundlesModificationChecksum)) {
+                    bundlesModificationChecksum = checksum;
+                    springUsages.clear();
 
-            for (Bundle bundle : bundles) {
-                if (!BundleUtils.isJahiaModuleBundle(bundle)) {
-                    LOGGER.debug("Ignoring bundle: {}, not a Jahia module", bundle.getSymbolicName());
-                    continue;
-                }
-                String bundleGroupId = BundleUtils.getModuleGroupId(bundle);
-                if (excludeJahiaModules && bundleGroupId != null && bundleGroupId.startsWith("org.jahia.modules")) {
-                    LOGGER.debug("Ignoring Jahia provided module: {}", bundle.getSymbolicName());
-                    continue;
-                }
+                    for (Bundle bundle : bundles) {
+                        if (!BundleUtils.isJahiaModuleBundle(bundle)) {
+                            LOGGER.debug("Ignoring bundle: {}, not a Jahia module", bundle.getSymbolicName());
+                            continue;
+                        }
+                        String bundleGroupId = BundleUtils.getModuleGroupId(bundle);
+                        if (excludeJahiaModules && bundleGroupId != null && bundleGroupId.startsWith("org.jahia.modules")) {
+                            LOGGER.debug("Ignoring Jahia provided module: {}", bundle.getSymbolicName());
+                            continue;
+                        }
 
-                LOGGER.debug("Exploring bundle: {}", bundle.getSymbolicName());
-                // Explore using ApplicationContextConfiguration (presence of spring context xml file)
-                ApplicationContextConfiguration config = new ApplicationContextConfiguration(bundle);
-                if (config.isSpringPoweredBundle()) {
-                    LOGGER.info("Detected Spring powered module: {}", bundle.getSymbolicName());
-                    springUsages.add(new SpringUsageInfo(bundle, "detected a Spring context xml file"));
-                }
-                // Explore OSGI imports for Spring Framework related package or Jahia Spring Related package
-                String imports = bundle.getHeaders().get("Import-Package");
-                if (imports != null) {
-                    for (String importStatement : imports.split("(?<=\\S),(?!\\h*\\d)\\h*")) {
-                        LOGGER.debug("Exploring import package: {}", importStatement);
-                        if (importStatement.startsWith("org.springframework")) {
-                            LOGGER.info("Spring related package: {} imported in module: {}", importStatement, bundle.getSymbolicName());
-                            springUsages.add(new SpringUsageInfo(bundle,
-                                    "detected a Spring related package imported in OSGI manifest: [" + importStatement + "]"));
+                        LOGGER.debug("Exploring bundle: {}", bundle.getSymbolicName());
+                        // Explore using ApplicationContextConfiguration (presence of spring context xml file)
+                        ApplicationContextConfiguration config = new ApplicationContextConfiguration(bundle);
+                        if (config.isSpringPoweredBundle()) {
+                            LOGGER.info("Detected Spring powered module: {}", bundle.getSymbolicName());
+                            springUsages.add(new SpringUsageInfo(bundle, "detected a Spring context xml file"));
+                        }
+                        // Explore OSGI imports for Spring Framework related package or Jahia Spring Related package
+                        String imports = bundle.getHeaders().get("Import-Package");
+                        if (imports != null) {
+                            for (String importStatement : imports.split("(?<=\\S),(?!\\h*\\d)\\h*")) {
+                                LOGGER.debug("Exploring import package: {}", importStatement);
+                                if (importStatement.startsWith("org.springframework")) {
+                                    LOGGER.info("Spring related package: {} imported in module: {}", importStatement,
+                                            bundle.getSymbolicName());
+                                    springUsages.add(new SpringUsageInfo(bundle,
+                                            "detected a Spring related package imported in OSGI manifest: [" + importStatement + "]"));
+                                }
+                            }
                         }
                     }
                 }
+                needRefresh = false;
             }
         }
     }
