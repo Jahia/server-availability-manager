@@ -30,7 +30,7 @@ public class MultipleBundleVersions extends MultipleModuleVersions implements Pr
 
     @Override
     public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.CRITICAL;
+        return ProbeSeverity.HIGH;
     }
 
     @Override

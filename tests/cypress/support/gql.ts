@@ -56,6 +56,7 @@ export const healthCheck = ({severity, includes, auth, health}: HealthCheckArgum
             errorPolicy: 'all'
         })
         .then((response: any) => {
+            console.log(response);
             return response.data.admin.jahia.healthCheck;
         });
 };
