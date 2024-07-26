@@ -30,7 +30,10 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.osgi.BundleUtils;
 import org.jahia.osgi.FrameworkService;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.BundleListener;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -44,7 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
-public class ModulesSpringUsageProbe implements Probe, BundleListener, BundleActivator {
+public class ModulesSpringUsageProbe implements Probe, BundleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesSpringUsageProbe.class);
     private static final String EXCLUDE_JAHIA_MODULES_PROPERTY = "excludeJahiaModules";
@@ -127,7 +130,7 @@ public class ModulesSpringUsageProbe implements Probe, BundleListener, BundleAct
                 // Explore using ApplicationContextConfiguration (presence of spring context xml file)
                 ApplicationContextConfiguration config = new ApplicationContextConfiguration(bundle);
                 if (config.isSpringPoweredBundle()) {
-                    LOGGER.info("Detected Spring powered module: {}", bundle.getSymbolicName());
+                    LOGGER.debug("Detected Spring powered module: {}", bundle.getSymbolicName());
                     springUsages.add(new SpringUsageInfo(bundle, "detected a Spring context xml file"));
                 }
                 // Explore OSGI imports for Spring Framework related package or Jahia Spring Related package
@@ -136,7 +139,7 @@ public class ModulesSpringUsageProbe implements Probe, BundleListener, BundleAct
                     for (String importStatement : imports.split("(?<=\\S),(?!\\h*\\d)\\h*")) {
                         LOGGER.debug("Exploring import package: {}", importStatement);
                         if (importStatement.startsWith("org.springframework")) {
-                            LOGGER.info("Spring related package: {} imported in module: {}", importStatement,
+                            LOGGER.debug("Spring related package: {} imported in module: {}", importStatement,
                                     bundle.getSymbolicName());
                             springUsages.add(new SpringUsageInfo(bundle,
                                     "detected a Spring related package imported in OSGI manifest: [" + importStatement + "]"));
