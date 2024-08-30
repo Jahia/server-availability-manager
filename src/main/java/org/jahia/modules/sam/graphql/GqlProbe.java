@@ -45,7 +45,11 @@ public class GqlProbe {
     @GraphQLField
     @GraphQLDescription("Status reported by the probe (GREEN to RED)")
     public GqlProbeStatus getStatus() {
-        ProbeStatus status = probe.getStatus();
-        return new GqlProbeStatus(status.getMessage(), GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
+        try {
+            ProbeStatus status = probe.getStatus();
+            return new GqlProbeStatus(status.getMessage(), GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
+        } catch (Throwable e) {
+            return new GqlProbeStatus("Error getting probe status: " + e.getMessage(), GqlProbeStatus.GqlProbeHealth.RED);
+        }
     }
 }
