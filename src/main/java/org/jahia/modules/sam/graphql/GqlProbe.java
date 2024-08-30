@@ -54,17 +54,20 @@ public class GqlProbe {
     @GraphQLDescription("Status reported by the probe (GREEN to RED)")
     public GqlProbeStatus getStatus(DataFetchingEnvironment environment) {
         ProbeStatus status;
-        if (probe.needsHttpContext()) {
-            HttpServletRequest request = ContextUtil.getHttpServletRequest(environment.getGraphQlContext());
-            HttpServletResponse response = ContextUtil.getHttpServletResponse(environment.getGraphQlContext());
-            if (request == null || response == null) {
-                throw new RuntimeException("No HttpRequest or HttpResponse");
+        try {
+            if (probe.needsHttpContext()) {
+                HttpServletRequest request = ContextUtil.getHttpServletRequest(environment.getGraphQlContext());
+                HttpServletResponse response = ContextUtil.getHttpServletResponse(environment.getGraphQlContext());
+                if (request == null || response == null) {
+                    throw new RuntimeException("No HttpRequest or HttpResponse");
+                }
+                status = probe.getStatus(request, response);
+            } else {
+                status = probe.getStatus();
             }
-            status = probe.getStatus(request, response);
-        } else {
-            status = probe.getStatus();
+            return new GqlProbeStatus(status.getMessage(), GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
+        } catch (Throwable e) {
+            return new GqlProbeStatus("Error getting probe status: " + e.getMessage(), GqlProbeStatus.GqlProbeHealth.RED);
         }
-        return new GqlProbeStatus(status.getMessage(),
-                GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
     }
 }
