@@ -36,7 +36,7 @@ public class SearchIndexProbe implements Probe {
     }
 
 
-    private int queryAVGLastMinuteYellowThreshold = 5;
+    private int queryAVGLastMinuteYellowThreshold = 10;
     private int queryAVGLastMinuteRedThreshold = 50;
 
     private static final String QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteYellowThreshold";
