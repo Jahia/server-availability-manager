@@ -84,12 +84,12 @@
             org.apache.commons.io.filefilter;version="[1.4,2)",
             org.apache.commons.lang;version="[2.6,3)",
             org.apache.jackrabbit.core,
-            org.apache.jackrabbit.core.persistence,
-            org.apache.jackrabbit.core.persistence.pool,
-            org.apache.jackrabbit.core.version,
+            org.apache.jackrabbit.core.data,
+            org.apache.jackrabbit.core.data.db,
             org.apache.karaf.cellar.core;resolution:=optional;version="[4.1,5)",
             org.apache.karaf.cellar.core.event;resolution:=optional;version="[4.1,5)",
             org.apache.karaf.cellar.bundle;resolution:=optional;version="[4.1,5)",
+            org.graalvm.polyglot,
             org.jahia.data.templates,
             org.jahia.modules.graphql.provider.dxm;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.admin;version="[2.7,4)",
@@ -111,16 +111,48 @@
             org.apache.naming.java,
             org.jahia.defaults.config.spring,
             org.jahia.exceptions,
-            org.jahia.services
+            org.jahia.services,
+            pl.touk.throwing
         </import-package>
         <yarn.arguments>build:production</yarn.arguments>
     </properties>
 
     <dependencies>
+        <!-- Dependencies provided by Jahia and used by this module: -->
+        <dependency>
+            <groupId>org.jahia.commons</groupId>
+            <artifactId>jahia-commons</artifactId>
+            <version>${jahia.commons.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.framework</artifactId>
+            <version>${felix.framework.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-jcr-commons</artifactId>
+            <version>${jackrabbit.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.jahia.modules</groupId>
             <artifactId>graphql-dxm-provider</artifactId>
             <version>2.7.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jahia.server</groupId>
+            <artifactId>jahia-api</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+            <version>${graphql-java-annotations.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -129,23 +161,90 @@
             <version>${graphql-java-annotations.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.karaf.cellar</groupId>
-            <artifactId>org.apache.karaf.cellar.core</artifactId>
-            <version>4.1.3-jahia6</version>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <version>2.0</version> <!-- matches the version declared in jahia-private (core/pom.xml) -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>  <!-- provided by Felix -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version> <!-- provided by Felix -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-core</artifactId>
+            <version>${jackrabbit.version}</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.karaf.cellar</groupId>
-            <artifactId>org.apache.karaf.cellar.bundle</artifactId>
-            <version>4.1.3-jahia6</version>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version> <!-- matches the version declared in https://github.com/Jahia/jahia-private/blob/JAHIA-8-2-0-X-BRANCH/core/pom.xml#L170 -->
             <scope>provided</scope>
-            <optional>true</optional>
         </dependency>
-
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.10.13</version> <!-- matches the version declared in https://github.com/Jahia/jahia-private/blob/JAHIA-8-2-0-X-BRANCH/core/pom.xml#L1551 -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>pl.touk</groupId>
+            <artifactId>throwing-function</artifactId>
+            <version>1.3</version> <!-- provided by Felix -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+            <version>${osgi.compendium.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-data</artifactId>
+            <version>${jackrabbit.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.13.0</version> <!-- matches the version declared in https://github.com/Jahia/jackrabbit/blob/2.20-jahia/jackrabbit-parent/pom.xml#L473 -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-jackrabbit-api</artifactId>
+            <version>${oak-jackrabbit-api.version.implemented}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.eclipse.gemini.blueprint</groupId>
             <artifactId>gemini-blueprint-extender</artifactId>
@@ -163,12 +262,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <repositories>
@@ -199,6 +292,10 @@
                     <version>3.4.0</version>
                 </plugin>
                 <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.8.1</version>
+                </plugin>
+                <plugin>
                     <groupId>org.cyclonedx</groupId>
                     <artifactId>cyclonedx-maven-plugin</artifactId>
                     <version>2.9.1</version>
@@ -218,6 +315,25 @@
                         </fileset>
                     </filesets>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>analyze-only</goal>
+                        </goals>
+                        <configuration>
+                            <failOnWarning>true</failOnWarning>
+                            <ignoredUnusedDeclaredDependencies>
+                                <!-- the following dependencies are declared in the parent pom, hence inherited, but not used -->
+                                <ignoredUnusedDeclaredDependency>org.springframework:spring-webmvc</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>javax.servlet:jstl</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.jahia.server:jahia-taglib</ignoredUnusedDeclaredDependency>
+                            </ignoredUnusedDeclaredDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
