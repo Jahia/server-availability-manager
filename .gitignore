@@ -12,6 +12,9 @@
 target
 pom.xml.versionsBackup
 
+# JS
+**/.yarn/install-state.gz
+
 .DS_Store
 /node_modules
 /node
