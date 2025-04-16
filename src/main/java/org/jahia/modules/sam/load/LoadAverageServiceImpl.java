@@ -42,7 +42,6 @@
  */
 package org.jahia.modules.sam.load;
 
-import org.jahia.services.observation.JahiaEventService;
 import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,7 @@ public class LoadAverageServiceImpl implements LoadAverageService {
     @Reference(service = LoadAverageProvider.class, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
             bind = "addProvider", unbind = "removeProvider")
     private volatile List<LoadAverageProvider> providers = new ArrayList<>();
-    private final ScheduledExecutorService executor =  Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, ScheduledFuture<?>> schedules = new HashMap<>();
     private long calcFreqMillis = 5000;
     private boolean running = false;
@@ -110,6 +109,7 @@ public class LoadAverageServiceImpl implements LoadAverageService {
 
     /**
      * Sets the frequency, in milliseconds, at which the calculation of averages occurs.
+     *
      * @param millisec how many milliseconds between average calculations
      */
     public void setCalcFrequencyInMillisec(long millisec) {
@@ -142,9 +142,10 @@ public class LoadAverageServiceImpl implements LoadAverageService {
                 if (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) { //optional *
                     LOGGER.info("Load Average Service did not terminate in the specified time."); //optional *
                     List<Runnable> droppedTasks = executor.shutdownNow(); //optional **
-                    LOGGER.info("Load Average Service was abruptly shut down. " + droppedTasks.size() + " tasks will not be executed."); //optional **
+                    LOGGER.info("Load Average Service was abruptly shut down. {} tasks will not be executed.", droppedTasks.size()); //optional **
                 }
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 executor.shutdownNow();
             }
             schedules.clear();

@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 @SuppressWarnings({"java:S2226", "java:S1989"})
 @Component(service = {javax.servlet.http.HttpServlet.class, javax.servlet.Servlet.class}, property = {"alias=/healthcheck", "allow-api-token=true"})
 public class HealthCheckServlet extends HttpServlet {
+    private static final String ERRORS_FIELD = "errors";
     private HttpServlet gql;
     private ProbeSeverity defaultSeverity;
     private String defaultIncludes;
@@ -74,9 +75,67 @@ public class HealthCheckServlet extends HttpServlet {
                     .map(b -> "\"" + b.getName() + "\"")
                     .collect(Collectors.joining(","));
         }
-        String includes = tmpIncludes;
+        HttpServletRequest requestWrapper = getRequestWrapper(req, tmpIncludes, severity);
+        StringWriter writer = new StringWriter();
+        HttpServletResponse responseWrapper = new HealthCheckHttpServletResponseWrapper(resp, writer);
 
-        HttpServletRequest requestWrapper = new HttpServletRequestWrapper(req) {
+        permissionService.addScopes(Collections.singleton("graphql"), req);
+        gql.service(requestWrapper, responseWrapper);
+
+        try {
+            String result = writer.getBuffer().toString();
+            JSONObject obj = new JSONObject(result);
+            if (obj.has(ERRORS_FIELD) && !obj.getJSONArray(ERRORS_FIELD).isEmpty()) {
+                handleErrorResponse(resp, obj);
+            } else {
+                handleSuccessResponse(resp, obj);
+            }
+        } catch (JSONException e) {
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private static void handleErrorResponse(HttpServletResponse resp, JSONObject obj) throws IOException {
+        JSONArray errors = obj.getJSONArray(ERRORS_FIELD);
+        JSONObject error = errors.getJSONObject(0);
+        if (error.getString("errorType").equals(GqlAccessDeniedException.class.getSimpleName())) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN,error.getString("message"));
+        } else {
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, error.getString("message"));
+        }
+    }
+
+    private void handleSuccessResponse(HttpServletResponse resp, JSONObject obj) throws IOException {
+        String result;
+        JSONObject healthCheckNode = obj.getJSONObject("data")
+                .getJSONObject("admin")
+                .getJSONObject("jahia")
+                .getJSONObject("healthCheck");
+
+        ProbeStatus.Health status = ProbeStatus.Health.valueOf(healthCheckNode.getJSONObject("status").getString("health"));
+
+        if (status.ordinal() >= statusThreshold.ordinal()) {
+            resp.setStatus(statusCode);
+        } else {
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
+
+
+        try (StringWriter finalWriter = new StringWriter()) {
+            healthCheckNode.write(finalWriter);
+            result = finalWriter.getBuffer().toString();
+        }
+
+        resp.setContentLength(result.length());
+
+        try (PrintWriter respWriter = resp.getWriter()) {
+            respWriter.write(result);
+        }
+    }
+
+    private static HttpServletRequest getRequestWrapper(HttpServletRequest req, String tmpIncludes, String severity) {
+
+        return new HttpServletRequestWrapper(req) {
             @Override
             public boolean isAsyncSupported() {
                 return false;
@@ -86,7 +145,7 @@ public class HealthCheckServlet extends HttpServlet {
             public String getParameter(String name) {
                 if (name.equals("query")) {
                     String params = "severity: " + severity
-                            + ((includes != null) ? String.format(", includes: [%s]", includes) : "");
+                            + ((tmpIncludes != null) ? String.format(", includes: [%s]", tmpIncludes) : "");
                     return "{\n" +
                             "  admin {\n" +
                             "    jahia {\n" +
@@ -111,79 +170,44 @@ public class HealthCheckServlet extends HttpServlet {
                 return super.getParameter(name);
             }
         };
-        StringWriter writer = new StringWriter();
-        HttpServletResponse responseWrapper = new HttpServletResponseWrapper(resp) {
-            @Override
-            public ServletOutputStream getOutputStream() throws IOException {
-                return new ServletOutputStream() {
-                    @Override
-                    public void write(int b) throws IOException {
-                        writer.write((char) b);
-                    }
+    }
 
-                    @Override
-                    public boolean isReady() {
-                        return true;
-                    }
+    private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
+        private final StringWriter writer;
 
-                    @Override
-                    public void setWriteListener(WriteListener writeListener) {
-                    }
-                };
-            }
+        public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp, StringWriter writer) {
+            super(resp);
+            this.writer = writer;
+        }
 
-            @Override
-            public PrintWriter getWriter() throws IOException {
-                return new PrintWriter(writer);
-            }
-
-            @Override
-            public void setContentLength(int len) {
-            }
-        };
-
-        permissionService.addScopes(Collections.singleton("graphql"), req);
-        gql.service(requestWrapper, responseWrapper);
-
-        try {
-            String result = writer.getBuffer().toString();
-            JSONObject obj = new JSONObject(result);
-            if (obj.has("errors") && obj.getJSONArray("errors").length() > 0) {
-                JSONArray errors = obj.getJSONArray("errors");
-                JSONObject error = errors.getJSONObject(0);
-                if (error.getString("errorType").equals(GqlAccessDeniedException.class.getSimpleName())) {
-                    resp.sendError(HttpServletResponse.SC_FORBIDDEN,error.getString("message"));
-                } else {
-                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, error.getString("message"));
-                }
-            } else {
-                JSONObject healthCheckNode = obj.getJSONObject("data")
-                        .getJSONObject("admin")
-                        .getJSONObject("jahia")
-                        .getJSONObject("healthCheck");
-
-                ProbeStatus.Health status = ProbeStatus.Health.valueOf(healthCheckNode.getJSONObject("status").getString("health"));
-
-                if (status.ordinal() >= statusThreshold.ordinal()) {
-                    resp.setStatus(statusCode);
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_OK);
+        @Override
+        public ServletOutputStream getOutputStream() {
+            return new ServletOutputStream() {
+                @Override
+                public void write(int b) {
+                    writer.write((char) b);
                 }
 
-
-                try (StringWriter finalWriter = new StringWriter()) {
-                    healthCheckNode.write(finalWriter);
-                    result = finalWriter.getBuffer().toString();
+                @Override
+                public boolean isReady() {
+                    return true;
                 }
 
-                resp.setContentLength(result.length());
-
-                try (PrintWriter respWriter = resp.getWriter()) {
-                    respWriter.write(result);
+                @Override
+                public void setWriteListener(WriteListener writeListener) {
+                    // ignore callback notifications
                 }
-            }
-        } catch (JSONException e) {
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            };
+        }
+
+        @Override
+        public PrintWriter getWriter() {
+            return new PrintWriter(writer);
+        }
+
+        @Override
+        public void setContentLength(int len) {
+            // ignore content length
         }
     }
 }
