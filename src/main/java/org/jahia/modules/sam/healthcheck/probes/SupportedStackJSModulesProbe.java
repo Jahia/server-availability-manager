@@ -1,7 +1,6 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
 import org.graalvm.polyglot.Context;
-import org.jahia.bin.Jahia;
 import org.jahia.commons.Version;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
@@ -10,10 +9,6 @@ import org.jahia.modules.sam.core.ProbeStatusUtils;
 import org.jahia.osgi.BundleUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
 
 @Component(service = Probe.class, immediate = true)
 public class SupportedStackJSModulesProbe implements Probe {
