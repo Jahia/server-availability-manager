@@ -3,18 +3,11 @@ package org.jahia.modules.sam.healthcheck.probes;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.osgi.BundleState;
-import org.jahia.osgi.BundleUtils;
-import org.jahia.osgi.FrameworkService;
 import org.jahia.settings.SettingsBean;
-import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component(immediate = true, service = Probe.class)
 public class MultipleBundleVersions extends MultipleModuleVersions implements Probe {
