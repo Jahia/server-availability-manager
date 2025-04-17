@@ -18,14 +18,16 @@ import java.util.Arrays;
 @Component(service = Probe.class, immediate = true)
 public class SupportedStackJSModulesProbe implements Probe {
 
+    private static final String UNKNOWN = "Unknown";
+
     @Override
     public ProbeStatus getStatus() {
         Bundle npmModulesEngineBundle = BundleUtils.getBundleBySymbolicName("javascript-modules-engine", null);
         boolean isNpmModulesEngineStarted = npmModulesEngineBundle != null && npmModulesEngineBundle.getState() == Bundle.ACTIVE;
 
-        String vmVendor = System.getProperty("java.vm.vendor", "Unknown");
-        Version jvmVersion = new Version(System.getProperty("java.version", "Unknown"));
-        Version graalVMVersion = new Version(System.getProperty("org.graalvm.version", "Unknown"));
+        String vmVendor = System.getProperty("java.vm.vendor", UNKNOWN);
+        Version jvmVersion = new Version(System.getProperty("java.version", UNKNOWN));
+        Version graalVMVersion = new Version(System.getProperty("org.graalvm.version", UNKNOWN));
 
         // This probe is only relevant for Jahia 8.2.0.0+ in which javascript-modules-engine is available. 
         // Not testing Jahia version since it is not to be backported to older versions of SAM.
