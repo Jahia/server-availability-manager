@@ -6,4 +6,5 @@ extensions:
       headers:
         user-agent: JS GraphQL
         Authorization: Basic cm9vdDpyb290MTIzNA==
+        Origin: http://localhost:8080
       introspect: true
