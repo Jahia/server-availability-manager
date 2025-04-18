@@ -19,3 +19,4 @@ jobs:
     with:
       module_id: server-availability-manager
       git_branch: ${{ matrix.git_branch }}
+      github_slug: 'jahia/server-availability-manager'
