@@ -28,6 +28,7 @@ public class JahiaErrorsProbe implements Probe {
 
     private String jahiaLogFilepath;
 
+    private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
@@ -56,12 +57,20 @@ public class JahiaErrorsProbe implements Probe {
             while ((currentLine = br.readLine()) != null) {
                 if (logPattern.matcher(currentLine).matches()){
                     numberOfError++;
-                    matchingLines.add(currentLine.trim());
+                    if (matchingLines.size() < MAX_COLLECTED_LINES) {
+                        matchingLines.add(currentLine.trim());
+                    }
                 }
             }
+
+            String matchingLinesStr = String.join("; ", matchingLines);
+            if (numberOfError > MAX_COLLECTED_LINES) {
+                matchingLinesStr += "; ... and " + (numberOfError - MAX_COLLECTED_LINES) + " more";
+            }
+
             return numberOfError == 0 ?
                     new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN) :
-                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError, String.join("; ", matchingLines)}), ProbeStatus.Health.YELLOW);
+                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError, matchingLinesStr}), ProbeStatus.Health.YELLOW);
         } catch (Exception e) {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
