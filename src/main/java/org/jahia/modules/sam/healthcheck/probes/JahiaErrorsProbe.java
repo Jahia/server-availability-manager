@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -26,7 +28,7 @@ public class JahiaErrorsProbe implements Probe {
 
     private String jahiaLogFilepath;
 
-    private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.");
+    private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
     @Override
@@ -48,16 +50,18 @@ public class JahiaErrorsProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
         int numberOfError = 0;
+        List<String> matchingLines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
             String currentLine;
             while ((currentLine = br.readLine()) != null) {
                 if (logPattern.matcher(currentLine).matches()){
                     numberOfError++;
+                    matchingLines.add(currentLine.trim());
                 }
             }
             return numberOfError == 0 ?
                     new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN) :
-                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError}), ProbeStatus.Health.YELLOW);
+                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError, String.join("; ", matchingLines)}), ProbeStatus.Health.YELLOW);
         } catch (Exception e) {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
