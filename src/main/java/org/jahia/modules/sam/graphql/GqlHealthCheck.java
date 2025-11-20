@@ -39,19 +39,22 @@ public class GqlHealthCheck {
 
     @GraphQLField
     @GraphQLDescription("Highest reported status across all probes")
-    public GqlProbeStatus getStatus(DataFetchingEnvironment environment) {
+    public GqlHealthCheckStatus getStatus(DataFetchingEnvironment environment) {
         Function<GqlProbeStatus, Integer> keyExtractor = (GqlProbeStatus status) -> status.getHealth().ordinal();
-        return getProbes(null, environment)
+
+        GqlProbeStatus healthCheckStatus = getProbes(null, environment)
                 .stream().map(gqlProbe -> gqlProbe.getStatus(environment))
-                .filter(status -> !status.getHealth().equals(GqlProbeStatus.GqlProbeHealth.GREEN))
+                .filter(status -> !status.getHealth().equals(GqlProbeHealth.GREEN))
                 .max(Comparator.comparing(keyExtractor))
-                .orElse(new GqlProbeStatus("All probes are healthy", GqlProbeStatus.GqlProbeHealth.GREEN));
+                .orElse(new GqlProbeStatus("All probes are healthy", GqlProbeHealth.GREEN));
+
+        return new GqlHealthCheckStatus(healthCheckStatus.getMessage(), healthCheckStatus.getHealth());
     }
 
     @GraphQLField
     @GraphQLDescription("Probes registered in SAM for the requested severity")
     public List<GqlProbe> getProbes(
-            @GraphQLName("health") @GraphQLDescription("Return probes matching this status or above") GqlProbeStatus.GqlProbeHealth health,
+            @GraphQLName("health") @GraphQLDescription("Return probes matching this status or above") GqlProbeHealth health,
             DataFetchingEnvironment environment) {
 
         return probesRegistry.getProbes().stream()
