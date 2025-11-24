@@ -1397,7 +1397,7 @@ type GqlHealthCheck {
         health: GqlProbeHealth
     ): [GqlProbe]
     "Highest reported status across all probes"
-    status: GqlProbeStatus
+    status: GqlHealthCheckStatus
 }
 
 "jContent API"
@@ -1608,12 +1608,20 @@ type GqlProbe {
     status: GqlProbeStatus
 }
 
+"HealthCheck status"
+type GqlHealthCheckStatus {
+    "Global health of probes"
+    health: GqlProbeHealth
+    "Message explaining global health status"
+    message: String @deprecated(reason: "When multiple probe return the same error status (YELLOW or RED), the message does not guarantee which of the probe will get its message returned. We recommend using the \"health\" parameter and corresponding individual probe message instead.")
+}
+
 "Probe status"
 type GqlProbeStatus {
     "Health of the probe"
     health: GqlProbeHealth
     "Message explaining probe status"
-    message: String @deprecated(reason: "When multiple probe return the same error status (YELLOW or RED), the message does not guarantee which of the probe will get its message returned. We recommend using the \"health\" parameter and corresponding individual probe message instead.")
+    message: String
 }
 
 "Publication background job"

@@ -65,9 +65,9 @@ public class GqlProbe {
             } else {
                 status = probe.getStatus();
             }
-            return new GqlProbeStatus(status.getMessage(), GqlProbeStatus.GqlProbeHealth.valueOf(status.getHealth().name()));
+            return new GqlProbeStatus(status.getMessage(), GqlProbeHealth.valueOf(status.getHealth().name()));
         } catch (Throwable e) {
-            return new GqlProbeStatus("Error getting probe status: " + e.getMessage(), GqlProbeStatus.GqlProbeHealth.RED);
+            return new GqlProbeStatus("Error getting probe status: " + e.getMessage(), GqlProbeHealth.RED);
         }
     }
 }
