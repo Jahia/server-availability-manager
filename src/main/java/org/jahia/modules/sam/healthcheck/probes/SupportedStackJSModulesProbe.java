@@ -1,7 +1,5 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
-import org.graalvm.polyglot.Context;
-import org.jahia.commons.Version;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
@@ -10,39 +8,17 @@ import org.jahia.osgi.BundleUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
 
-// Disabled as part of https://github.com/Jahia/jahia-private/issues/4280 (use of OpenJDK by default instead of GraalVM).
-// Should be reviewed and enabled again based on the outcomes of https://github.com/Jahia/javascript-modules/issues/505
-//@Component(service = Probe.class, immediate = true)
+@Component(service = Probe.class, immediate = true)
 public class SupportedStackJSModulesProbe implements Probe {
-
-    private static final String UNKNOWN = "Unknown";
 
     @Override
     public ProbeStatus getStatus() {
-        Bundle npmModulesEngineBundle = BundleUtils.getBundleBySymbolicName("javascript-modules-engine", null);
-        boolean isNpmModulesEngineStarted = npmModulesEngineBundle != null && npmModulesEngineBundle.getState() == Bundle.ACTIVE;
+        Bundle javaScriptModulesEngineBundle = BundleUtils.getBundleBySymbolicName("javascript-modules-engine", null);
+        boolean isJavaScriptModulesEngineStarted = javaScriptModulesEngineBundle != null && javaScriptModulesEngineBundle.getState() == Bundle.ACTIVE;
 
-        String vmVendor = System.getProperty("java.vm.vendor", UNKNOWN);
-        Version jvmVersion = new Version(System.getProperty("java.version", UNKNOWN));
-        Version graalVMVersion = new Version(System.getProperty("org.graalvm.version", UNKNOWN));
-
-        // This probe is only relevant for Jahia 8.2.0.0+ in which javascript-modules-engine is available.
-        // Not testing Jahia version since it is not to be backported to older versions of SAM.
         ProbeStatus status = new ProbeStatus("No issues to report", ProbeStatus.Health.GREEN);
-        if (!isNpmModulesEngineStarted) {
-            status = ProbeStatusUtils.aggregateStatus(status, "The environment is not running JS modules (javascript-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
-        } else if (System.getProperty("org.graalvm.version") == null) {
-            status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM not detected on the environment (detected vendor: %s with JVM version: %s), after switching to GraalVM 22.3.3+ with JVM version 17+, make sure to enable the Javascript extension", vmVendor, jvmVersion), ProbeStatus.Health.RED);
-        } else {
-            if (graalVMVersion.compareTo(new Version("22.3")) <= 0) {
-                status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM version 22.3.3 or newer required (detected GraalVM version: %s)", graalVMVersion), ProbeStatus.Health.RED);
-            }
-            if (jvmVersion.compareTo(new Version("17")) <= 0) {
-                status = ProbeStatusUtils.aggregateStatus(status, String.format("GraalVM with JVM version 17 or newer required (detected JVM version: %s)", jvmVersion), ProbeStatus.Health.RED);
-            }
-            if (!isJavaScriptModuleInstalled()) {
-                status = ProbeStatusUtils.aggregateStatus(status, "GraalVM is detected but the JavaScript extension is not installed", ProbeStatus.Health.RED);
-            }
+        if (!isJavaScriptModulesEngineStarted) {
+            ProbeStatusUtils.aggregateStatus(status, "The environment is not running JS modules (javascript-modules-engine stopped or not present)", ProbeStatus.Health.GREEN);
         }
         return status;
     }
@@ -60,12 +36,5 @@ public class SupportedStackJSModulesProbe implements Probe {
     @Override
     public ProbeSeverity getDefaultSeverity() {
         return ProbeSeverity.MEDIUM;
-    }
-
-    private boolean isJavaScriptModuleInstalled() {
-        try (Context context = Context.create()) {
-            return context.getEngine().getLanguages().containsKey("js");
-
-        }
     }
 }

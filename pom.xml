@@ -89,7 +89,6 @@
             org.apache.karaf.cellar.core;resolution:=optional;version="[4.1,5)",
             org.apache.karaf.cellar.core.event;resolution:=optional;version="[4.1,5)",
             org.apache.karaf.cellar.bundle;resolution:=optional;version="[4.1,5)",
-            org.graalvm.polyglot,
             org.jahia.data.templates,
             org.jahia.modules.graphql.provider.dxm;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.admin;version="[2.7,4)",
@@ -202,12 +201,6 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>2.10.13</version> <!-- matches the version declared in https://github.com/Jahia/jahia-private/blob/JAHIA-8-2-0-X-BRANCH/core/pom.xml#L1551 -->
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.graalvm.sdk</groupId>
-            <artifactId>graal-sdk</artifactId>
-            <version>${graalvm.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
