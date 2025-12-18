@@ -53,7 +53,7 @@
     </parent>
     <artifactId>server-availability-manager</artifactId>
     <name>Server Availability Manager</name>
-    <version>3.5.0-SNAPSHOT</version>
+    <version>3.4.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (Server Availability Manager) for running on a Jahia server.</description>
 
@@ -68,7 +68,7 @@
         <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
-        <jahia-module-signature>MCwCFFBjHWu9gzmsH1V5KZtVG/Xwi0hFAhQdsAUJwiC+Hi68AzStc6PvPGe2Tw==</jahia-module-signature>
+        <jahia-module-signature>MC0CFQCK3C9m/B8kWqdAkZRR0nx4n65LtAIUKEwg7xPjX0MuxYkPaxfMD/OCMpg=</jahia-module-signature>
         <export-package>
             org.jahia.modules.sam,
             org.jahia.modules.sam.model
@@ -89,7 +89,6 @@
             org.apache.karaf.cellar.core;resolution:=optional;version="[4.1,5)",
             org.apache.karaf.cellar.core.event;resolution:=optional;version="[4.1,5)",
             org.apache.karaf.cellar.bundle;resolution:=optional;version="[4.1,5)",
-            org.graalvm.polyglot,
             org.jahia.data.templates,
             org.jahia.modules.graphql.provider.dxm;version="[2.7,4)",
             org.jahia.modules.graphql.provider.dxm.admin;version="[2.7,4)",
@@ -202,12 +201,6 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>2.10.13</version> <!-- matches the version declared in https://github.com/Jahia/jahia-private/blob/JAHIA-8-2-0-X-BRANCH/core/pom.xml#L1551 -->
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.graalvm.sdk</groupId>
-            <artifactId>graal-sdk</artifactId>
-            <version>${graalvm.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

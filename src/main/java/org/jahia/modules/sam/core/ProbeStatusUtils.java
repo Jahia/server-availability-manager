@@ -6,15 +6,19 @@ import org.jahia.modules.sam.ProbeStatus;
  * Simple utils class to manipulate probe data
  */
 public final class ProbeStatusUtils {
+
+    private ProbeStatusUtils() {
+        // Utility class
+    }
+
     /**
      * Aggregate a new message to an existing probe status
      *
      * @param status The status of a probe
      * @param message A message to aggregate with to the status
      * @param health The health level associated with the message
-     * @return status
      */
-    public static ProbeStatus aggregateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
+    public static void aggregateStatus(ProbeStatus status, String message, ProbeStatus.Health health) {
         if (status.getHealth() == ProbeStatus.Health.GREEN) {
             status.setMessage(message);
             status.setHealth(health);
@@ -24,6 +28,5 @@ public final class ProbeStatusUtils {
             }
             status.setMessage(String.format("%s - %s", status.getMessage(), message));
         }
-        return status;
     }
 }
