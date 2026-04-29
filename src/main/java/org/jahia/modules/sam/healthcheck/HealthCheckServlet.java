@@ -79,7 +79,7 @@ public class HealthCheckServlet extends HttpServlet {
         StringWriter writer = new StringWriter();
         HttpServletResponse responseWrapper = new HealthCheckHttpServletResponseWrapper(resp, writer);
 
-        permissionService.addScopes(Collections.singleton("graphql"), req);
+        permissionService.addScopes(Collections.singleton("healthcheck"), req);
         gql.service(requestWrapper, responseWrapper);
 
         try {
