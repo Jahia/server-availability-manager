@@ -11,3 +11,4 @@ healthcheck:
     - api: graphql.JahiaAdminQuery.healthCheck
     - api: graphql.GqlHealthCheck
     - api: graphql.GqlProbe
+    - api: graphql.GqlProbeStatus
