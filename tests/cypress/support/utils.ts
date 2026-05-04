@@ -7,8 +7,8 @@ type HealthCheckQuery = Record<string, string | number | boolean | null | undefi
  * Executes a call to healthcheck REST API endpoint
  * @param qs
  */
-export const healthCheckAPI = (qs?: HealthCheckQuery): Chainable<any> => {
-    return cy.request<Chainable<any>>({
+export const healthCheckAPI = (qs?: HealthCheckQuery): Chainable<Cypress.Response<any>> => {
+    return cy.request({
         url: `${Cypress.config().baseUrl}/modules/healthcheck`,
         qs,
         headers: {

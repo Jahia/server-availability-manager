@@ -16,12 +16,22 @@ const API_PROVISIONING_ACCESS_REMOVE = 'securityProfiles/provisioning-access-rem
 describe('healthcheck REST API test with security.profile=off', () => {
     before(() => {
         // Grant provisioning API access through the SAM configuration.
-        // Required to be able to restore default configuration aftr the test.
+        // Required to be able to restore default configuration after the test.
         cy.runProvisioningScript({fileName: API_PROVISIONING_ACCESS_GRANT});
         // Turn security.profile off to remove default GraphQL API scopes
         cy.runProvisioningScript({fileName: API_SECURITY_CONFIG_OFF});
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(1000); // Wait for the configuration to be applied.
+        // Once security.profile is turned OFF, default access to GraphQL should be denied.
+        // Wait for default profile to be emptied before making sure SAM scopes grant all required access.
+        cy.waitUntil(() =>
+                healthCheckGQL({severity: 'LOW', health: 'GREEN'}).then(response => {
+                    return response.errors?.[0]?.errorType === 'GqlAccessDeniedException';
+                }),
+            {
+                timeout: 10_000,
+                interval: 500,
+                errorMsg: 'Timed out waiting for security.profile=off to deny GraphQL access',
+            }
+        );
     });
 
     after(() => {
@@ -30,17 +40,10 @@ describe('healthcheck REST API test with security.profile=off', () => {
         cy.runProvisioningScript({fileName: API_PROVISIONING_ACCESS_REMOVE});
     });
 
-    it('GraphQL endpoint should deny an access (since graphql scope is not granted)', () => {
-        healthCheckGQL({severity: 'LOW', health: 'GREEN'}).should(response => {
-            expect(response.errors?.[0]?.errorType, 'Access to GraphQL should be denied').to.be.equal('GqlAccessDeniedException');
-            expect(response.data, 'Response data should be null').to.be.null;
-        });
-    });
-
-    it('REST API endpoint should return probes data (using API scopes from SAM config)', () => {
+    it('REST API endpoint should return probes data (SAM API scopes should grant required access)', () => {
         healthCheckAPI({}).should(response => {
-            expect(response.status).to.eq(200);
-            expect(response.body.probes).to.not.be.empty;
+            expect(response.status, 'Access to healthcheck REST endpoint should be granted').to.eq(200);
+            expect(response.body.probes, 'Healthcheck probes list should not be empty').to.not.be.empty;
         });
     });
 });
