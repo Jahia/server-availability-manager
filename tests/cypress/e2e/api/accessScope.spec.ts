@@ -23,13 +23,13 @@ describe('healthcheck REST API test with security.profile=off', () => {
         // Once security.profile is turned OFF, default access to GraphQL should be denied.
         // Wait for default profile to be emptied before making sure SAM scopes grant all required access.
         cy.waitUntil(() =>
-                healthCheckGQL({severity: 'LOW', health: 'GREEN'}).then(response => {
-                    return response.errors?.[0]?.errorType === 'GqlAccessDeniedException';
-                }),
+            healthCheckGQL({severity: 'LOW', health: 'GREEN'}).then(response => {
+                return response.errors?.[0]?.errorType === 'GqlAccessDeniedException';
+            }),
             {
                 timeout: 10_000,
                 interval: 500,
-                errorMsg: 'Timed out waiting for security.profile=off to deny GraphQL access',
+                errorMsg: 'Timed out waiting for security.profile=off to deny GraphQL access'
             }
         );
     });
