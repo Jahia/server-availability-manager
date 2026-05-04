@@ -26,11 +26,11 @@ describe('healthcheck REST API test with security.profile=off', () => {
             healthCheckGQL({severity: 'LOW', health: 'GREEN'}).then(response => {
                 return response.errors?.[0]?.errorType === 'GqlAccessDeniedException';
             }),
-            {
-                timeout: 10_000,
-                interval: 500,
-                errorMsg: 'Timed out waiting for security.profile=off to deny GraphQL access'
-            }
+        {
+            timeout: 10_000,
+            interval: 500,
+            errorMsg: 'Timed out waiting for security.profile=off to deny GraphQL access'
+        }
         );
     });
 
