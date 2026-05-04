@@ -1,0 +1,8 @@
+[
+  {
+    "editConfiguration": "org.jahia.bundles.api.security",
+    "properties": {
+      "security.profile": "off"
+    }
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "editConfiguration": "org.jahia.bundles.api.authorization-qa",
+    "properties": {
+        "provisioning.description": "Workaround to grant provisioning API access to test SAM healthcheck servlet with security.profile=off",
+        "provisioning.metadata.visible": "true",
+        "provisioning.auto_apply[0].always": "true",
+        "provisioning.constraints[0].user_permission": "provisioningAccess",
+        "provisioning.constraints[0].path": "/",
+        "provisioning.grants[0].api": "provisioning"
+    }
+  }
+]

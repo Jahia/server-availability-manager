@@ -1,24 +1,11 @@
-const healthcheck = () => {
-    return cy.request({
-        url: `${Cypress.config().baseUrl}/modules/healthcheck`,
-        headers: {
-            referer: Cypress.config().baseUrl
-        },
-        auth: {
-            user: 'root',
-            pass: Cypress.env('SUPER_USER_PASSWORD'),
-            sendImmediately: true
-        },
-        failOnStatusCode: false
-    });
-};
+import {healthCheckAPI as healthcheck} from "../../support/utils";
 
 describe('Module definitions probe test', () => {
     it('should fail when installing incompatible definitions', {retries: 5}, function () {
         cy.login();
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
-        healthcheck().should(response => {
+        healthcheck({}).should(response => {
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.status).to.eq(200);
         });
@@ -36,7 +23,7 @@ describe('Module definitions probe test', () => {
         cy.installBundle('moduleDefinitionsProbe/test-1.0-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
 
-        healthcheck().should(response => {
+        healthcheck({}).should(response => {
             expect(response.body.status.health).to.eq('GREEN');
             expect(response.status).to.eq(200);
         });
@@ -44,14 +31,14 @@ describe('Module definitions probe test', () => {
         cy.installBundle('moduleDefinitionsProbe/test-1.1-SNAPSHOT.jar');
         cy.runProvisioningScript([{startBundle: 'test/1.1.0.SNAPSHOT'}]);
 
-        healthcheck().should(response => {
+        healthcheck({}).should(response => {
             expect(response.body.status.health).to.eq('YELLOW');
             expect(response.status).to.eq(200);
         });
 
         cy.runProvisioningScript([{startBundle: 'test/1.0.0.SNAPSHOT'}]);
 
-        healthcheck().should(response => {
+        healthcheck({}).should(response => {
             expect(response.body.status.health).to.eq('RED');
             expect(response.status).to.eq(503);
         });
