@@ -1,4 +1,4 @@
-import {healthCheckAPI as healthcheck} from "../../support/utils";
+import {healthCheckAPI as healthcheck} from '../../support/utils';
 
 describe('Module definitions probe test', () => {
     it('should fail when installing incompatible definitions', {retries: 5}, function () {

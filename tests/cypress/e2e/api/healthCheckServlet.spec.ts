@@ -1,4 +1,4 @@
-import {healthCheckAPI as healthcheck} from "../../support/utils";
+import {healthCheckAPI as healthcheck} from '../../support/utils';
 
 describe('healthcheck REST API test', () => {
     it('should return using "includes" parameter', () => {

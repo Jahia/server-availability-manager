@@ -1,5 +1,5 @@
 import {healthCheck as healthCheckGQL} from '../../support/gql';
-import {healthCheckAPI} from "../../support/utils";
+import {healthCheckAPI} from '../../support/utils';
 
 const API_SECURITY_CONFIG_DEFAULT = 'securityProfiles/security-profile-default.json';
 const API_SECURITY_CONFIG_OFF = 'securityProfiles/security-profile-off.json';
