@@ -119,7 +119,7 @@ public class HealthCheckServlet extends HttpServlet {
             }
         };
 
-        permissionService.addScopes(Collections.singleton("graphql"), req);
+        permissionService.addScopes(Collections.singleton("healthcheck"), req);
 
         gql.service(requestWrapper, responseWrapper);
 
