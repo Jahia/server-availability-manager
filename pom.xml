@@ -68,7 +68,7 @@
         <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
-        <jahia-module-signature>MCwCFFMCkuXOleFeN6GGm6y1eWwA3v4DAhRtYColTwnsgAULx1Mi6ldUoOqqIA==</jahia-module-signature>
+        <jahia-module-signature>MC0CFAlIhl+jIWT5wYDJIh4VFXCgAHF+AhUAjFEWJ197RO9L0N268eVN0WGoC5o=</jahia-module-signature>
         <jahia.plugin.version>6.9</jahia.plugin.version>
         <export-package>org.jahia.modules.sam</export-package>
         <import-package>
