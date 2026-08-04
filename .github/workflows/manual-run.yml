@@ -23,6 +23,6 @@ jobs:
       module_id: server-availability-manager
       testrail_project: Server Availability Manager
       should_skip_testrail: true
-      skip_notification: true
+      skip_notifications: true
       provisioning_manifest: ${{ github.event.inputs.manifest }}
       module_branch: ${{ github.ref }}
