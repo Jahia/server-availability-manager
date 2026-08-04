@@ -66,7 +66,7 @@ jobs:
       jahia_image: ghcr.io/jahia/jahia-ee-dev:8-SNAPSHOT
       module_id: server-availability-manager
       testrail_project: Server Availability Manager
-      pagerduty_skip_notification: true
+      skip_notification: true
       provisioning_manifest: provisioning-manifest-build.yml
       should_skip_testrail: true
       module_branch: ${{ github.head_ref }}
