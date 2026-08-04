@@ -13,6 +13,6 @@ jobs:
       jahia_image: jahia/jahia-ee:8
       module_id: server-availability-manager
       testrail_project: Server Availability Manager
-      pagerduty_incident_service: server-availability-manager-JahiaRL
+      incident_service: server-availability-manager-JahiaRL
       provisioning_manifest: provisioning-manifest-snapshot.yml
       module_branch: ${{ github.ref }}

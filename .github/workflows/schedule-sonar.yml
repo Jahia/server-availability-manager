@@ -18,5 +18,6 @@ jobs:
         git_branch: ["${{ github.event.repository.default_branch }}"]
     with:
       module_id: server-availability-manager
+      incident_service: server-availability-manager-sonar
       git_branch: ${{ matrix.git_branch }}
       github_slug: 'jahia/server-availability-manager'
