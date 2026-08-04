@@ -12,11 +12,13 @@ describe('Module definitions probe test', () => {
         cy.installBundle('moduleDefinitionsProbe/test-1.2-SNAPSHOT.jar');
 
         cy.visit('/tools/osgi/console/bundles');
-        cy.get('.filter').first().type('(Bundle-Name=test)');
-        cy.get('.filterApply').first().click();
-        cy.get('.reloadButton').first().click();
-        cy.get('td').contains('1.0.0.SNAPSHOT');
-        cy.get('td').contains('1.2.0.SNAPSHOT').should('not.exist');
+        // Scope the check to the "test" bundle's own row: the page lists every bundle
+        // installed on the instance, so asserting on unscoped `td` content is fragile
+        // whenever another bundle's version happens to collide with '1.2.0.SNAPSHOT'.
+        cy.contains('.symName', /^test$/).closest('tr').within(() => {
+            cy.contains('td', '1.0.0.SNAPSHOT');
+            cy.contains('td', '1.2.0.SNAPSHOT').should('not.exist');
+        });
     });
 
     it('show an error if running version has incompatible definitions', function () {
