@@ -1,0 +1,11 @@
+# Client cache policy for the resources served by this module.
+#
+# The health check response reports the live state of the server for the calling user, so it is
+# served with the "private" template: each request is answered from the server rather than from a
+# browser, proxy or CDN cache.
+#
+# See the client-cache-control documentation for the ruleset format and the available templates.
+name: "Server Availability Manager ruleset"
+description: "Client cache policy for the Server Availability Manager module"
+rules:
+  - "8.2;GET|HEAD;(?:/[^/]+)?/modules/healthcheck(/.*)?;template:private"
