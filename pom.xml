@@ -105,6 +105,8 @@
             org.joda.time,
             org.json,
             org.osgi.framework;version="[1.8,2)",
+            org.osgi.service.component.runtime;version="[1.4,2)",
+            org.osgi.service.component.runtime.dto;version="[1.4,2)",
             org.osgi.service.event;version="[1.3,2)",
             org.slf4j;version="[1.7,2)",
             org.apache.naming.java,
