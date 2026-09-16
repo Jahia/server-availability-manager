@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.*;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,23 +27,24 @@ import java.util.stream.Stream;
 public class HealthCheckServlet extends HttpServlet {
     private static final String ERRORS_FIELD = "errors";
     private HttpServlet gql;
-    private ProbeSeverity defaultSeverity;
-    private String defaultIncludes;
-    private ProbeStatus.Health statusThreshold;
+    private final AtomicReference<Settings> settings = new AtomicReference<>();
 
     @Reference(service = ProbesRegistry.class)
     private ProbesRegistry probesRegistry;
 
     private PermissionService permissionService;
-    private int statusCode;
 
+    /**
+     * Serves as both the activation and the modified method: rebuilding the settings is exactly the work
+     * a configuration update needs.
+     */
     @Activate
+    @Modified
     public void activate(Map<String, Object> config) {
-        //setting default values for probes
-        defaultSeverity = (config.get("severity.default")!=null ? ProbeSeverity.valueOf((String) config.get("severity.default")) : ProbeSeverity.MEDIUM);
-        defaultIncludes = (config.get("includes.default") != null) ? (String) config.get("includes.default") : "";
-        statusThreshold = (config.get("status.threshold")!=null ? ProbeStatus.Health.valueOf((String) config.get("status.threshold")) : ProbeStatus.Health.RED);
-        statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
+        // a single write of a fully built object: on an update the servlet is already serving, so a
+        // request reads either every setting from before the update or every setting from after it,
+        // and a value the constructor rejects leaves the servlet on its previous settings
+        settings.set(new Settings(config));
     }
 
     @Reference(service = HttpServlet.class, target = "(component.name=graphql.kickstart.servlet.OsgiGraphQLHttpServlet)")
@@ -56,7 +59,8 @@ public class HealthCheckServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String severity = Optional.ofNullable(req.getParameter("severity")).orElse(defaultSeverity.name()).toUpperCase();
+        Settings currentSettings = settings.get();
+        String severity = Optional.ofNullable(req.getParameter("severity")).orElse(currentSettings.defaultSeverity.name()).toUpperCase();
 
         try {
             ProbeSeverity.valueOf(severity);
@@ -66,7 +70,7 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         // Filter 'includes' param (or default includes) against valid probe names
-        String includesParam = Optional.ofNullable(req.getParameter("includes")).orElse(defaultIncludes);
+        String includesParam = Optional.ofNullable(req.getParameter("includes")).orElse(currentSettings.defaultIncludes);
         String tmpIncludes = null;
         if (!includesParam.isEmpty()) {
             Set<String> includeSet = Stream.of(includesParam.split(",")).collect(Collectors.toCollection(HashSet::new));
@@ -88,7 +92,7 @@ public class HealthCheckServlet extends HttpServlet {
             if (obj.has(ERRORS_FIELD) && !obj.getJSONArray(ERRORS_FIELD).isEmpty()) {
                 handleErrorResponse(resp, obj);
             } else {
-                handleSuccessResponse(resp, obj);
+                handleSuccessResponse(resp, obj, currentSettings);
             }
         } catch (JSONException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -105,7 +109,7 @@ public class HealthCheckServlet extends HttpServlet {
         }
     }
 
-    private void handleSuccessResponse(HttpServletResponse resp, JSONObject obj) throws IOException {
+    private static void handleSuccessResponse(HttpServletResponse resp, JSONObject obj, Settings currentSettings) throws IOException {
         String result;
         JSONObject healthCheckNode = obj.getJSONObject("data")
                 .getJSONObject("admin")
@@ -114,8 +118,8 @@ public class HealthCheckServlet extends HttpServlet {
 
         ProbeStatus.Health status = ProbeStatus.Health.valueOf(healthCheckNode.getJSONObject("status").getString("health"));
 
-        if (status.ordinal() >= statusThreshold.ordinal()) {
-            resp.setStatus(statusCode);
+        if (status.ordinal() >= currentSettings.statusThreshold.ordinal()) {
+            resp.setStatus(currentSettings.statusCode);
         } else {
             resp.setStatus(HttpServletResponse.SC_OK);
         }
@@ -170,6 +174,21 @@ public class HealthCheckServlet extends HttpServlet {
                 return super.getParameter(name);
             }
         };
+    }
+
+    private static final class Settings {
+        private final ProbeSeverity defaultSeverity;
+        private final String defaultIncludes;
+        private final ProbeStatus.Health statusThreshold;
+        private final int statusCode;
+
+        private Settings(Map<String, Object> config) {
+            //setting default values for probes
+            defaultSeverity = (config.get("severity.default")!=null ? ProbeSeverity.valueOf((String) config.get("severity.default")) : ProbeSeverity.MEDIUM);
+            defaultIncludes = (config.get("includes.default") != null) ? (String) config.get("includes.default") : "";
+            statusThreshold = (config.get("status.threshold")!=null ? ProbeStatus.Health.valueOf((String) config.get("status.threshold")) : ProbeStatus.Health.RED);
+            statusCode = (config.get("status.code")!=null ? Integer.parseInt((String) config.get("status.code")) : 503);
+        }
     }
 
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {

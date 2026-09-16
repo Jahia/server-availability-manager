@@ -6,9 +6,10 @@ import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Component(immediate = true, service = ProbesRegistry.class)
@@ -16,12 +17,17 @@ public class ProbesRegistry {
 
     private static final Logger logger = LoggerFactory.getLogger(ProbesRegistry.class);
 
-    private Map<String, Object> config;
-    private final Collection<Probe> probes = new ArrayList<>();
+    private final AtomicReference<Map<String, Object>> config = new AtomicReference<>();
+    private final Collection<Probe> probes = new CopyOnWriteArrayList<>();
 
+    /**
+     * Serves as both the activation and the modified method: re-reading the properties and re-applying
+     * them to every registered probe is exactly the work a configuration update needs.
+     */
     @Activate
+    @Modified
     public void activate(Map<String, Object> props) {
-        this.config = props;
+        config.set(props);
         for (Probe probe : probes) {
             activateProbe(probe);
         }
@@ -38,16 +44,17 @@ public class ProbesRegistry {
     }
 
     private void activateProbe(Probe probe) {
-        if (config != null) {
+        if (config.get() != null) {
             probe.setConfig(getProbeConfig(probe.getName()));
         }
     }
 
     public ProbeSeverity getProbeSeverity(Probe probe) {
+        Map<String, Object> currentConfig = config.get();
         String key = "probes." + probe.getName() + ".severity";
-        if (config.containsKey(key)) {
+        if (currentConfig.containsKey(key)) {
             try {
-                return ProbeSeverity.valueOf((String) config.get(key));
+                return ProbeSeverity.valueOf((String) currentConfig.get(key));
             } catch (IllegalArgumentException e) {
                 logger.error("Cannot parse severity", e);
             }
@@ -56,11 +63,11 @@ public class ProbesRegistry {
     }
 
     public Map<String, Object> getProbeConfig(String name) {
+        Map<String, Object> currentConfig = config.get();
         String configPrefix = "probes." + name + ".";
-        return config.keySet().stream()
+        return currentConfig.keySet().stream()
                 .filter(k -> k.startsWith(configPrefix))
-                .map(k -> k.substring(configPrefix.length()))
-                .collect(Collectors.toMap(k -> k, k -> config.get(configPrefix + k)));
+                .collect(Collectors.toMap(k -> k.substring(configPrefix.length()), currentConfig::get));
     }
 
     public Collection<Probe> getProbes() {
