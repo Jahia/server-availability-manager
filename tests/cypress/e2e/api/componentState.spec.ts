@@ -5,7 +5,9 @@ const PROBE = 'ModulesComponentState';
 describe('Modules component state probe test', () => {
     const waitUntilOptions = {
         interval: 500,
-        timeout: 15000,
+        // The probe serves a cached result until SCR republishes its change count, which it does 5 s after the
+        // last component state change. Every health transition therefore needs more than 5 s to appear.
+        timeout: 30000,
         errorMsg: 'Failed to reach the expected probe health'
     };
 
