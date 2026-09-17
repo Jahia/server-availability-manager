@@ -16,6 +16,7 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
@@ -132,14 +133,15 @@ public class HealthCheckServlet extends HttpServlet {
             result = finalWriter.getBuffer().toString();
         }
 
-        // Content-Length counts bytes, and a probe message can carry a non-ASCII character from a third party
-        // exception. Declaring the character count truncated such a body. The encoding is set before getWriter(),
-        // because the writer takes the encoding of the response at that moment.
+        // The body is encoded once, and the declared length counts those same bytes. A probe message can carry a
+        // non-ASCII character from a third party exception, and such a character takes two bytes for one
+        // character. Writing through the stream keeps the length and the bytes from one source.
+        byte[] body = result.getBytes(StandardCharsets.UTF_8);
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
+        resp.setContentLength(body.length);
 
-        try (PrintWriter respWriter = resp.getWriter()) {
-            respWriter.write(result);
+        try (OutputStream respStream = resp.getOutputStream()) {
+            respStream.write(body);
         }
     }
 
@@ -199,8 +201,11 @@ public class HealthCheckServlet extends HttpServlet {
 
     /**
      * Collects the response of the internal GraphQL call. The call can write through the stream or through the
-     * writer, so both go to one buffer and keep their order. The buffer is decoded as UTF-8, which is what the
-     * GraphQL servlet writes. Decoding each byte on its own turned a two byte character into two characters.
+     * writer, so both go to one buffer and keep their order.
+     *
+     * <p>Every method that would commit or discard the real response is intercepted. Forwarding one of them would
+     * commit the real response before this servlet writes the body, and the status, the encoding and the length
+     * set afterwards would be ignored.
      */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -242,9 +247,37 @@ public class HealthCheckServlet extends HttpServlet {
             return writer;
         }
 
+        /** The buffer is decoded as UTF-8, so a caller that builds its own encoder uses the same encoding. */
+        @Override
+        public String getCharacterEncoding() {
+            return StandardCharsets.UTF_8.name();
+        }
+
         @Override
         public void setContentLength(int len) {
-            // ignore content length
+            // the length of the real response is set once the body is known
+        }
+
+        @Override
+        public void setContentLengthLong(long len) {
+            // the length of the real response is set once the body is known
+        }
+
+        @Override
+        public void flushBuffer() {
+            // flush this buffer only, because committing the real response would discard everything set later
+            writer.flush();
+        }
+
+        @Override
+        public void resetBuffer() {
+            writer.flush();
+            buffer.reset();
+        }
+
+        @Override
+        public void reset() {
+            resetBuffer();
         }
     }
 }
