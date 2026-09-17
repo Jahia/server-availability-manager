@@ -16,6 +16,7 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -197,32 +198,31 @@ public class HealthCheckServlet extends HttpServlet {
     }
 
     /**
-     * Collects the response of the internal GraphQL call. The call writes bytes, so the bytes are buffered and
-     * decoded once, with the encoding the response declares. Decoding each byte on its own turned a two byte
-     * character into two characters.
+     * Collects the response of the internal GraphQL call. The call can write through the stream or through the
+     * writer, so both go to one buffer and keep their order. The buffer is decoded as UTF-8, which is what the
+     * GraphQL servlet writes. Decoding each byte on its own turned a two byte character into two characters.
      */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
-        private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        private final StringWriter characters = new StringWriter();
+        private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        private final PrintWriter writer = new PrintWriter(new OutputStreamWriter(buffer, StandardCharsets.UTF_8));
 
         public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
         }
 
-        /** @return what the internal call wrote, through either the stream or the writer */
+        /** @return what the internal call wrote, through the stream, the writer, or both */
         public String getContent() {
-            if (bytes.size() > 0) {
-                return new String(bytes.toByteArray(), StandardCharsets.UTF_8);
-            }
-            return characters.getBuffer().toString();
+            writer.flush();
+            return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
         }
 
         @Override
         public ServletOutputStream getOutputStream() {
+            writer.flush();
             return new ServletOutputStream() {
                 @Override
                 public void write(int b) {
-                    bytes.write(b);
+                    buffer.write(b);
                 }
 
                 @Override
@@ -239,7 +239,7 @@ public class HealthCheckServlet extends HttpServlet {
 
         @Override
         public PrintWriter getWriter() {
-            return new PrintWriter(characters);
+            return writer;
         }
 
         @Override
