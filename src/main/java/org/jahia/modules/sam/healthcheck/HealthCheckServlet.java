@@ -15,6 +15,8 @@ import org.osgi.service.component.annotations.Reference;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -80,14 +82,13 @@ public class HealthCheckServlet extends HttpServlet {
                     .collect(Collectors.joining(","));
         }
         HttpServletRequest requestWrapper = getRequestWrapper(req, tmpIncludes, severity);
-        StringWriter writer = new StringWriter();
-        HttpServletResponse responseWrapper = new HealthCheckHttpServletResponseWrapper(resp, writer);
+        HealthCheckHttpServletResponseWrapper responseWrapper = new HealthCheckHttpServletResponseWrapper(resp);
 
         permissionService.addScopes(Collections.singleton("healthcheck"), req);
         gql.service(requestWrapper, responseWrapper);
 
         try {
-            String result = writer.getBuffer().toString();
+            String result = responseWrapper.getContent();
             JSONObject obj = new JSONObject(result);
             if (obj.has(ERRORS_FIELD) && !obj.getJSONArray(ERRORS_FIELD).isEmpty()) {
                 handleErrorResponse(resp, obj);
@@ -130,7 +131,11 @@ public class HealthCheckServlet extends HttpServlet {
             result = finalWriter.getBuffer().toString();
         }
 
-        resp.setContentLength(result.length());
+        // Content-Length counts bytes, and a probe message can carry a non-ASCII character from a third party
+        // exception. Declaring the character count truncated such a body. The encoding is set before getWriter(),
+        // because the writer takes the encoding of the response at that moment.
+        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
         try (PrintWriter respWriter = resp.getWriter()) {
             respWriter.write(result);
@@ -191,12 +196,25 @@ public class HealthCheckServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Collects the response of the internal GraphQL call. The call writes bytes, so the bytes are buffered and
+     * decoded once, with the encoding the response declares. Decoding each byte on its own turned a two byte
+     * character into two characters.
+     */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
-        private final StringWriter writer;
+        private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        private final StringWriter characters = new StringWriter();
 
-        public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp, StringWriter writer) {
+        public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
-            this.writer = writer;
+        }
+
+        /** @return what the internal call wrote, through either the stream or the writer */
+        public String getContent() {
+            if (bytes.size() > 0) {
+                return new String(bytes.toByteArray(), StandardCharsets.UTF_8);
+            }
+            return characters.getBuffer().toString();
         }
 
         @Override
@@ -204,7 +222,7 @@ public class HealthCheckServlet extends HttpServlet {
             return new ServletOutputStream() {
                 @Override
                 public void write(int b) {
-                    writer.write((char) b);
+                    bytes.write(b);
                 }
 
                 @Override
@@ -221,7 +239,7 @@ public class HealthCheckServlet extends HttpServlet {
 
         @Override
         public PrintWriter getWriter() {
-            return new PrintWriter(writer);
+            return new PrintWriter(characters);
         }
 
         @Override

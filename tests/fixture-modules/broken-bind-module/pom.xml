@@ -5,6 +5,8 @@
         <groupId>org.jahia.modules</groupId>
         <artifactId>jahia-modules</artifactId>
         <version>8.2.0.0</version>
+        <!-- The aggregator sits in the parent directory, so Maven must not look for jahia-modules there. -->
+        <relativePath/>
     </parent>
 
     <groupId>org.jahia.test.sam</groupId>
