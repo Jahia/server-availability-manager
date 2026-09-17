@@ -12,12 +12,17 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ComponentConfigurationDTO;
 import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -39,15 +44,36 @@ import java.util.stream.Collectors;
 @Component(service = Probe.class, immediate = true)
 public class ModulesComponentStateProbe implements Probe {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModulesComponentStateProbe.class);
+
     private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
 
     private List<String> blacklist = Collections.emptyList();
 
-    private ServiceComponentRuntime serviceComponentRuntime;
+    private volatile ServiceComponentRuntime serviceComponentRuntime;
 
-    @Reference
+    /**
+     * SCR publishes a {@code service.changecount} service property, and it republishes that property only once no
+     * component has changed state for 5 seconds. Binding the update of that property therefore gives the probe two
+     * things at once: it recomputes nothing while the load balancer polls a quiet system, and it never reads a
+     * component that is still activating, because during a deployment the probe serves the cached result.
+     */
+    private final AtomicBoolean refreshCache = new AtomicBoolean();
+
+    private final AtomicReference<ProbeStatus> cache = new AtomicReference<>();
+
+    @Reference(name = "scr", updated = "updatedServiceComponentRuntime")
     public void setServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
         this.serviceComponentRuntime = serviceComponentRuntime;
+    }
+
+    public void unsetServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
+        this.serviceComponentRuntime = null;
+    }
+
+    protected void updatedServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
+        refreshCache.set(true);
+        LOGGER.debug("Declarative Services reported a change, the next health check recomputes the component states");
     }
 
     @Override
@@ -67,15 +93,24 @@ public class ModulesComponentStateProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        List<ComponentIssue> issues = collectIssues();
-
-        if (issues.isEmpty()) {
-            return new ProbeStatus("All module components are active", ProbeStatus.Health.GREEN);
+        ProbeStatus cached = cache.get();
+        if (cached != null && !refreshCache.compareAndSet(true, false)) {
+            return cached;
         }
 
-        String details = issues.stream().map(ComponentIssue::toString).collect(Collectors.joining(", "));
-        return new ProbeStatus(String.format("Found %d component(s) that failed to activate, in modules that are started. Details: %s",
-                issues.size(), details), ProbeStatus.Health.YELLOW);
+        List<ComponentIssue> issues;
+        try {
+            issues = collectIssues();
+        } catch (Exception e) {
+            // Nothing is cached here, so the next health check reads the component states again.
+            LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
+            return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
+                    + e.getMessage(), ProbeStatus.Health.YELLOW);
+        }
+
+        ProbeStatus status = toStatus(issues);
+        cache.set(status);
+        return status;
     }
 
     @Override
@@ -88,6 +123,19 @@ public class ModulesComponentStateProbe implements Probe {
         } else {
             blacklist = Collections.emptyList();
         }
+
+        // The blacklist changes which components are reported, so the cached status no longer answers the question.
+        cache.set(null);
+    }
+
+    private static ProbeStatus toStatus(List<ComponentIssue> issues) {
+        if (issues.isEmpty()) {
+            return new ProbeStatus("All module components are active", ProbeStatus.Health.GREEN);
+        }
+
+        String details = issues.stream().map(ComponentIssue::toString).collect(Collectors.joining("\n"));
+        return new ProbeStatus(String.format("Found %d component(s) that failed to activate, in modules that are started:%n%s",
+                issues.size(), details), ProbeStatus.Health.YELLOW);
     }
 
     private List<ComponentIssue> collectIssues() {
@@ -98,7 +146,16 @@ public class ModulesComponentStateProbe implements Probe {
                 continue;
             }
 
-            for (ComponentConfigurationDTO configuration : serviceComponentRuntime.getComponentConfigurationDTOs(description)) {
+            Collection<ComponentConfigurationDTO> configurations;
+            try {
+                configurations = serviceComponentRuntime.getComponentConfigurationDTOs(description);
+            } catch (Exception e) {
+                // The bundle may have gone away between the two calls. Another component still deserves a report.
+                LOGGER.debug("Could not read the configurations of component {}", description.name, e);
+                continue;
+            }
+
+            for (ComponentConfigurationDTO configuration : configurations) {
                 String reason = getFailureReason(description, configuration);
                 if (reason != null) {
                     issues.add(new ComponentIssue(description, reason));
