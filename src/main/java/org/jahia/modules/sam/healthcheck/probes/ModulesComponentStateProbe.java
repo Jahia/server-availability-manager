@@ -1,13 +1,11 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
 import org.apache.commons.lang.StringUtils;
-import org.jahia.data.templates.JahiaTemplatesPackage;
 import org.jahia.data.templates.ModuleState;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
-import org.jahia.osgi.BundleUtils;
-import org.jahia.osgi.FrameworkService;
+import org.jahia.services.templates.JahiaTemplateManagerService;
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -23,15 +21,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
  * Reports a Declarative Services component that never came up, in a Jahia module that Jahia reports as started.
- * Jahia sets a module to STARTED from the bundle lifecycle alone, so a module whose components are all dead is
- * still reported as started.
+ * Jahia sets a module to STARTED from the bundle lifecycle alone. A module whose components are all dead is
+ * therefore still reported as started.
  *
  * <p>Two component states are reported, and each one means the component is dead:
  * <ul>
@@ -41,8 +38,8 @@ import java.util.stream.Collectors;
  *     invoked produces this state, because SCR records no failure reason for a bind failure.</li>
  * </ul>
  *
- * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service,
- * or for a configuration that the operator chose not to provide, is a supported design.
+ * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
+ * a supported design, and so is a component that waits for a configuration.
  *
  * <p>Known limit: the probe calls SCR on the request thread. A component whose activate method blocks holds its
  * component manager lock, so a health check that reads that component waits for the same lock.
@@ -54,20 +51,30 @@ public class ModulesComponentStateProbe implements Probe {
 
     private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
 
-    /** Written by the configuration thread, read by the request threads. */
-    private final List<String> blacklist = new CopyOnWriteArrayList<>();
+    /** A health check answers a load balancer, so the message stays bounded. */
+    private static final int MAX_REPORTED_ISSUES = 10;
+
+    /**
+     * The reported set also depends on the Jahia module state, and a module can leave STARTED with no component
+     * state change. This delay bounds how long the probe serves a status that no signal invalidated.
+     */
+    private static final long CACHE_TTL_MS = 30000L;
+
+    private final AtomicReference<List<String>> blacklist = new AtomicReference<>(Collections.emptyList());
 
     private volatile ServiceComponentRuntime serviceComponentRuntime;
 
+    private volatile JahiaTemplateManagerService templateManagerService;
+
     /**
-     * SCR publishes a {@code service.changecount} service property, and it republishes that property only once no
-     * component has changed state for 5 seconds. Binding the update of that property therefore gives the probe two
-     * things at once: it recomputes nothing while the load balancer polls a quiet system, and it never reads a
-     * component that is still activating, because during a deployment the probe serves the cached result.
+     * SCR publishes a {@code service.changecount} service property. SCR republishes that property only once no
+     * component has changed state for 5 seconds, so this flag also tells the probe that the system settled.
      */
     private final AtomicBoolean refreshCache = new AtomicBoolean();
 
     private final AtomicReference<ProbeStatus> cache = new AtomicReference<>();
+
+    private volatile long cachedAt;
 
     @Reference(name = "scr", updated = "updatedServiceComponentRuntime")
     public void setServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
@@ -80,7 +87,12 @@ public class ModulesComponentStateProbe implements Probe {
 
     protected void updatedServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
         refreshCache.set(true);
-        LOGGER.debug("Declarative Services reported a change, the next health check recomputes the component states");
+        LOGGER.debug("Declarative Services reported a change, the next health check recomputes");
+    }
+
+    @Reference
+    public void setTemplateManagerService(JahiaTemplateManagerService templateManagerService) {
+        this.templateManagerService = templateManagerService;
     }
 
     @Override
@@ -101,7 +113,8 @@ public class ModulesComponentStateProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
         ProbeStatus cached = cache.get();
-        if (cached != null && !refreshCache.compareAndSet(true, false)) {
+        boolean expired = System.currentTimeMillis() - cachedAt >= CACHE_TTL_MS;
+        if (cached != null && !expired && !refreshCache.compareAndSet(true, false)) {
             return cached;
         }
 
@@ -109,15 +122,18 @@ public class ModulesComponentStateProbe implements Probe {
         try {
             issues = collectIssues();
         } catch (Throwable e) {
-            // GqlProbe turns anything that escapes a probe into RED, and the health check servlet answers 503 on
-            // RED, so an error here would take the node out of the load balancer pool.
-            // Nothing is cached here, so the next health check reads the component states again.
+            // GqlProbe turns anything that escapes a probe into RED. The health check servlet answers 503 on RED,
+            // which takes the node out of the load balancer pool.
             LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
+            // The refresh signal was consumed above, so it is raised again. Without it, the next health check
+            // would serve the status cached before this failure.
+            refreshCache.set(true);
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
                     + e.getMessage(), ProbeStatus.Health.YELLOW);
         }
 
         ProbeStatus status = toStatus(issues);
+        cachedAt = System.currentTimeMillis();
         cache.set(status);
         return status;
     }
@@ -131,10 +147,12 @@ public class ModulesComponentStateProbe implements Probe {
                     .filter(StringUtils::isNotEmpty)
                     .collect(Collectors.toList());
         }
-        blacklist.clear();
-        blacklist.addAll(names);
 
-        // The blacklist changes which components are reported, so the cached status no longer answers the question.
+        // One write publishes the whole list, so a reader never sees it half updated.
+        blacklist.set(Collections.unmodifiableList(names));
+
+        // The blacklist changes which components are reported, so the cached status is dropped.
+        cachedAt = 0L;
         cache.set(null);
     }
 
@@ -143,32 +161,46 @@ public class ModulesComponentStateProbe implements Probe {
             return new ProbeStatus("All module components are active", ProbeStatus.Health.GREEN);
         }
 
-        String details = issues.stream().map(ComponentIssue::toString).collect(Collectors.joining("\n"));
+        String details = issues.stream()
+                .limit(MAX_REPORTED_ISSUES)
+                .map(ComponentIssue::toString)
+                .collect(Collectors.joining("\n"));
+        if (issues.size() > MAX_REPORTED_ISSUES) {
+            details = details + String.format("%nand %d more", issues.size() - MAX_REPORTED_ISSUES);
+        }
+
         return new ProbeStatus(String.format("Found %d component(s) that failed to activate, in modules that are started:%n%s",
                 issues.size(), details), ProbeStatus.Health.YELLOW);
     }
 
     private List<ComponentIssue> collectIssues() {
         List<ComponentIssue> issues = new ArrayList<>();
+        List<String> silenced = blacklist.get();
 
-        Bundle[] bundles = getStartedModuleBundles();
+        Bundle[] bundles = getStartedModuleBundles(silenced);
         if (bundles.length == 0) {
             return issues;
         }
 
-        // Asking SCR for these bundles only avoids building a DTO for every component of the Karaf, Felix and Jahia
-        // core bundles, which this probe never reports.
-        for (ComponentDescriptionDTO description : serviceComponentRuntime.getComponentDescriptionDTOs(bundles)) {
-            if (blacklist.contains(description.name)) {
+        // Asking SCR for these bundles only avoids building a DTO for every component of the Karaf, Felix and
+        // Jahia core bundles, which this probe never reports.
+        Collection<ComponentDescriptionDTO> descriptions = serviceComponentRuntime.getComponentDescriptionDTOs(bundles);
+        int read = 0;
+        int failed = 0;
+
+        for (ComponentDescriptionDTO description : descriptions) {
+            if (silenced.contains(description.name)) {
                 continue;
             }
 
             Collection<ComponentConfigurationDTO> configurations;
             try {
                 configurations = serviceComponentRuntime.getComponentConfigurationDTOs(description);
+                read++;
             } catch (Exception e) {
                 // The bundle may have gone away between the two calls. Another component still deserves a report.
                 LOGGER.debug("Could not read the configurations of component {}", description.name, e);
+                failed++;
                 continue;
             }
 
@@ -180,25 +212,28 @@ public class ModulesComponentStateProbe implements Probe {
             }
         }
 
+        if (read == 0 && failed > 0) {
+            // Every component failed to read, so an empty list would report a healthy instance.
+            throw new IllegalStateException("None of the " + failed + " component(s) could be read");
+        }
+
         return issues;
     }
 
     /**
-     * @return the bundles of the Jahia modules that Jahia reports as started, which is the only set this probe
-     *         reports on. A module in another state is already reported by the ModuleState probe.
+     * @param silenced the bundle and component names the operator chose not to report
+     * @return the bundles of the Jahia modules that Jahia reports as started. A module in another state is already
+     *         reported by the ModuleState probe.
      */
-    private Bundle[] getStartedModuleBundles() {
+    private Bundle[] getStartedModuleBundles(List<String> silenced) {
         List<Bundle> bundles = new ArrayList<>();
 
-        for (Bundle bundle : FrameworkService.getBundleContext().getBundles()) {
-            if (!BundleUtils.isJahiaModuleBundle(bundle) || blacklist.contains(bundle.getSymbolicName())) {
+        for (Map.Entry<Bundle, ModuleState> entry : templateManagerService.getModuleStates().entrySet()) {
+            Bundle bundle = entry.getKey();
+            if (silenced.contains(bundle.getSymbolicName())) {
                 continue;
             }
-
-            // BundleUtils.getModule creates and stores a module instance, so it runs behind isJahiaModuleBundle.
-            JahiaTemplatesPackage module = BundleUtils.getModule(bundle);
-            if (module != null && module.getState() != null
-                    && module.getState().getState() == ModuleState.State.STARTED) {
+            if (entry.getValue() != null && entry.getValue().getState() == ModuleState.State.STARTED) {
                 bundles.add(bundle);
             }
         }
@@ -211,8 +246,8 @@ public class ModulesComponentStateProbe implements Probe {
      */
     private static String getFailureReason(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration) {
         if (configuration.state == ComponentConfigurationDTO.FAILED_ACTIVATION) {
-            // SCR reports the whole stack trace. Only its first line, the exception and its message, belongs in a
-            // probe message; the stack trace is already in the logs.
+            // SCR reports the whole stack trace. Only its first line belongs in a probe message, because the
+            // stack trace is already in the logs.
             String firstLine = StringUtils.substringBefore(StringUtils.defaultString(configuration.failure), "\n").trim();
             return StringUtils.isNotEmpty(firstLine)
                     ? "activation failed: " + StringUtils.abbreviate(firstLine, 200)
@@ -226,7 +261,7 @@ public class ModulesComponentStateProbe implements Probe {
         return null;
     }
 
-    protected static class ComponentIssue {
+    private static final class ComponentIssue {
         private final String module;
         private final String component;
         private final String reason;
@@ -235,18 +270,6 @@ public class ModulesComponentStateProbe implements Probe {
             this.module = description.bundle.symbolicName + " - " + description.bundle.version;
             this.component = description.name + "(" + configuration.id + ")";
             this.reason = reason;
-        }
-
-        public String getModule() {
-            return module;
-        }
-
-        public String getComponent() {
-            return component;
-        }
-
-        public String getReason() {
-            return reason;
         }
 
         @Override

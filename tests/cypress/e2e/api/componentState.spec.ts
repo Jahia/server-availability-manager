@@ -1,4 +1,5 @@
 import {healthCheck} from '../../support/gql';
+import {healthCheckAPI} from '../../support/utils';
 
 const PROBE = 'ModulesComponentState';
 
@@ -64,12 +65,7 @@ describe('Modules component state probe test', () => {
         // The health check response declares a Content-Length. A non-ASCII character in a probe message takes two
         // bytes and one character, so a response that counts characters is truncated and no longer parses.
         it('serves the whole response although the message carries a non-ASCII character', {retries: 5}, () => {
-            cy.request({
-                url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=LOW&includes=${PROBE}`,
-                headers: {referer: Cypress.config().baseUrl},
-                auth: {user: 'root', pass: Cypress.env('SUPER_USER_PASSWORD'), sendImmediately: true},
-                failOnStatusCode: false
-            }).should(response => {
+            healthCheckAPI({severity: 'LOW', includes: PROBE}).should(response => {
                 expect(response.body.probes[0].status.message).to.contains('Deliberate activation failure (é)');
             });
         });
