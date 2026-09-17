@@ -9,9 +9,7 @@ const BIND_MODULE = 'broken-bind-module/8.2.0.0';
 describe('Modules component state probe test', () => {
     const waitUntilOptions = {
         interval: 500,
-        // The probe serves a cached result until SCR republishes its change count, which it does 5 s after the
-        // last component state change. Every health transition therefore needs more than 5 s to appear.
-        timeout: 30000,
+        timeout: 15000,
         errorMsg: 'Failed to reach the expected probe health'
     };
 
@@ -66,6 +64,10 @@ describe('Modules component state probe test', () => {
         // bytes and one character, so a response that counts characters is truncated and no longer parses.
         it('serves the whole response although the message carries a non-ASCII character', {retries: 5}, () => {
             healthCheckAPI({severity: 'LOW', includes: PROBE}).should(response => {
+                // A truncated body does not parse, so response.body stays a string. Naming that first makes the
+                // regression report its own cause instead of a type error.
+                expect(response.status).to.eq(200);
+                expect(response.body.probes).to.be.an('array').and.not.be.empty;
                 expect(response.body.probes[0].status.message).to.contains('Deliberate activation failure (é)');
             });
         });
@@ -89,8 +91,8 @@ describe('Modules component state probe test', () => {
             });
         });
 
-        // The blind spot this probe exists to cover: the module is broken, and the module level probe stays green,
-        // because Jahia marks a module STARTED from the bundle lifecycle alone.
+        // This is the blind spot the probe exists to cover. The module is broken, and the module level probe
+        // stays green, because Jahia marks a module STARTED from the bundle lifecycle alone.
         it('is not reported by the module level probe, which stays green', {retries: 5}, () => {
             healthCheck({includes: 'ModuleState', severity: 'LOW'}).should(r => {
                 const moduleStateProbe = r.probes.find(p => p.name === 'ModuleState');
