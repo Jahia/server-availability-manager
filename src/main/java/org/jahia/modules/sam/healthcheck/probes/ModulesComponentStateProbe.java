@@ -1,6 +1,8 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
 import org.apache.commons.lang.StringUtils;
+import org.jahia.data.templates.JahiaTemplatesPackage;
+import org.jahia.data.templates.ModuleState;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
@@ -21,25 +23,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * Reports Declarative Services components that a Jahia module ships but that never came up, while the module itself
- * is started. Jahia marks a module STARTED from the bundle lifecycle alone, so a module whose components are all
- * dead still shows up as green everywhere else.
+ * Reports a Declarative Services component that never came up, in a Jahia module that Jahia reports as started.
+ * Jahia sets a module to STARTED from the bundle lifecycle alone, so a module whose components are all dead is
+ * still reported as started.
  *
- * <p>Two symptoms are reported, and both mean the component is dead:
+ * <p>Two component states are reported, and each one means the component is dead:
  * <ul>
- *     <li>{@code FAILED_ACTIVATION} — the activate method or the constructor threw.</li>
- *     <li>an immediate component left in {@code SATISFIED} — SCR must activate an immediate component as soon as it
- *     is satisfied, so this is the signature of an activation that was attempted and failed. A bind method that
- *     cannot be invoked lands here, because SCR records no failure reason for it and logs the cause at DEBUG.</li>
+ *     <li>FAILED_ACTIVATION: the activate method or the constructor threw.</li>
+ *     <li>An immediate component left in SATISFIED. SCR activates an immediate component as soon as that component
+ *     is satisfied, so this state means the activation was attempted and it failed. A bind method that cannot be
+ *     invoked produces this state, because SCR records no failure reason for a bind failure.</li>
  * </ul>
  *
- * <p>{@code UNSATISFIED_REFERENCE} and {@code UNSATISFIED_CONFIGURATION} are deliberately NOT reported: a component
- * that waits for a service or for a configuration that the operator chose not to provide is a supported design.
+ * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service,
+ * or for a configuration that the operator chose not to provide, is a supported design.
+ *
+ * <p>Known limit: the probe calls SCR on the request thread. A component whose activate method blocks holds its
+ * component manager lock, so a health check that reads that component waits for the same lock.
  */
 @Component(service = Probe.class, immediate = true)
 public class ModulesComponentStateProbe implements Probe {
@@ -48,7 +54,8 @@ public class ModulesComponentStateProbe implements Probe {
 
     private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
 
-    private List<String> blacklist = Collections.emptyList();
+    /** Written by the configuration thread, read by the request threads. */
+    private final List<String> blacklist = new CopyOnWriteArrayList<>();
 
     private volatile ServiceComponentRuntime serviceComponentRuntime;
 
@@ -101,7 +108,9 @@ public class ModulesComponentStateProbe implements Probe {
         List<ComponentIssue> issues;
         try {
             issues = collectIssues();
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // GqlProbe turns anything that escapes a probe into RED, and the health check servlet answers 503 on
+            // RED, so an error here would take the node out of the load balancer pool.
             // Nothing is cached here, so the next health check reads the component states again.
             LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
@@ -115,14 +124,15 @@ public class ModulesComponentStateProbe implements Probe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
+        List<String> names = Collections.emptyList();
         if (config.containsKey(BLACKLIST_CONFIG_PROPERTY) && StringUtils.isNotEmpty(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)))) {
-            blacklist = Arrays.stream(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)).split(","))
+            names = Arrays.stream(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)).split(","))
                     .map(String::trim)
                     .filter(StringUtils::isNotEmpty)
                     .collect(Collectors.toList());
-        } else {
-            blacklist = Collections.emptyList();
         }
+        blacklist.clear();
+        blacklist.addAll(names);
 
         // The blacklist changes which components are reported, so the cached status no longer answers the question.
         cache.set(null);
@@ -141,8 +151,15 @@ public class ModulesComponentStateProbe implements Probe {
     private List<ComponentIssue> collectIssues() {
         List<ComponentIssue> issues = new ArrayList<>();
 
-        for (ComponentDescriptionDTO description : serviceComponentRuntime.getComponentDescriptionDTOs()) {
-            if (!isComponentToCheck(description)) {
+        Bundle[] bundles = getStartedModuleBundles();
+        if (bundles.length == 0) {
+            return issues;
+        }
+
+        // Asking SCR for these bundles only avoids building a DTO for every component of the Karaf, Felix and Jahia
+        // core bundles, which this probe never reports.
+        for (ComponentDescriptionDTO description : serviceComponentRuntime.getComponentDescriptionDTOs(bundles)) {
+            if (blacklist.contains(description.name)) {
                 continue;
             }
 
@@ -158,12 +175,35 @@ public class ModulesComponentStateProbe implements Probe {
             for (ComponentConfigurationDTO configuration : configurations) {
                 String reason = getFailureReason(description, configuration);
                 if (reason != null) {
-                    issues.add(new ComponentIssue(description, reason));
+                    issues.add(new ComponentIssue(description, configuration, reason));
                 }
             }
         }
 
         return issues;
+    }
+
+    /**
+     * @return the bundles of the Jahia modules that Jahia reports as started, which is the only set this probe
+     *         reports on. A module in another state is already reported by the ModuleState probe.
+     */
+    private Bundle[] getStartedModuleBundles() {
+        List<Bundle> bundles = new ArrayList<>();
+
+        for (Bundle bundle : FrameworkService.getBundleContext().getBundles()) {
+            if (!BundleUtils.isJahiaModuleBundle(bundle) || blacklist.contains(bundle.getSymbolicName())) {
+                continue;
+            }
+
+            // BundleUtils.getModule creates and stores a module instance, so it runs behind isJahiaModuleBundle.
+            JahiaTemplatesPackage module = BundleUtils.getModule(bundle);
+            if (module != null && module.getState() != null
+                    && module.getState().getState() == ModuleState.State.STARTED) {
+                bundles.add(bundle);
+            }
+        }
+
+        return bundles.toArray(new Bundle[0]);
     }
 
     /**
@@ -186,23 +226,14 @@ public class ModulesComponentStateProbe implements Probe {
         return null;
     }
 
-    private boolean isComponentToCheck(ComponentDescriptionDTO description) {
-        if (blacklist.contains(description.bundle.symbolicName) || blacklist.contains(description.name)) {
-            return false;
-        }
-
-        Bundle bundle = FrameworkService.getBundleContext().getBundle(description.bundle.id);
-        return bundle != null && BundleUtils.isJahiaModuleBundle(bundle);
-    }
-
     protected static class ComponentIssue {
         private final String module;
         private final String component;
         private final String reason;
 
-        ComponentIssue(ComponentDescriptionDTO description, String reason) {
+        ComponentIssue(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration, String reason) {
             this.module = description.bundle.symbolicName + " - " + description.bundle.version;
-            this.component = description.name;
+            this.component = description.name + "(" + configuration.id + ")";
             this.reason = reason;
         }
 

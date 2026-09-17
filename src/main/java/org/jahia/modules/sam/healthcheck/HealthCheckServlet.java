@@ -16,7 +16,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -94,6 +95,7 @@ public class HealthCheckServlet extends HttpServlet {
         String result = responseWrapper.getContent();
 
         try {
+            String result = responseWrapper.getContent();
             JSONObject obj = new JSONObject(result);
             if (obj.has(ERRORS_FIELD) && !obj.getJSONArray(ERRORS_FIELD).isEmpty()) {
                 handleErrorResponse(resp, obj);
@@ -137,9 +139,9 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         // Content-Length counts bytes, and a probe message can carry a non-ASCII character from a third party
-        // exception, which takes more than one byte. The content type carries the charset, and it is set before
-        // getWriter(). The writer therefore encodes in UTF-8, and the declared length counts those same bytes.
-        resp.setContentType("application/json;charset=UTF-8");
+        // exception. Declaring the character count truncated such a body. The encoding is set before getWriter(),
+        // because the writer takes the encoding of the response at that moment.
+        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
         resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
         try (PrintWriter respWriter = resp.getWriter()) {
@@ -202,75 +204,33 @@ public class HealthCheckServlet extends HttpServlet {
     }
 
     /**
-     * Collects the response of the internal GraphQL call, which the servlet then re-serves itself. The call can
-     * write through the stream or through the writer, and both go to one buffer that is decoded as UTF-8.
-     * Decoding each byte on its own turned a two byte character into two characters.
-     *
-     * <p>The capture is always UTF-8. setCharacterEncoding is therefore ignored, and getCharacterEncoding
-     * answers UTF-8, so a caller that builds its own encoder agrees with the buffer.
-     *
-     * <p>reset and resetBuffer discard what was captured, which is what a caller asking for a reset means.
-     * flushBuffer does nothing, for the same reason setContentLength does nothing: the body lives in this
-     * buffer, and letting the inner call commit the real response would commit it empty, behind the servlet's
-     * back. sendError is not intercepted, because absorbing it would swallow a status the inner call chose.
+     * Collects the response of the internal GraphQL call. The call writes bytes, so the bytes are buffered and
+     * decoded once, with the encoding the response declares. Decoding each byte on its own turned a two byte
+     * character into two characters.
      */
-    // Package-private so the test next to this class can reach it. Nothing outside the package needs it.
-    static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
-        private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-        /**
-         * One encoder for the whole capture. Encoding each write on its own replaced a character written as a
-         * surrogate pair across two writes.
-         */
-        private OutputStreamWriter encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
-
-        /**
-         * One stream and one writer per response, because the servlet contract promises the same object. Once
-         * the writer exists, the stream flushes the encoder before each write, so bytes written through the two
-         * routes keep their order in the buffer. Before that there is nothing to order, and
-         * ServletOutputStream.print(String) writes one byte at a time, so the flush is skipped.
-         */
-        private ServletOutputStream outputStream;
-        private PrintWriter writer;
-
-        /** The captured body, once read. Reading ends the capture, so the answer cannot change afterwards. */
-        private String content;
+    private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
+        private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        private final StringWriter characters = new StringWriter();
 
         public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
         }
 
-        /**
-         * Closes the encoder rather than flushing it. A flush drops a character left pending as half of a
-         * surrogate pair, while a close replaces it, so the byte count still matches the body. Closing ends the
-         * capture, so the answer is kept, and a second call returns the same string instead of writing to a
-         * closed encoder.
-         *
-         * @return what the internal call wrote, through the stream, the writer, or both
-         */
-        public String getContent() throws IOException {
-            if (content == null) {
-                encoder.close();
-                content = buffer.toString(StandardCharsets.UTF_8.name());
+        /** @return what the internal call wrote, through either the stream or the writer */
+        public String getContent() {
+            if (bytes.size() > 0) {
+                return new String(bytes.toByteArray(), StandardCharsets.UTF_8);
             }
-            return content;
-        }
-
-        private void flushWriterRoute() throws IOException {
-            if (writer != null) {
-                encoder.flush();
-            }
+            return characters.getBuffer().toString();
         }
 
         @Override
         public ServletOutputStream getOutputStream() {
-            if (outputStream == null) {
-                outputStream = new ServletOutputStream() {
-                    @Override
-                    public void write(int b) throws IOException {
-                        flushWriterRoute();
-                        buffer.write(b);
-                    }
+            return new ServletOutputStream() {
+                @Override
+                public void write(int b) {
+                    bytes.write(b);
+                }
 
                     @Override
                     public void write(byte[] b, int off, int len) throws IOException {
@@ -339,35 +299,8 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         @Override
-        public void setCharacterEncoding(String charset) {
-            // the capture is UTF-8, and getCharacterEncoding says so
-        }
-
-        /** Committing the real response is the servlet's decision, and the body is not there yet. */
-        @Override
-        public void flushBuffer() {
-            // the capture is flushed and committed once, by the servlet, after getContent()
-        }
-
-        @Override
-        public void resetBuffer() {
-            super.resetBuffer();
-            discardCapture();
-        }
-
-        @Override
-        public void reset() {
-            super.reset();
-            discardCapture();
-        }
-
-        /** A reset asks for the captured body to be forgotten, encoder state included. */
-        private void discardCapture() {
-            // The encoder is not closed, because closing would emit a pending character into the buffer this
-            // call exists to empty. It wraps a byte array and holds no resource of its own.
-            buffer.reset();
-            encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
-            content = null;
+        public PrintWriter getWriter() {
+            return new PrintWriter(characters);
         }
 
         @Override

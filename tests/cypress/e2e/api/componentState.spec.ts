@@ -2,6 +2,9 @@ import {healthCheck} from '../../support/gql';
 
 const PROBE = 'ModulesComponentState';
 
+const ACTIVATION_MODULE = 'broken-activation-module/8.2.0.0';
+const BIND_MODULE = 'broken-bind-module/8.2.0.0';
+
 describe('Modules component state probe test', () => {
     const waitUntilOptions = {
         interval: 500,
@@ -18,6 +21,19 @@ describe('Modules component state probe test', () => {
             }), waitUntilOptions);
     };
 
+    // A before hook can run again when Cypress retries, so it asserts no starting state. Installing and starting
+    // a module that is already installed and started is accepted, and the probe is already YELLOW at that point.
+    const installFixture = (module: string, jar: string) => {
+        cy.installBundle(`componentStateProbe/${jar}`);
+        cy.runProvisioningScript([{startBundle: module}]);
+        waitUntilHealth('YELLOW');
+    };
+
+    const uninstallFixture = (module: string) => {
+        cy.runProvisioningScript([{uninstallBundle: module}]);
+        waitUntilHealth('GREEN');
+    };
+
     it('Check that the probe exists and is green by default', () => {
         healthCheck({includes: PROBE, severity: 'LOW'}).should(r => {
             expect(r.status.health).to.eq('GREEN');
@@ -29,15 +45,11 @@ describe('Modules component state probe test', () => {
 
     describe('Module whose component throws on activation', () => {
         before(() => {
-            waitUntilHealth('GREEN');
-            cy.installBundle('componentStateProbe/broken-activation-module-8.2.0.0.jar');
-            cy.runProvisioningScript([{startBundle: 'broken-activation-module/8.2.0.0'}]);
-            waitUntilHealth('YELLOW');
+            installFixture(ACTIVATION_MODULE, 'broken-activation-module-8.2.0.0.jar');
         });
 
         after(() => {
-            cy.runProvisioningScript([{uninstallBundle: 'broken-activation-module/8.2.0.0'}]);
-            waitUntilHealth('GREEN');
+            uninstallFixture(ACTIVATION_MODULE);
         });
 
         it('reports the component and names the module', {retries: 5}, () => {
@@ -48,19 +60,28 @@ describe('Modules component state probe test', () => {
                 expect(probe.status.message).to.contains('activation failed');
             });
         });
+
+        // The health check response declares a Content-Length. A non-ASCII character in a probe message takes two
+        // bytes and one character, so a response that counts characters is truncated and no longer parses.
+        it('serves the whole response although the message carries a non-ASCII character', {retries: 5}, () => {
+            cy.request({
+                url: `${Cypress.config().baseUrl}/modules/healthcheck?severity=LOW&includes=${PROBE}`,
+                headers: {referer: Cypress.config().baseUrl},
+                auth: {user: 'root', pass: Cypress.env('SUPER_USER_PASSWORD'), sendImmediately: true},
+                failOnStatusCode: false
+            }).should(response => {
+                expect(response.body.probes[0].status.message).to.contains('Deliberate activation failure (é)');
+            });
+        });
     });
 
     describe('Module whose bind method cannot be invoked', () => {
         before(() => {
-            waitUntilHealth('GREEN');
-            cy.installBundle('componentStateProbe/broken-bind-module-8.2.0.0.jar');
-            cy.runProvisioningScript([{startBundle: 'broken-bind-module/8.2.0.0'}]);
-            waitUntilHealth('YELLOW');
+            installFixture(BIND_MODULE, 'broken-bind-module-8.2.0.0.jar');
         });
 
         after(() => {
-            cy.runProvisioningScript([{uninstallBundle: 'broken-bind-module/8.2.0.0'}]);
-            waitUntilHealth('GREEN');
+            uninstallFixture(BIND_MODULE);
         });
 
         it('reports the component although the module is started and the bundle is active', {retries: 5}, () => {
@@ -72,11 +93,12 @@ describe('Modules component state probe test', () => {
             });
         });
 
-        // The blind spot this probe exists to cover: the module is broken, and the module-level probe says nothing
-        // about it, because Jahia marks a module STARTED from the bundle lifecycle alone.
-        it('is not reported at all by the module level probe', {retries: 5}, () => {
+        // The blind spot this probe exists to cover: the module is broken, and the module level probe stays green,
+        // because Jahia marks a module STARTED from the bundle lifecycle alone.
+        it('is not reported by the module level probe, which stays green', {retries: 5}, () => {
             healthCheck({includes: 'ModuleState', severity: 'LOW'}).should(r => {
                 const moduleStateProbe = r.probes.find(p => p.name === 'ModuleState');
+                expect(moduleStateProbe.status.health).to.eq('GREEN');
                 expect(moduleStateProbe.status.message).to.not.contains('broken-bind-module');
             });
             cy.logout();
