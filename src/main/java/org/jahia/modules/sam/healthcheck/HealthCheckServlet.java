@@ -144,7 +144,7 @@ public class HealthCheckServlet extends HttpServlet {
         // non-ASCII character from a third party exception, and such a character takes two bytes for one
         // character. Writing through the stream keeps the length and the bytes from one source.
         // The content type carries the charset, and it is set before getWriter(), so the writer encodes in UTF-8.
-        // Content-Length counts bytes, and a probe message can carry a non-ASCII character that takes two bytes.
+        // Content-Length counts bytes, and a probe message can carry a character that takes two of them.
         resp.setContentType("application/json;charset=UTF-8");
         resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
@@ -212,8 +212,9 @@ public class HealthCheckServlet extends HttpServlet {
      * writer, and both go to one buffer, which is decoded as UTF-8. Decoding each byte on its own turned a two
      * byte character into two characters.
      *
-     * <p>This wrapper captures the body only. It does not intercept the methods that commit the real response,
-     * such as sendError, flushBuffer or reset. A caller that uses one of them commits the real response.
+     * <p>This wrapper captures the body only. It does not intercept sendError, flushBuffer, reset or
+     * resetBuffer, which reach the real response. A caller that discards its output therefore leaves the
+     * discarded bytes in this buffer.
      */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -224,14 +225,24 @@ public class HealthCheckServlet extends HttpServlet {
          */
         private final OutputStreamWriter encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
 
+        /** The stream flushes the encoder to keep the two write methods in order, and only when it has been used. */
+        private boolean encoderUsed;
+
         public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
         }
 
+        private void flushEncoder() throws IOException {
+            if (encoderUsed) {
+                encoder.flush();
+                encoderUsed = false;
+            }
+        }
+
         /** @return what the internal call wrote, through the stream, the writer, or both */
         public String getContent() throws IOException {
-            encoder.flush();
-            return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+            flushEncoder();
+            return buffer.toString(StandardCharsets.UTF_8.name());
         }
 
         @Override
@@ -239,13 +250,13 @@ public class HealthCheckServlet extends HttpServlet {
             return new ServletOutputStream() {
                 @Override
                 public void write(int b) throws IOException {
-                    encoder.flush();
+                    flushEncoder();
                     buffer.write(b);
                 }
 
                 @Override
                 public void write(byte[] b, int off, int len) throws IOException {
-                    encoder.flush();
+                    flushEncoder();
                     buffer.write(b, off, len);
                 }
 
@@ -323,6 +334,7 @@ public class HealthCheckServlet extends HttpServlet {
             return new PrintWriter(new Writer() {
                 @Override
                 public void write(char[] chars, int off, int len) throws IOException {
+                    encoderUsed = true;
                     encoder.write(chars, off, len);
                 }
 
