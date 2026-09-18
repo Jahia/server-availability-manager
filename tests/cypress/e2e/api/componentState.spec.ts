@@ -20,8 +20,8 @@ describe('Modules component state probe test', () => {
             }), waitUntilOptions);
     };
 
-    // A before hook can run again when Cypress retries, so it asserts no starting state. Installing and starting
-    // a module that is already installed and started is accepted, and the probe is already YELLOW at that point.
+    // The hook asserts no starting state, so it also works when a previous run left the module installed.
+    // Installing and starting a module that is already installed and started is accepted.
     const installFixture = (module: string, jar: string) => {
         cy.installBundle(`componentStateProbe/${jar}`);
         cy.runProvisioningScript([{startBundle: module}]);
@@ -58,6 +58,20 @@ describe('Modules component state probe test', () => {
                 expect(probe.status.message).to.contains('broken-activation-module');
                 expect(probe.status.message).to.contains('activation failed');
             });
+        });
+
+        it('is silenced by a blacklist on the module name', {retries: 5}, () => {
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-module.json'});
+            waitUntilHealth('GREEN');
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
+            waitUntilHealth('YELLOW');
+        });
+
+        it('is silenced by a blacklist on the component name', {retries: 5}, () => {
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-component.json'});
+            waitUntilHealth('GREEN');
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
+            waitUntilHealth('YELLOW');
         });
 
         // The health check response declares a Content-Length. A non-ASCII character in a probe message takes two
