@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +43,10 @@ import java.util.stream.Collectors;
  * <p>The probe reads the component states on every call and holds no state between calls. A measurement on Jahia 8
  * gives 0.4 ms for 127 components, and the cost grows with the number of components.
  *
+ * <p>Known limit: a component that SCR is re-activating passes through SATISFIED, so a configuration update on
+ * a started module can make the probe report that component once. The probe is read on demand and reports no
+ * routing decision at MEDIUM severity, so a transient report costs nothing.
+ *
  * <p>Known limit: the probe calls SCR on the request thread. A component whose activate method blocks holds its
  * component manager lock, so a health check that reads that component waits for the same lock.
  */
@@ -56,7 +60,7 @@ public class ModulesComponentStateProbe implements Probe {
     /** A health check answers a load balancer, so the message stays bounded. */
     private static final int MAX_REPORTED_ISSUES = 10;
 
-    private final AtomicReference<List<String>> blacklist = new AtomicReference<>(Collections.emptyList());
+    private volatile Set<String> blacklist = Collections.emptySet();
 
     private volatile ServiceComponentRuntime serviceComponentRuntime;
 
@@ -103,16 +107,16 @@ public class ModulesComponentStateProbe implements Probe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        List<String> names = Collections.emptyList();
+        Set<String> names = Collections.emptySet();
         if (config.containsKey(BLACKLIST_CONFIG_PROPERTY) && StringUtils.isNotEmpty(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)))) {
             names = Arrays.stream(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)).split(","))
                     .map(String::trim)
                     .filter(StringUtils::isNotEmpty)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
         }
 
-        // One write publishes the whole list, so a reader never sees it half updated.
-        blacklist.set(Collections.unmodifiableList(names));
+        // One write publishes the whole set, so a reader never sees it half updated.
+        blacklist = Collections.unmodifiableSet(names);
     }
 
     private static ProbeStatus toStatus(List<ComponentIssue> issues) {
@@ -132,7 +136,7 @@ public class ModulesComponentStateProbe implements Probe {
 
     private List<ComponentIssue> collectIssues() {
         List<ComponentIssue> issues = new ArrayList<>();
-        List<String> silenced = blacklist.get();
+        Set<String> silenced = blacklist;
 
         Bundle[] bundles = getStartedModuleBundles(silenced);
         if (bundles.length == 0) {
@@ -141,7 +145,10 @@ public class ModulesComponentStateProbe implements Probe {
 
         // Asking SCR for these bundles only avoids building a DTO for every component of the Karaf, Felix and
         // Jahia core bundles, which this probe never reports.
+        // A bundle uninstalled between the two calls yields fewer descriptions, because SCR skips a holder whose
+        // bundle is gone. A failure here is therefore a real one, and it reaches the caller.
         Collection<ComponentDescriptionDTO> descriptions = serviceComponentRuntime.getComponentDescriptionDTOs(bundles);
+
         int read = 0;
         int failed = 0;
 
@@ -169,9 +176,9 @@ public class ModulesComponentStateProbe implements Probe {
             }
         }
 
-        if (read == 0 && failed > 0) {
-            // Every component failed to read, so an empty list would report a healthy instance.
-            throw new IllegalStateException("None of the " + failed + " component(s) could be read");
+        if (failed > 0 && issues.isEmpty()) {
+            // An empty list would report a healthy instance, and part of the instance was never inspected.
+            throw new IllegalStateException(failed + " of " + (read + failed) + " component(s) could not be read");
         }
 
         return issues;
@@ -182,7 +189,7 @@ public class ModulesComponentStateProbe implements Probe {
      * @return the bundles of the Jahia modules that Jahia reports as started. A module in another state is already
      *         reported by the ModuleState probe.
      */
-    private Bundle[] getStartedModuleBundles(List<String> silenced) {
+    private Bundle[] getStartedModuleBundles(Set<String> silenced) {
         List<Bundle> bundles = new ArrayList<>();
 
         for (Map.Entry<Bundle, ModuleState> entry : templateManagerService.getModuleStates().entrySet()) {

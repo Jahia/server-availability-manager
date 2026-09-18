@@ -18,9 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -144,7 +144,7 @@ public class HealthCheckServlet extends HttpServlet {
         // non-ASCII character from a third party exception, and such a character takes two bytes for one
         // character. Writing through the stream keeps the length and the bytes from one source.
         byte[] body = result.getBytes(StandardCharsets.UTF_8);
-        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        resp.setContentType("application/json;charset=UTF-8");
         resp.setContentLength(body.length);
 
         try (OutputStream respStream = resp.getOutputStream()) {
@@ -208,15 +208,14 @@ public class HealthCheckServlet extends HttpServlet {
 
     /**
      * Collects the response of the internal GraphQL call. The call can write through the stream or through the
-     * writer, so both go to one buffer and keep their order.
+     * writer, and both go to one buffer, which is decoded as UTF-8. Decoding each byte on its own turned a two
+     * byte character into two characters.
      *
-     * <p>Every method that would commit or discard the real response is intercepted. Forwarding one of them would
-     * commit the real response before this servlet writes the body, and the status, the encoding and the length
-     * set afterwards would be ignored.
+     * <p>This wrapper captures the body. It does not intercept the methods that commit the real response, such as
+     * sendError, flushBuffer or reset, so a caller that uses one of them commits the real response.
      */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        private final PrintWriter writer = new PrintWriter(new OutputStreamWriter(buffer, StandardCharsets.UTF_8));
 
         public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
@@ -224,24 +223,26 @@ public class HealthCheckServlet extends HttpServlet {
 
         /** @return what the internal call wrote, through the stream, the writer, or both */
         public String getContent() {
-            writer.flush();
             return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
         }
 
         @Override
         public ServletOutputStream getOutputStream() {
-            writer.flush();
             return new ServletOutputStream() {
                 @Override
                 public void write(int b) {
                     buffer.write(b);
                 }
 
-                    @Override
-                    public void write(byte[] b, int off, int len) throws IOException {
-                        flushWriterRoute();
-                        buffer.write(b, off, len);
-                    }
+                @Override
+                public void write(byte[] b, int off, int len) {
+                    buffer.write(b, off, len);
+                }
+
+                @Override
+                public boolean isReady() {
+                    return true;
+                }
 
                     @Override
                     public boolean isReady() {
@@ -303,9 +304,29 @@ public class HealthCheckServlet extends HttpServlet {
             return StandardCharsets.UTF_8.name();
         }
 
+        /**
+         * Each call returns a new writer that encodes into the shared buffer as it is written. A caller that
+         * closes the writer therefore loses nothing, and the two write methods keep their order.
+         */
         @Override
         public PrintWriter getWriter() {
-            return writer;
+            return new PrintWriter(new Writer() {
+                @Override
+                public void write(char[] chars, int off, int len) {
+                    byte[] bytes = new String(chars, off, len).getBytes(StandardCharsets.UTF_8);
+                    buffer.write(bytes, 0, bytes.length);
+                }
+
+                @Override
+                public void flush() {
+                    // every write already reached the buffer
+                }
+
+                @Override
+                public void close() {
+                    // the buffer outlives this writer
+                }
+            });
         }
 
         /** The buffer is decoded as UTF-8, so a caller that builds its own encoder uses the same encoding. */
@@ -322,23 +343,6 @@ public class HealthCheckServlet extends HttpServlet {
         @Override
         public void setContentLengthLong(long len) {
             // the length of the real response is set once the body is known
-        }
-
-        @Override
-        public void flushBuffer() {
-            // flush this buffer only, because committing the real response would discard everything set later
-            writer.flush();
-        }
-
-        @Override
-        public void resetBuffer() {
-            writer.flush();
-            buffer.reset();
-        }
-
-        @Override
-        public void reset() {
-            resetBuffer();
         }
     }
 }
