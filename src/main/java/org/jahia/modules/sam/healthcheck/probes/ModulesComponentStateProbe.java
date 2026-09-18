@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
  * <p>The probe reads the component states on every call and holds no state between calls. A measurement on Jahia 8
  * gives 0.4 ms for 127 components, and the cost grows with the number of components.
  *
- * <p>Known limit: a component that SCR is re-activating passes through SATISFIED, so a configuration update on
- * a started module can make the probe report that component once. The probe is read on demand and reports no
- * routing decision at MEDIUM severity, so a transient report costs nothing.
+ * <p>Known limit: a component that SCR is re-activating passes through SATISFIED. A configuration update on a
+ * started module can therefore make the probe report that component once. The probe is read on demand, and it
+ * decides no routing at MEDIUM severity, so a transient report costs nothing.
  *
  * <p>Known limit: the probe calls SCR on the request thread. A component whose activate method blocks holds its
  * component manager lock, so a health check that reads that component waits for the same lock.
@@ -83,7 +83,7 @@ public class ModulesComponentStateProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Checks if any module ships a Declarative Services component that failed to activate, while the module itself is started";
+        return "Checks if any module ships a Declarative Services component that did not start, while the module itself is started";
     }
 
     @Override
@@ -96,9 +96,9 @@ public class ModulesComponentStateProbe implements Probe {
         try {
             return toStatus(collectIssues());
         } catch (Exception e) {
-            // GqlProbe turns anything that escapes a probe into RED, and the servlet answers 503 on RED. A bug in
-            // this probe must not take the node out of the load balancer pool. An Error is left to propagate,
-            // because a JVM in trouble is a reason to answer 503.
+            // GqlProbe turns anything that escapes a probe into RED, and the servlet answers 503 on RED. A bug
+            // in this probe must not take the node out of the load balancer pool. An Error is not caught here,
+            // so GqlProbe reports it as RED, which is the right answer for a JVM in trouble.
             LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
                     + e.getMessage(), ProbeStatus.Health.YELLOW);
@@ -125,7 +125,7 @@ public class ModulesComponentStateProbe implements Probe {
         }
 
         StringBuilder message = new StringBuilder();
-        message.append(issues.size()).append(" component(s) did not come up, in modules that are started:");
+        message.append(issues.size()).append(" component(s) did not start, in modules that Jahia reports as started:");
         issues.stream().limit(MAX_REPORTED_ISSUES).forEach(issue -> message.append('\n').append(issue));
         if (issues.size() > MAX_REPORTED_ISSUES) {
             message.append('\n').append("and ").append(issues.size() - MAX_REPORTED_ISSUES).append(" more");
@@ -149,36 +149,19 @@ public class ModulesComponentStateProbe implements Probe {
         // bundle is gone. A failure here is therefore a real one, and it reaches the caller.
         Collection<ComponentDescriptionDTO> descriptions = serviceComponentRuntime.getComponentDescriptionDTOs(bundles);
 
-        int read = 0;
-        int failed = 0;
-
         for (ComponentDescriptionDTO description : descriptions) {
             if (silenced.contains(description.name)) {
                 continue;
             }
 
-            Collection<ComponentConfigurationDTO> configurations;
-            try {
-                configurations = serviceComponentRuntime.getComponentConfigurationDTOs(description);
-                read++;
-            } catch (Exception e) {
-                // The bundle may have gone away between the two calls. Another component still deserves a report.
-                LOGGER.debug("Could not read the configurations of component {}", description.name, e);
-                failed++;
-                continue;
-            }
-
-            for (ComponentConfigurationDTO configuration : configurations) {
+            // SCR returns an empty collection for a description whose bundle went away, so this call needs no
+            // guard of its own. Anything it does throw is a defect, and the caller reports it.
+            for (ComponentConfigurationDTO configuration : serviceComponentRuntime.getComponentConfigurationDTOs(description)) {
                 String reason = getFailureReason(description, configuration);
                 if (reason != null) {
                     issues.add(new ComponentIssue(description, configuration, reason));
                 }
             }
-        }
-
-        if (failed > 0 && issues.isEmpty()) {
-            // An empty list would report a healthy instance, and part of the instance was never inspected.
-            throw new IllegalStateException(failed + " of " + (read + failed) + " component(s) could not be read");
         }
 
         return issues;
@@ -219,7 +202,7 @@ public class ModulesComponentStateProbe implements Probe {
         }
 
         if (description.immediate && configuration.state == ComponentConfigurationDTO.SATISFIED) {
-            return "immediate component is satisfied but was never activated, which usually means a bind method could not be invoked";
+            return "activation failed silently, which usually means a bind method could not be invoked";
         }
 
         return null;

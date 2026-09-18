@@ -16,8 +16,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.io.StringWriter;
@@ -136,12 +136,13 @@ public class HealthCheckServlet extends HttpServlet {
         // The body is encoded once, and the declared length counts those same bytes. A probe message can carry a
         // non-ASCII character from a third party exception, and such a character takes two bytes for one
         // character. Writing through the stream keeps the length and the bytes from one source.
-        byte[] body = result.getBytes(StandardCharsets.UTF_8);
+        // The content type carries the charset, and it is set before getWriter(), so the writer encodes in UTF-8.
+        // Content-Length counts bytes, and a probe message can carry a non-ASCII character that takes two bytes.
         resp.setContentType("application/json;charset=UTF-8");
-        resp.setContentLength(body.length);
+        resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
-        try (OutputStream respStream = resp.getOutputStream()) {
-            respStream.write(body);
+        try (PrintWriter respWriter = resp.getWriter()) {
+            respWriter.write(result);
         }
     }
 
@@ -204,18 +205,25 @@ public class HealthCheckServlet extends HttpServlet {
      * writer, and both go to one buffer, which is decoded as UTF-8. Decoding each byte on its own turned a two
      * byte character into two characters.
      *
-     * <p>This wrapper captures the body. It does not intercept the methods that commit the real response, such as
-     * sendError, flushBuffer or reset, so a caller that uses one of them commits the real response.
+     * <p>This wrapper captures the body only. It does not intercept the methods that commit the real response,
+     * such as sendError, flushBuffer or reset. A caller that uses one of them commits the real response.
      */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        /**
+         * One encoder for the whole capture. Encoding each write on its own replaced a character written as a
+         * surrogate pair across two writes.
+         */
+        private final OutputStreamWriter encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
 
         public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
         }
 
         /** @return what the internal call wrote, through the stream, the writer, or both */
-        public String getContent() {
+        public String getContent() throws IOException {
+            encoder.flush();
             return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
         }
 
@@ -223,12 +231,14 @@ public class HealthCheckServlet extends HttpServlet {
         public ServletOutputStream getOutputStream() {
             return new ServletOutputStream() {
                 @Override
-                public void write(int b) {
+                public void write(int b) throws IOException {
+                    encoder.flush();
                     buffer.write(b);
                 }
 
                 @Override
-                public void write(byte[] b, int off, int len) {
+                public void write(byte[] b, int off, int len) throws IOException {
+                    encoder.flush();
                     buffer.write(b, off, len);
                 }
 
@@ -245,26 +255,25 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         /**
-         * Each call returns a new writer that encodes into the shared buffer as it is written. A caller that
-         * closes the writer therefore loses nothing, and the two write methods keep their order.
+         * Each call returns a new writer over the shared encoder, and closing that writer flushes the encoder
+         * rather than closing it. A caller that closes the writer therefore loses nothing.
          */
         @Override
         public PrintWriter getWriter() {
             return new PrintWriter(new Writer() {
                 @Override
-                public void write(char[] chars, int off, int len) {
-                    byte[] bytes = new String(chars, off, len).getBytes(StandardCharsets.UTF_8);
-                    buffer.write(bytes, 0, bytes.length);
+                public void write(char[] chars, int off, int len) throws IOException {
+                    encoder.write(chars, off, len);
                 }
 
                 @Override
-                public void flush() {
-                    // every write already reached the buffer
+                public void flush() throws IOException {
+                    encoder.flush();
                 }
 
                 @Override
-                public void close() {
-                    // the buffer outlives this writer
+                public void close() throws IOException {
+                    encoder.flush();
                 }
             });
         }
