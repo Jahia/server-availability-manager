@@ -124,7 +124,9 @@ public class ModulesComponentStateProbe implements Probe {
 
     private static ProbeStatus toStatus(List<ComponentIssue> issues) {
         if (issues.isEmpty()) {
-return new ProbeStatus("No failed module components found", ProbeStatus.Health.GREEN);
+            // The probe leaves a delayed component and a component waiting for a service or a configuration
+            // alone, so it reports what it looked for and not that every component is active.
+            return new ProbeStatus("No failed module components found", ProbeStatus.Health.GREEN);
         }
 
         // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the

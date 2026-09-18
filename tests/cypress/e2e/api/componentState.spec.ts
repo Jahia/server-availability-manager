@@ -22,8 +22,8 @@ describe('Modules component state probe test', () => {
             }), waitUntilOptions);
     };
 
-    // The hook asserts no starting state, so it also works when a previous run left the module installed.
-    // Installing and starting a module that is already installed and started is accepted.
+    // The hook makes no assumption about the starting state, so it also works when a previous run left the
+    // module installed. Installing and starting a module that is already installed and started is accepted.
     const installFixture = (module: string, jar: string) => {
         cy.installBundle(`componentStateProbe/${jar}`);
         cy.runProvisioningScript([{startBundle: module}]);
@@ -34,6 +34,12 @@ describe('Modules component state probe test', () => {
         cy.runProvisioningScript([{uninstallBundle: module}]);
         waitUntilHealth('GREEN');
     };
+
+    // A run interrupted earlier can leave the blacklist configured, which would silence the probe and make
+    // every assertion below read GREEN.
+    before(() => {
+        cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
+    });
 
     it('Check that the probe exists and is green by default', () => {
         healthCheck({includes: PROBE, severity: 'LOW'}).should(r => {
@@ -118,7 +124,6 @@ describe('Modules component state probe test', () => {
                 expect(moduleStateProbe.status.health).to.eq('GREEN');
                 expect(moduleStateProbe.status.message).to.not.contains('broken-bind-module');
             });
-            cy.logout();
         });
     });
 });
