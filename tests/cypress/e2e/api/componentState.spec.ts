@@ -48,6 +48,8 @@ describe('Modules component state probe test', () => {
         });
 
         after(() => {
+            // The blacklist tests below edit a shared configuration, and a failure must not leave it applied.
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
             uninstallFixture(ACTIVATION_MODULE);
         });
 
@@ -82,7 +84,8 @@ describe('Modules component state probe test', () => {
                 // regression report its own cause instead of a type error.
                 expect(response.status).to.eq(200);
                 expect(response.body.probes).to.be.an('array').and.not.be.empty;
-                expect(response.body.probes[0].status.message).to.contains('Deliberate activation failure (é)');
+                const probe = response.body.probes.find(p => p.name === PROBE);
+                expect(probe.status.message).to.contains('Deliberate activation failure (é)');
             });
         });
     });
@@ -101,7 +104,7 @@ describe('Modules component state probe test', () => {
                 const probe = r.probes.find(p => p.name === PROBE);
                 expect(probe.status.health).to.eq('YELLOW');
                 expect(probe.status.message).to.contains('broken-bind-module');
-                expect(probe.status.message).to.contains('never activated');
+                expect(probe.status.message).to.contains('bind method could not be invoked');
             });
         });
 
