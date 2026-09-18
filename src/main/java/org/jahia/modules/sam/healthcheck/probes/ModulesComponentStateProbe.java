@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * Reports a Declarative Services component that never came up, in a Jahia module that Jahia reports as started.
- * Jahia sets a module to STARTED from the bundle lifecycle alone. A module whose components are all dead is
+ * Reports a Declarative Services component that failed to activate, in a Jahia module that Jahia reports as
+ * started. Jahia sets a module to STARTED from the bundle lifecycle alone. A module whose components are all dead is
  * therefore still reported as started.
  *
  * <p>Two component states are reported, and each one means the component is dead:
@@ -86,7 +86,7 @@ public class ModulesComponentStateProbe implements Probe {
 
     @Override
     public String getDescription() {
-        return "Checks if any module ships a Declarative Services component that did not start, while the module itself is started";
+        return "Checks if a started module ships a Declarative Services component that failed to activate";
     }
 
     @Override
@@ -126,7 +126,7 @@ public class ModulesComponentStateProbe implements Probe {
         if (issues.isEmpty()) {
             // The probe leaves a delayed component and a component waiting for a service or a configuration
             // alone, so it reports what it looked for and not that every component is active.
-            return new ProbeStatus("No failed module components found", ProbeStatus.Health.GREEN);
+            return new ProbeStatus("No component failed to activate in a started module", ProbeStatus.Health.GREEN);
         }
 
         // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the
@@ -134,7 +134,7 @@ public class ModulesComponentStateProbe implements Probe {
         issues.sort(Comparator.comparing(ComponentIssue::toString));
 
         StringBuilder message = new StringBuilder();
-        message.append(issues.size()).append(" component(s) did not start, in modules that Jahia reports as started:");
+        message.append(issues.size()).append(" component(s) failed to activate in a started module:");
         issues.stream().limit(MAX_REPORTED_ISSUES).forEach(issue -> message.append('\n').append(issue));
         if (issues.size() > MAX_REPORTED_ISSUES) {
             message.append('\n').append("and ").append(issues.size() - MAX_REPORTED_ISSUES).append(" more");
