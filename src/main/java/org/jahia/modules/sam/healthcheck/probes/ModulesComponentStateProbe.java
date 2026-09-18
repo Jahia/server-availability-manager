@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -62,11 +63,11 @@ public class ModulesComponentStateProbe implements Probe {
     /** A health check answers a load balancer, so the message stays bounded. */
     private static final int MAX_REPORTED_ISSUES = 10;
 
-    private volatile Set<String> blacklist = Collections.emptySet();
+    private final AtomicReference<Set<String>> blacklist = new AtomicReference<>(Collections.emptySet());
 
-    private volatile ServiceComponentRuntime serviceComponentRuntime;
+    private ServiceComponentRuntime serviceComponentRuntime;
 
-    private volatile JahiaTemplateManagerService templateManagerService;
+    private JahiaTemplateManagerService templateManagerService;
 
     @Reference
     public void setServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
@@ -118,7 +119,7 @@ public class ModulesComponentStateProbe implements Probe {
         }
 
         // One write publishes the whole set, so a reader never sees it half updated.
-        blacklist = Collections.unmodifiableSet(names);
+        blacklist.set(Collections.unmodifiableSet(names));
     }
 
     private static ProbeStatus toStatus(List<ComponentIssue> issues) {
@@ -142,7 +143,7 @@ public class ModulesComponentStateProbe implements Probe {
 
     private List<ComponentIssue> collectIssues() {
         List<ComponentIssue> issues = new ArrayList<>();
-        Set<String> silenced = blacklist;
+        Set<String> silenced = blacklist.get();
 
         Bundle[] bundles = getStartedModuleBundles(silenced);
         if (bundles.length == 0) {
