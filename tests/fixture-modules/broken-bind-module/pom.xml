@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jahia.modules</groupId>
+        <artifactId>jahia-modules</artifactId>
+        <version>8.2.0.0</version>
+        <!-- The aggregator sits in the parent directory, so Maven must not look for jahia-modules there. -->
+        <relativePath/>
+    </parent>
+
+    <groupId>org.jahia.test.sam</groupId>
+    <artifactId>broken-bind-module</artifactId>
+    <version>8.2.0.0</version>
+    <packaging>bundle</packaging>
+    <name>Broken bind module</name>
+    <description>Imports the package holding its mandatory reference interface at a range no bundle satisfies, so the component dies at bind time while the module stays STARTED.</description>
+
+    <properties>
+        <jahia-depends>default</jahia-depends>
+        <import-package>
+            org.jahia.modules.sam;version="[1.0,2)";resolution:=optional
+        </import-package>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+            <version>${osgi.compendium.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jahia.modules</groupId>
+            <artifactId>server-availability-manager</artifactId>
+            <version>3.3.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
