@@ -16,7 +16,9 @@ describe('Modules component state probe test', () => {
     const waitUntilHealth = (health: string) => {
         cy.waitUntil(() =>
             healthCheck({includes: PROBE, severity: 'LOW'}).then(result => {
-                return result.probes.find(probe => probe.name === PROBE).status.health === health;
+                // The probe can be missing for a moment while a bundle is refreshed, and that counts as a
+                // failed poll rather than as an error.
+                return result.probes.find(probe => probe.name === PROBE)?.status.health === health;
             }), waitUntilOptions);
     };
 
@@ -47,9 +49,13 @@ describe('Modules component state probe test', () => {
             installFixture(ACTIVATION_MODULE, 'broken-activation-module-8.2.0.0.jar');
         });
 
-        after(() => {
-            // The blacklist tests below edit a shared configuration, and a failure must not leave it applied.
+        // The blacklist tests edit a shared configuration, and a test that fails must not leave it applied to
+        // the tests that follow.
+        afterEach(() => {
             cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
+        });
+
+        after(() => {
             uninstallFixture(ACTIVATION_MODULE);
         });
 
@@ -65,15 +71,11 @@ describe('Modules component state probe test', () => {
         it('is silenced by a blacklist on the module name', {retries: 5}, () => {
             cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-module.json'});
             waitUntilHealth('GREEN');
-            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
-            waitUntilHealth('YELLOW');
         });
 
         it('is silenced by a blacklist on the component name', {retries: 5}, () => {
             cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-component.json'});
             waitUntilHealth('GREEN');
-            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
-            waitUntilHealth('YELLOW');
         });
 
         // The health check response declares a Content-Length. A non-ASCII character in a probe message takes two

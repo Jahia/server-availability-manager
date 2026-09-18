@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +41,9 @@ import java.util.stream.Collectors;
  * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
  * a supported design, and so is a component that waits for a configuration.
  *
- * <p>The probe reads the component states on every call and holds no state between calls. A measurement on Jahia 8
- * gives 0.4 ms for 127 components, and the cost grows with the number of components.
+ * <p>The probe reads the component states on every call and holds no state between calls. A measurement on
+ * Jahia 8 gives 0.4 ms for one read of 127 components. The GraphQL layer reads every probe twice per request,
+ * once for the aggregate status and once for the probe list, so a health check pays that cost twice.
  *
  * <p>Known limit: a component that SCR is re-activating passes through SATISFIED. A configuration update on a
  * started module can therefore make the probe report that component once. The probe is read on demand, and it
@@ -123,6 +125,10 @@ public class ModulesComponentStateProbe implements Probe {
         if (issues.isEmpty()) {
             return new ProbeStatus("All module components are active", ProbeStatus.Health.GREEN);
         }
+
+        // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the
+        // same components, and an operator can diff two health check responses.
+        issues.sort(Comparator.comparing(ComponentIssue::toString));
 
         StringBuilder message = new StringBuilder();
         message.append(issues.size()).append(" component(s) did not start, in modules that Jahia reports as started:");
