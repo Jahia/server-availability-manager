@@ -26,7 +26,6 @@ import static java.util.stream.Collectors.toMap;
 @Component(service = Probe.class, immediate = true)
 public class ModuleStateProbe extends AbstractProbe {
 
-    private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
     private static final String WHITELIST_CONFIG_PROPERTY = "whitelist";
     private static final int EXPECTED_START_LEVEL = 80;
 

@@ -36,13 +36,27 @@ describe('Modules component state probe test', () => {
         waitUntilHealth('GREEN');
     };
 
+    const FIXTURE_NAMES = [ACTIVATION_MODULE, BIND_MODULE].map(module => module.split('/')[0]);
+
+    /**
+     * Reads `bundle:list -s`, whose columns are the id, the state, the start level, the version and the
+     * symbolic name. A fixture is matched on the symbolic name column rather than on the raw text, and it is
+     * returned at the version the instance carries, which is not always the version this spec installs.
+     */
+    const findLeftoverFixtures = (bundles: string): string[] => bundles
+        // eslint-disable-next-line no-control-regex
+        .replace(/\u001b\[[0-9;]*m/g, '')
+        .split('\n')
+        .map(line => line.split('|').map(column => column.trim()))
+        .filter(columns => columns.length >= 5 && FIXTURE_NAMES.includes(columns[4]))
+        .map(columns => `${columns[4]}/${columns[3]}`);
+
     // The provisioning API answers 500 for a bundle it cannot find.
     // A fixture is therefore uninstalled only once the instance is known to carry it. The bundle list is read
     // over ssh, which reports the real state whatever the probe configuration says.
     const removeLeftoverFixtures = () => {
         cy.task('sshCommand', ['bundle:list -s']).then((bundles: string) => {
-            const leftovers = [ACTIVATION_MODULE, BIND_MODULE]
-                .filter(module => bundles.includes(module.split('/')[0]));
+            const leftovers = findLeftoverFixtures(bundles);
             if (leftovers.length > 0) {
                 cy.runProvisioningScript(leftovers.map(module => ({uninstallBundle: module})));
                 waitUntilHealth('GREEN');

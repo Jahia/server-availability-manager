@@ -7,6 +7,7 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.osgi.framework.Bundle;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +22,9 @@ import java.util.stream.Stream;
  * argument.
  */
 public abstract class AbstractProbe implements Probe {
+
+    /** The configuration property that names what a probe must not report. Two probes read it. */
+    protected static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
 
     private final String name;
     private final String description;
@@ -61,8 +65,21 @@ public abstract class AbstractProbe implements Probe {
             return Collections.emptySet();
         }
 
+        // Configuration admin gives a property as a String, and it can also give it as an array or a
+        // collection. String.valueOf on either of those yields the object identity, which would become one
+        // garbage entry, so each element is read on its own.
+        Stream<String> entries;
+        if (value instanceof Object[]) {
+            entries = Arrays.stream((Object[]) value).map(String::valueOf);
+        } else if (value instanceof Collection) {
+            entries = ((Collection<?>) value).stream().map(String::valueOf);
+        } else {
+            entries = Stream.of(String.valueOf(value));
+        }
+
         // An empty value needs no test of its own, because the filter below drops the empty entry it splits to.
-        return Collections.unmodifiableSet(Arrays.stream(String.valueOf(value).split(","))
+        return Collections.unmodifiableSet(entries
+                .flatMap(entry -> Arrays.stream(entry.split(",")))
                 .map(String::trim)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet()));

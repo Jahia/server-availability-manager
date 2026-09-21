@@ -44,12 +44,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>Two component failures stay invisible to this probe, so a GREEN answer does not rule them out:
  * <ul>
  *     <li>A delayed component that was never requested is not reported. SCR attempts no activation until a
- *     caller asks for the service, so such a component has no failure to show, however broken its bind method
- *     is. A delayed component that SCR did attempt and that threw carries FAILED_ACTIVATION, and the first
- *     state above reports it.</li>
- *     <li>A component that SCR refused at registration produces no DTO at all. SCR catches anything the component
- *     metadata validation throws, logs "Cannot register component" and moves on, so the component is never
- *     registered and the runtime cannot describe it. The module still starts and Jahia still marks it STARTED.</li>
+ *     caller asks for the service, so such a component has no failure to show. Its bind method can be broken
+ *     and nothing shows it. A delayed component that SCR did attempt and that threw carries FAILED_ACTIVATION,
+ *     and the first state above reports it.</li>
+ *     <li>A component that SCR refused at registration produces no DTO at all. SCR catches anything the
+ *     component metadata validation throws, logs "Cannot register component" and moves on. The component is
+ *     never registered, so the runtime cannot describe it. The module still starts, and Jahia still marks it
+ *     STARTED.</li>
  * </ul>
  *
  * <p>The probe reads the component states on every call and holds no state between calls. A measurement on
@@ -73,7 +74,6 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesComponentStateProbe.class);
 
-    private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
 
     /** A health check answers a load balancer, so the message stays bounded. */
     private static final int MAX_REPORTED_ISSUES = 10;
@@ -130,10 +130,12 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
         // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the
         // same components, and an operator can diff two health check responses.
-        issues.sort(Comparator.comparing(ComponentIssue::render));
+        issues.sort(Comparator.comparing(ComponentIssue::toString));
 
         StringBuilder message = new StringBuilder();
-        message.append(issues.size()).append(" component(s) failed to activate in a started module:");
+        // One component declaring several configurations contributes one line per configuration, so the count
+        // names configurations rather than components.
+        message.append(issues.size()).append(" component configuration(s) failed to activate in a started module:");
         issues.stream().limit(MAX_REPORTED_ISSUES).forEach(issue -> message.append('\n').append(issue));
         if (issues.size() > MAX_REPORTED_ISSUES) {
             message.append('\n').append("and ").append(issues.size() - MAX_REPORTED_ISSUES).append(" more");
@@ -239,10 +241,6 @@ public class ModulesComponentStateProbe extends AbstractProbe {
             this.rendered = "module[" + description.bundle.symbolicName + " - " + description.bundle.version
                     + "] component[" + description.name
                     + "] configuration[" + configuration.id + "] " + reason;
-        }
-
-        String render() {
-            return rendered;
         }
 
         @Override
