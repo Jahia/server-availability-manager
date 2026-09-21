@@ -15,7 +15,11 @@ import org.osgi.service.component.annotations.Reference;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -80,14 +84,13 @@ public class HealthCheckServlet extends HttpServlet {
                     .collect(Collectors.joining(","));
         }
         HttpServletRequest requestWrapper = getRequestWrapper(req, tmpIncludes, severity);
-        StringWriter writer = new StringWriter();
-        HttpServletResponse responseWrapper = new HealthCheckHttpServletResponseWrapper(resp, writer);
+        HealthCheckHttpServletResponseWrapper responseWrapper = new HealthCheckHttpServletResponseWrapper(resp);
 
         permissionService.addScopes(Collections.singleton("healthcheck"), req);
         gql.service(requestWrapper, responseWrapper);
 
         try {
-            String result = writer.getBuffer().toString();
+            String result = responseWrapper.getContent();
             JSONObject obj = new JSONObject(result);
             if (obj.has(ERRORS_FIELD) && !obj.getJSONArray(ERRORS_FIELD).isEmpty()) {
                 handleErrorResponse(resp, obj);
@@ -130,7 +133,11 @@ public class HealthCheckServlet extends HttpServlet {
             result = finalWriter.getBuffer().toString();
         }
 
-        resp.setContentLength(result.length());
+        // Content-Length counts bytes, and a probe message can carry a non-ASCII character from a third party
+        // exception, which takes more than one byte. The content type carries the charset and it is set before
+        // getWriter(), so the writer encodes in UTF-8 and the declared length counts those same bytes.
+        resp.setContentType("application/json;charset=UTF-8");
+        resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
         try (PrintWriter respWriter = resp.getWriter()) {
             respWriter.write(result);
@@ -191,20 +198,62 @@ public class HealthCheckServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Collects the response of the internal GraphQL call. The call can write through the stream or through the
+     * writer, and both go to one buffer, which is decoded as UTF-8. Decoding each byte on its own turned a two
+     * byte character into two characters.
+     *
+     * <p>This wrapper captures the body only. It does not intercept sendError, flushBuffer, reset or
+     * resetBuffer, which reach the real response. A caller that discards its output therefore leaves the
+     * discarded bytes in this buffer.
+     */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
-        private final StringWriter writer;
+        private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
-        public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp, StringWriter writer) {
+        /**
+         * One encoder for the whole capture. Encoding each write on its own replaced a character written as a
+         * surrogate pair across two writes.
+         */
+        private final OutputStreamWriter encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
+
+        /** The stream flushes the encoder to keep the two write methods in order, and only when it has been used. */
+        private boolean encoderUsed;
+
+        public HealthCheckHttpServletResponseWrapper(HttpServletResponse resp) {
             super(resp);
-            this.writer = writer;
+        }
+
+        private void flushEncoder() throws IOException {
+            if (encoderUsed) {
+                encoder.flush();
+                encoderUsed = false;
+            }
+        }
+
+        /**
+         * Closes the encoder rather than flushing it, because a flush never emits a character left pending as
+         * half of a surrogate pair, and only a close does. This ends the capture, so it is called once.
+         *
+         * @return what the internal call wrote, through the stream, the writer, or both
+         */
+        public String getContent() throws IOException {
+            encoder.close();
+            return buffer.toString(StandardCharsets.UTF_8.name());
         }
 
         @Override
         public ServletOutputStream getOutputStream() {
             return new ServletOutputStream() {
                 @Override
-                public void write(int b) {
-                    writer.write((char) b);
+                public void write(int b) throws IOException {
+                    flushEncoder();
+                    buffer.write(b);
+                }
+
+                @Override
+                public void write(byte[] b, int off, int len) throws IOException {
+                    flushEncoder();
+                    buffer.write(b, off, len);
                 }
 
                 @Override
@@ -219,14 +268,45 @@ public class HealthCheckServlet extends HttpServlet {
             };
         }
 
+        /**
+         * Each call returns a new writer over the shared encoder, and closing that writer flushes the encoder
+         * rather than closing it. A caller that closes the writer therefore loses nothing.
+         */
         @Override
         public PrintWriter getWriter() {
-            return new PrintWriter(writer);
+            return new PrintWriter(new Writer() {
+                @Override
+                public void write(char[] chars, int off, int len) throws IOException {
+                    encoderUsed = true;
+                    encoder.write(chars, off, len);
+                }
+
+                @Override
+                public void flush() throws IOException {
+                    encoder.flush();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    encoder.flush();
+                }
+            });
+        }
+
+        /** The buffer is decoded as UTF-8, so a caller that builds its own encoder uses the same encoding. */
+        @Override
+        public String getCharacterEncoding() {
+            return StandardCharsets.UTF_8.name();
         }
 
         @Override
         public void setContentLength(int len) {
-            // ignore content length
+            // the length of the real response is set once the body is known
+        }
+
+        @Override
+        public void setContentLengthLong(long len) {
+            // the length of the real response is set once the body is known
         }
     }
 }
