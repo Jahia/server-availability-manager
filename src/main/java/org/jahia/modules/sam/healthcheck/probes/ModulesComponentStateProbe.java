@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * Reports a Declarative Services component that failed to activate, in a Jahia module that Jahia reports as
@@ -42,6 +40,15 @@ import java.util.stream.Collectors;
  * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
  * a supported design, and so is a component that waits for a configuration.
  *
+ * <p>Two component failures stay invisible to this probe, so a GREEN answer does not rule them out:
+ * <ul>
+ *     <li>A delayed component is never reported. The check reads an immediate component only, so a component that
+ *     publishes a service and waits to be requested stays unreported however broken its bind method is.</li>
+ *     <li>A component that SCR refused at registration produces no DTO at all. SCR catches anything the component
+ *     metadata validation throws, logs "Cannot register component" and moves on, so the component is never
+ *     registered and the runtime cannot describe it. The module still starts and Jahia still marks it STARTED.</li>
+ * </ul>
+ *
  * <p>The probe reads the component states on every call and holds no state between calls. A measurement on
  * Jahia 8 gives 0.4 ms for one read of 127 components. The GraphQL layer reads every probe twice per request,
  * once for the aggregate status and once for the probe list, so a health check pays that cost twice.
@@ -50,11 +57,16 @@ import java.util.stream.Collectors;
  * started module can therefore make the probe report that component once. The probe is read on demand, and it
  * decides no routing at MEDIUM severity, so a transient report costs nothing.
  *
+ * <p>Known limit: SCR sets a component to SATISFIED before it runs the activate method, and to ACTIVE only once
+ * that method returns. A healthy immediate component is therefore reported for the duration of its own activation.
+ * This is not limited to a module start: a component satisfied late, once the service it awaited appears, activates
+ * while its module has been STARTED for a while.
+ *
  * <p>Known limit: the probe calls SCR on the request thread. A component whose activate method blocks holds its
  * component manager lock, so a health check that reads that component waits for the same lock.
  */
 @Component(service = Probe.class, immediate = true)
-public class ModulesComponentStateProbe implements Probe {
+public class ModulesComponentStateProbe extends AbstractProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesComponentStateProbe.class);
 
@@ -69,6 +81,12 @@ public class ModulesComponentStateProbe implements Probe {
 
     private JahiaTemplateManagerService templateManagerService;
 
+    public ModulesComponentStateProbe() {
+        super("ModulesComponentState",
+                "Checks if a started module ships a Declarative Services component that failed to activate",
+                ProbeSeverity.MEDIUM);
+    }
+
     @Reference
     public void setServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
         this.serviceComponentRuntime = serviceComponentRuntime;
@@ -77,21 +95,6 @@ public class ModulesComponentStateProbe implements Probe {
     @Reference
     public void setTemplateManagerService(JahiaTemplateManagerService templateManagerService) {
         this.templateManagerService = templateManagerService;
-    }
-
-    @Override
-    public String getName() {
-        return "ModulesComponentState";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Checks if a started module ships a Declarative Services component that failed to activate";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.MEDIUM;
     }
 
     @Override
@@ -110,16 +113,8 @@ public class ModulesComponentStateProbe implements Probe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        Set<String> names = Collections.emptySet();
-        if (config.containsKey(BLACKLIST_CONFIG_PROPERTY) && StringUtils.isNotEmpty(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)))) {
-            names = Arrays.stream(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)).split(","))
-                    .map(String::trim)
-                    .filter(StringUtils::isNotEmpty)
-                    .collect(Collectors.toSet());
-        }
-
         // One write publishes the whole set, so a reader never sees it half updated.
-        blacklist.set(Collections.unmodifiableSet(names));
+        blacklist.set(parseNameList(config, BLACKLIST_CONFIG_PROPERTY));
     }
 
     private static ProbeStatus toStatus(List<ComponentIssue> issues) {
@@ -163,9 +158,19 @@ public class ModulesComponentStateProbe implements Probe {
                 continue;
             }
 
-            // SCR returns an empty collection for a description whose bundle went away, so this call needs no
-            // guard of its own. Anything it does throw is a defect, and the caller reports it.
-            for (ComponentConfigurationDTO configuration : serviceComponentRuntime.getComponentConfigurationDTOs(description)) {
+            // A module stopped or redeployed between the two SCR calls leaves a description whose holder is
+            // already gone. SCR catches only IllegalStateException on that path, so the holder lookup returns
+            // null and the call throws. The guard costs that module its components, and it keeps the report.
+            Collection<ComponentConfigurationDTO> configurations;
+            try {
+                configurations = serviceComponentRuntime.getComponentConfigurationDTOs(description);
+            } catch (RuntimeException e) {
+                LOGGER.debug("Could not read the configurations of component {}, its module is going away",
+                        description.name, e);
+                continue;
+            }
+
+            for (ComponentConfigurationDTO configuration : configurations) {
                 String reason = getFailureReason(description, configuration);
                 if (reason != null) {
                     issues.add(new ComponentIssue(description, configuration, reason));
