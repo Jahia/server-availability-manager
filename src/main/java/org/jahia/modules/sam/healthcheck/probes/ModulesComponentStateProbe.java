@@ -114,7 +114,7 @@ public class ModulesComponentStateProbe extends AbstractProbe {
     public ProbeStatus getStatus() {
         try {
             List<String> issues = collectIssues();
-            lastFailure.report("");
+            lastFailure.clear();
             return toStatus(issues);
         } catch (Exception e) {
             // GqlProbe turns anything that escapes a probe into RED, and the servlet answers 503 on RED. A bug
@@ -166,7 +166,7 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         if (bundles.length == 0) {
             // Nothing was read, so nothing stayed unreadable. Clearing here keeps the next real failure
             // loggable, which an early return used to prevent for good.
-            reportUnreadable(Collections.emptyList());
+            lastUnreadable.clear();
             return issues;
         }
 
@@ -221,6 +221,11 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         /** @return true when this is not what was reported last, which clears with an empty signature */
         boolean report(String signature) {
             return !signature.equals(last.getAndSet(signature));
+        }
+
+        /** Forgets what was reported last, so the next occurrence is written again. */
+        void clear() {
+            last.set("");
         }
     }
 

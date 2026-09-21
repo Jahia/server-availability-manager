@@ -108,12 +108,14 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
      */
     protected synchronized List<SpringUsageInfo> searchForSpringUsageInBundles() {
         if (needRefresh) {
+            // Cleared before the scan rather than after it. A bundle event that arrives while this scan runs
+            // therefore asks for another one, where it used to be overwritten when this one ended.
+            needRefresh = false;
             springUsages.clear();
 
             for (Bundle bundle : FrameworkService.getBundleContext().getBundles()) {
                 searchInBundle(bundle);
             }
-            needRefresh = false;
         }
 
         return new ArrayList<>(springUsages);

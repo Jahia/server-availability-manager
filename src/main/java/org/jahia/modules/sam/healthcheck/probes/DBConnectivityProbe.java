@@ -44,7 +44,6 @@ public class DBConnectivityProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        // This read the key name rather than its value, so it threw on every update that carried the property.
         int configured = parseNumber(config, TIMEOUT_CONFIG_PROPERTY, DEFAULT_TIMEOUT);
         if (configured < 0) {
             // Connection.isValid rejects a negative timeout, and this probe is CRITICAL, so a mistyped value
