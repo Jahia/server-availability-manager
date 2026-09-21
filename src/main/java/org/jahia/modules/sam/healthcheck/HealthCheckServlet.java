@@ -330,6 +330,7 @@ public class HealthCheckServlet extends HttpServlet {
 
         @Override
         public void resetBuffer() {
+            super.resetBuffer();
             discardCapture();
         }
 
