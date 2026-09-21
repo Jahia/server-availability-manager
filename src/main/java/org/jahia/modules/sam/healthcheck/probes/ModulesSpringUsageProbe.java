@@ -73,7 +73,9 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
     }
 
     @Override
-    public void setConfig(Map<String, Object> config) {
+    public synchronized void setConfig(Map<String, Object> config) {
+        // Synchronized on the same monitor as the scan, so an update that lands while a scan runs is not
+        // lost. The scan that follows sees both the new value and the request to refresh.
         // A property the operator removed must restore the default, so the value is assigned either way.
         excludeJahiaModules = !config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)
                 || Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));

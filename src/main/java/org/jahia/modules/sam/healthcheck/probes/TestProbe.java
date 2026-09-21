@@ -4,13 +4,19 @@ import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 @Component(immediate = true, service = Probe.class)
 public class TestProbe extends AbstractProbe {
 
-    private volatile ProbeStatus status = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestProbe.class);
+    private static final String STATUS_CONFIG_PROPERTY = "status";
+    private static final ProbeStatus DEFAULT_STATUS = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
+
+    private volatile ProbeStatus status = DEFAULT_STATUS;
 
     public TestProbe() {
         super("testProbe", "This is a simple configurable test probe", ProbeSeverity.IGNORED);
@@ -23,16 +29,21 @@ public class TestProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey("status")) {
-            // The message is configurable so a test can make this probe carry any text through the health check
-            // response, a character that takes more than one byte included, with no second bundle to install.
-            // Read once, and tested as an object first: String.valueOf(null) is the four letters "null", so an
-            // explicit null used to become that message.
-            Object configured = config.get("message");
-            String message = configured == null || String.valueOf(configured).isEmpty()
-                    ? "Configured test probe status"
-                    : String.valueOf(configured);
-            status = new ProbeStatus(message, ProbeStatus.Health.valueOf((String) config.get("status")));
+        // A health this probe does not know must not make it reject its whole configuration.
+        // A property the operator removed returns it to the default.
+        Object configured = config.get(STATUS_CONFIG_PROPERTY);
+        if (configured == null || String.valueOf(configured).isEmpty()) {
+            status = DEFAULT_STATUS;
+            return;
+        }
+
+        try {
+            status = new ProbeStatus("Configured test probe status",
+                    ProbeStatus.Health.valueOf(String.valueOf(configured)));
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("The {} property of this probe names no known health, so the default is used: {}",
+                    STATUS_CONFIG_PROPERTY, configured);
+            status = DEFAULT_STATUS;
         }
     }
 }

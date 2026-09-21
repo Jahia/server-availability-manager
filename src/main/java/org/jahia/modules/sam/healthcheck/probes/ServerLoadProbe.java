@@ -14,7 +14,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -110,10 +109,8 @@ public class ServerLoadProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        // Every value is read before any is assigned, so one unusable value cannot leave half of this
-        // configuration applied. A property the operator removed returns its threshold to the default.
-        Map<String, Integer> values = new HashMap<>();
-        thresholds.forEach((key, threshold) -> values.put(key, parseNumber(config, key, threshold.defaultValue)));
-        thresholds.forEach((key, threshold) -> threshold.setter.accept(values.get(key)));
+        // Every threshold is assigned on every update. A property the operator removed therefore returns to
+        // its default, rather than keeping the last value that was set.
+        thresholds.forEach((key, threshold) -> threshold.setter.accept(parseNumber(config, key, threshold.defaultValue)));
     }
 }

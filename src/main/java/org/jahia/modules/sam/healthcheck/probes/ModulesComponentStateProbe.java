@@ -55,8 +55,8 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * <p>The probe reads the component states on every call, and no answer it gives depends on a previous call.
- * It keeps one field between calls, which records what the last scan could not read. The same failure is
- * therefore logged once rather than on every poll. A measurement on
+ * What it keeps between calls is the operator's blacklist, and a record of the last failure it logged. That
+ * record is what makes a failure that stays get logged once rather than on every poll. A measurement on
  * Jahia 8 gives 0.4 ms for one read of 127 components. The GraphQL layer reads every probe twice per request,
  * once for the aggregate status and once for the probe list. A health check therefore pays that cost twice.
  *
@@ -164,6 +164,9 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
         Bundle[] bundles = getStartedModuleBundles(silenced);
         if (bundles.length == 0) {
+            // Nothing was read, so nothing stayed unreadable. Clearing here keeps the next real failure
+            // loggable, which an early return used to prevent for good.
+            reportUnreadable(Collections.emptyList());
             return issues;
         }
 

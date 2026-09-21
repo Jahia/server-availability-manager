@@ -86,7 +86,9 @@ describe('Modules component state probe test', () => {
         removeLeftoverFixtures();
     });
 
-    it('Check that the probe exists and is green by default', () => {
+    // Retried like the tests below, because the probe reports a component that is activating.
+    // This assertion runs right after the fixtures of an earlier run were removed.
+    it('Check that the probe exists and is green by default', {retries: 5}, () => {
         healthCheck({includes: PROBE, severity: 'LOW'}).should(r => {
             expect(r.status.health).to.eq('GREEN');
             const probe = r.probes.find(p => p.name === PROBE);
