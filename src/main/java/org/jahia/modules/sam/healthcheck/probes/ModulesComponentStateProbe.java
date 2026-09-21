@@ -158,19 +158,7 @@ public class ModulesComponentStateProbe extends AbstractProbe {
                 continue;
             }
 
-            // A module stopped or redeployed between the two SCR calls leaves a description whose holder is
-            // already gone. SCR catches only IllegalStateException on that path, so the holder lookup returns
-            // null and the call throws. The guard costs that module its components, and it keeps the report.
-            Collection<ComponentConfigurationDTO> configurations;
-            try {
-                configurations = serviceComponentRuntime.getComponentConfigurationDTOs(description);
-            } catch (RuntimeException e) {
-                LOGGER.debug("Could not read the configurations of component {}, its module is going away",
-                        description.name, e);
-                continue;
-            }
-
-            for (ComponentConfigurationDTO configuration : configurations) {
+            for (ComponentConfigurationDTO configuration : getConfigurations(description)) {
                 String reason = getFailureReason(description, configuration);
                 if (reason != null) {
                     issues.add(new ComponentIssue(description, configuration, reason));
@@ -179,6 +167,23 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         }
 
         return issues;
+    }
+
+    /**
+     * A module stopped or redeployed between the two SCR calls leaves a description whose holder is already
+     * gone. SCR catches only IllegalStateException on that path, so the holder lookup returns null and the call
+     * throws. Reading each description on its own costs that module its components, and it keeps the report.
+     *
+     * @return the configurations of this description, or none when its module is going away
+     */
+    private Collection<ComponentConfigurationDTO> getConfigurations(ComponentDescriptionDTO description) {
+        try {
+            return serviceComponentRuntime.getComponentConfigurationDTOs(description);
+        } catch (RuntimeException e) {
+            LOGGER.debug("Could not read the configurations of component {}, its module is going away",
+                    description.name, e);
+            return Collections.emptyList();
+        }
     }
 
     /**
