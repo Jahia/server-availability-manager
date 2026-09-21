@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component(immediate = true, service = Probe.class)
 public class TestProbe extends AbstractProbe {
@@ -16,7 +17,9 @@ public class TestProbe extends AbstractProbe {
     private static final String STATUS_CONFIG_PROPERTY = "status";
     private static final ProbeStatus DEFAULT_STATUS = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
 
-    private volatile ProbeStatus status = DEFAULT_STATUS;
+    // ProbeStatus carries mutable fields, so one reference publishes the whole object rather than only the
+    // pointer to it. The configuration admin thread writes it and a request thread reads it.
+    private final AtomicReference<ProbeStatus> status = new AtomicReference<>(DEFAULT_STATUS);
 
     public TestProbe() {
         super("testProbe", "This is a simple configurable test probe", ProbeSeverity.IGNORED);
@@ -24,7 +27,7 @@ public class TestProbe extends AbstractProbe {
 
     @Override
     public ProbeStatus getStatus() {
-        return status;
+        return status.get();
     }
 
     @Override
@@ -33,17 +36,17 @@ public class TestProbe extends AbstractProbe {
         // A property the operator removed returns it to the default.
         Object configured = config.get(STATUS_CONFIG_PROPERTY);
         if (configured == null || String.valueOf(configured).isEmpty()) {
-            status = DEFAULT_STATUS;
+            status.set(DEFAULT_STATUS);
             return;
         }
 
         try {
-            status = new ProbeStatus("Configured test probe status",
-                    ProbeStatus.Health.valueOf(String.valueOf(configured)));
+            status.set(new ProbeStatus("Configured test probe status",
+                    ProbeStatus.Health.valueOf(String.valueOf(configured))));
         } catch (IllegalArgumentException e) {
             LOGGER.warn("The {} property of this probe names no known health, so the default is used: {}",
                     STATUS_CONFIG_PROPERTY, configured);
-            status = DEFAULT_STATUS;
+            status.set(DEFAULT_STATUS);
         }
     }
 }
