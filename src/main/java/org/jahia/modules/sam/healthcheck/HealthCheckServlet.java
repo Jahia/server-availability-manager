@@ -134,8 +134,8 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         // Content-Length counts bytes, and a probe message can carry a non-ASCII character from a third party
-        // exception, which takes more than one byte. The content type carries the charset and it is set before
-        // getWriter(), so the writer encodes in UTF-8 and the declared length counts those same bytes.
+        // exception, which takes more than one byte. The content type carries the charset, and it is set before
+        // getWriter(). The writer therefore encodes in UTF-8, and the declared length counts those same bytes.
         resp.setContentType("application/json;charset=UTF-8");
         resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
@@ -219,10 +219,11 @@ public class HealthCheckServlet extends HttpServlet {
          */
         private OutputStreamWriter encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
 
-        /** The stream flushes the encoder to keep the two write methods in order, and only when it has been used. */
-        private boolean encoderUsed;
-
-        /** One stream and one writer per response, because the servlet contract promises the same object. */
+        /**
+         * One stream and one writer per response, because the servlet contract promises the same object. The
+         * stream flushes the encoder before each write, so bytes written through the two routes keep their
+         * order in the buffer.
+         */
         private ServletOutputStream outputStream;
         private PrintWriter writer;
 
@@ -233,17 +234,10 @@ public class HealthCheckServlet extends HttpServlet {
             super(resp);
         }
 
-        private void flushEncoder() throws IOException {
-            if (encoderUsed) {
-                encoder.flush();
-                encoderUsed = false;
-            }
-        }
-
         /**
-         * Closes the encoder rather than flushing it, because a flush never emits a character left pending as
-         * half of a surrogate pair, and only a close does. Closing ends the capture, so the answer is kept and
-         * a second call returns the same string instead of writing to a closed encoder.
+         * Closes the encoder rather than flushing it. A flush never emits a character left pending as half of
+         * a surrogate pair, and only a close does. Closing ends the capture, so the answer is kept, and a
+         * second call returns the same string instead of writing to a closed encoder.
          *
          * @return what the internal call wrote, through the stream, the writer, or both
          */
@@ -261,13 +255,13 @@ public class HealthCheckServlet extends HttpServlet {
                 outputStream = new ServletOutputStream() {
                     @Override
                     public void write(int b) throws IOException {
-                        flushEncoder();
+                        encoder.flush();
                         buffer.write(b);
                     }
 
                     @Override
                     public void write(byte[] b, int off, int len) throws IOException {
-                        flushEncoder();
+                        encoder.flush();
                         buffer.write(b, off, len);
                     }
 
@@ -286,12 +280,12 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         /**
-         * The writer goes through the shared encoder, and closing it flushes the encoder rather than closing
-         * it, so a caller that closes the writer loses nothing.
+         * The writer goes through the shared encoder. Closing it flushes the encoder rather than closing it,
+         * so a caller that closes the writer loses nothing.
          *
-         * <p>A caller that alternates this writer and the stream within one character is the one case this
-         * wrapper cannot order, because a flush cannot emit a pending surrogate half. The servlet writes the
-         * body itself and the internal call uses one route, so that case does not arise here.
+         * <p>One case this wrapper cannot order is a caller that alternates this writer and the stream within
+         * one character, because a flush cannot emit a pending surrogate half. The servlet writes the body
+         * itself, and the internal call uses one route, so that case does not arise here.
          */
         @Override
         public PrintWriter getWriter() {
@@ -299,7 +293,6 @@ public class HealthCheckServlet extends HttpServlet {
                 writer = new PrintWriter(new Writer() {
                     @Override
                     public void write(char[] chars, int off, int len) throws IOException {
-                        encoderUsed = true;
                         encoder.write(chars, off, len);
                     }
 
@@ -342,9 +335,10 @@ public class HealthCheckServlet extends HttpServlet {
 
         /** A reset asks for the captured body to be forgotten, encoder state included. */
         private void discardCapture() {
+            // The encoder is not closed, because closing would emit a pending character into the buffer this
+            // call exists to empty. It wraps a byte array and holds no resource of its own.
             buffer.reset();
             encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
-            encoderUsed = false;
             content = null;
         }
 
