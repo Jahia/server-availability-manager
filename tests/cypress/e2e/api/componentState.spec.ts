@@ -42,12 +42,15 @@ describe('Modules component state probe test', () => {
      * Reads `bundle:list -s`, whose columns are the id, the state, the start level, the version and the
      * symbolic name. A fixture is matched on the symbolic name column rather than on the raw text, and it is
      * returned at the version the instance carries, which is not always the version this spec installs.
+     *
+     * Karaf separates the columns with an ASCII pipe here, and it draws a box-drawing pipe on a terminal that
+     * takes one, so the split accepts both.
      */
     const findLeftoverFixtures = (bundles: string): string[] => bundles
         // eslint-disable-next-line no-control-regex
         .replace(/\u001b\[[0-9;]*m/g, '')
         .split('\n')
-        .map(line => line.split('|').map(column => column.trim()))
+        .map(line => line.split(/[|\u2502]/).map(column => column.trim()))
         .filter(columns => columns.length >= 5 && FIXTURE_NAMES.includes(columns[4]))
         .map(columns => `${columns[4]}/${columns[3]}`);
 

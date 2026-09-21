@@ -23,7 +23,6 @@
  */
 package org.jahia.modules.sam.healthcheck.probes;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.gemini.blueprint.extender.support.ApplicationContextConfiguration;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
@@ -75,7 +74,7 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)))) {
+        if (config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)) {
             excludeJahiaModules = Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
         }
         needRefresh = true;

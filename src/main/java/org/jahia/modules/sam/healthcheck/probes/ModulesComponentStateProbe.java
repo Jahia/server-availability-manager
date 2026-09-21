@@ -58,8 +58,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * once for the aggregate status and once for the probe list, so a health check pays that cost twice.
  *
  * <p>Known limit: a component that SCR is re-activating passes through SATISFIED. A configuration update on a
- * started module can therefore make the probe report that component once. The probe is read on demand, and it
- * decides no routing at MEDIUM severity, so a transient report costs nothing.
+ * started module can therefore make the probe report that component once. The probe is read on demand, and at
+ * its default MEDIUM severity it decides no routing. An operator who lowers the health check servlet's
+ * status.threshold to YELLOW makes it decide one, and a transient report then answers 503.
  *
  * <p>Known limit: SCR sets a component to SATISFIED before it runs the activate method, and to ACTIVE only
  * once that method returns. A healthy immediate component is therefore reported while it activates.
@@ -187,10 +188,12 @@ public class ModulesComponentStateProbe extends AbstractProbe {
             return serviceComponentRuntime.getComponentConfigurationDTOs(description);
         } catch (RuntimeException e) {
             // The probe answers GREEN when it finds nothing, so a component it could not read must leave a
-            // trace. WARN is the level, because a module going away mid-scan is expected and any other cause
-            // is a defect this message is the only evidence of.
+            // trace at a level the default configuration prints. A load balancer polls this path, and a module
+            // going away mid-scan is an expected cause, so the stack trace stays at DEBUG.
             LOGGER.warn("Could not read the configurations of component {}, so this component is not reported."
-                    + " Its module is going away, or the Declarative Services runtime failed.", description.name, e);
+                    + " Its module is going away, or the Declarative Services runtime failed: {}",
+                    description.name, e.toString());
+            LOGGER.debug("Reading the configurations of component {} failed", description.name, e);
             return Collections.emptyList();
         }
     }
