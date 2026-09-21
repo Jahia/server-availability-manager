@@ -34,9 +34,10 @@
             <groupId>org.jahia.modules</groupId>
             <artifactId>server-availability-manager</artifactId>
             <!-- A released version, because this fixture must build on its own. Pinning the version of this
-                 project would make it need an install of that project first. The module imports
-                 org.jahia.modules.sam with no version and optionally, which is the point of the fixture, so
-                 this dependency serves compilation only. -->
+                 project would make it need an install of that project first. This dependency serves
+                 compilation only: at run time the module imports org.jahia.modules.sam optionally, at a range
+                 the running server-availability-manager does not satisfy, which is the point of the fixture.
+                 The bundle resolves, the class is missing, and the bind method cannot be invoked. -->
             <version>3.3.0</version>
             <scope>provided</scope>
         </dependency>

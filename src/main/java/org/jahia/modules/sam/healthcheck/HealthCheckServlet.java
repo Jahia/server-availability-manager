@@ -297,7 +297,7 @@ public class HealthCheckServlet extends HttpServlet {
         @Override
         public PrintWriter getWriter() {
             if (writer == null) {
-                writer = new PrintWriter(new Writer() {
+                Writer target = new Writer() {
                     @Override
                     public void write(char[] chars, int off, int len) throws IOException {
                         encoder.write(chars, off, len);
@@ -312,7 +312,16 @@ public class HealthCheckServlet extends HttpServlet {
                     public void close() throws IOException {
                         encoder.flush();
                     }
-                });
+                };
+
+                // PrintWriter.close() drops the writer it wraps and then discards every later write in
+                // silence. This response hands out one writer, so closing it flushes and keeps it usable.
+                writer = new PrintWriter(target) {
+                    @Override
+                    public void close() {
+                        flush();
+                    }
+                };
             }
             return writer;
         }

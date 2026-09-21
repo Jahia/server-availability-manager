@@ -5,7 +5,6 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.utils.DatabaseUtils;
 import org.osgi.service.component.annotations.Component;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +19,9 @@ public class DBConnectivityProbe extends AbstractProbe {
 
     // The timeout value is defined in seconds.
     private static final String TIMEOUT_CONFIG_PROPERTY = "timeout";
+    private static final int DEFAULT_TIMEOUT = 20;
 
-    private volatile int timeout = 20;
+    private volatile int timeout = DEFAULT_TIMEOUT;
 
     public DBConnectivityProbe() {
         super("DBConnectivity", "Check DB connectivity", ProbeSeverity.CRITICAL);
@@ -45,14 +45,14 @@ public class DBConnectivityProbe extends AbstractProbe {
     @Override
     public void setConfig(Map<String, Object> config) {
         // This read the key name rather than its value, so it threw on every update that carried the property.
-        String configured = String.valueOf(config.get(TIMEOUT_CONFIG_PROPERTY));
-        if (config.containsKey(TIMEOUT_CONFIG_PROPERTY) && StringUtils.isNotEmpty(configured)) {
-            try {
-                timeout = Integer.parseInt(configured);
-            } catch (NumberFormatException e) {
-                LOGGER.warn("The {} property of this probe is not a number, so the probe keeps {} seconds: {}",
-                        TIMEOUT_CONFIG_PROPERTY, timeout, configured);
-            }
+        int configured = parseNumber(config, TIMEOUT_CONFIG_PROPERTY, DEFAULT_TIMEOUT);
+        if (configured < 0) {
+            // Connection.isValid rejects a negative timeout, and this probe is CRITICAL, so a mistyped value
+            // would take the node out of the load balancer pool.
+            LOGGER.warn("The {} property of this probe cannot be negative, so {} seconds is used instead: {}",
+                    TIMEOUT_CONFIG_PROPERTY, DEFAULT_TIMEOUT, configured);
+            configured = DEFAULT_TIMEOUT;
         }
+        timeout = configured;
     }
 }

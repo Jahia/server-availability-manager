@@ -5,6 +5,8 @@ import org.jahia.data.templates.ModuleState;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.osgi.framework.Bundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -25,6 +27,8 @@ import java.util.stream.Stream;
  * argument.
  */
 public abstract class AbstractProbe implements Probe {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractProbe.class);
 
     /** The configuration property that names what a probe must not report. Two probes read it. */
     protected static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
@@ -89,6 +93,29 @@ public abstract class AbstractProbe implements Probe {
                 .map(String::trim)
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.toSet()));
+    }
+
+    /**
+     * Reads a whole number from the configuration, which is how a probe takes a threshold or a timeout.
+     *
+     * @param config       the configuration the probes registry applied
+     * @param key          the property to read
+     * @param defaultValue what an absent, empty or unusable value falls back to
+     * @return the configured number, or the default. A probe therefore returns to its default when the
+     *         operator removes the property, and one unusable value never leaves a probe half configured.
+     */
+    protected static int parseNumber(Map<String, Object> config, String key, int defaultValue) {
+        Object value = config.get(key);
+        if (value == null || String.valueOf(value).isEmpty()) {
+            return defaultValue;
+        }
+
+        try {
+            return Integer.parseInt(String.valueOf(value).trim());
+        } catch (NumberFormatException e) {
+            LOGGER.warn("The {} property is not a whole number, so {} is used instead: {}", key, defaultValue, value);
+            return defaultValue;
+        }
     }
 
     /**

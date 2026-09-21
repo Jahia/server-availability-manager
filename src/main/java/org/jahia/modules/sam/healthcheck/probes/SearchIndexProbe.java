@@ -54,27 +54,9 @@ public class SearchIndexProbe extends AbstractProbe {
     public void setConfig(Map<String, Object> config) {
         // Both values are read before either is assigned, so a second value that is not a number cannot leave
         // half of this configuration applied. A property the operator removed restores the default.
-        int yellow = readThreshold(config, QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY, DEFAULT_YELLOW_THRESHOLD);
-        int red = readThreshold(config, QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY, DEFAULT_RED_THRESHOLD);
+        int yellow = parseNumber(config, QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY, DEFAULT_YELLOW_THRESHOLD);
+        int red = parseNumber(config, QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY, DEFAULT_RED_THRESHOLD);
         queryAVGLastMinuteYellowThreshold = yellow;
         queryAVGLastMinuteRedThreshold = red;
-    }
-
-    /**
-     * @return the configured threshold, or the default when the property is absent, empty or not a number
-     */
-    private static int readThreshold(Map<String, Object> config, String property, int defaultValue) {
-        Object value = config.get(property);
-        if (value == null || String.valueOf(value).isEmpty()) {
-            return defaultValue;
-        }
-
-        try {
-            return Integer.parseInt(String.valueOf(value));
-        } catch (NumberFormatException e) {
-            logger.warn("The {} property of this probe is not a number, so the probe uses {}: {}",
-                    property, defaultValue, value);
-            return defaultValue;
-        }
     }
 }

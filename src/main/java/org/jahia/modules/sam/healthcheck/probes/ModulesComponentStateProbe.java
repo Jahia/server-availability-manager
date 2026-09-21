@@ -87,6 +87,9 @@ public class ModulesComponentStateProbe extends AbstractProbe {
     /** What the last scan could not read. Read and written by request threads, so it is published safely. */
     private volatile String lastUnreadable = "";
 
+    /** The failure the last call reported, so the same one is not written on every poll. */
+    private volatile String lastFailure = "";
+
     private ServiceComponentRuntime serviceComponentRuntime;
 
     private JahiaTemplateManagerService templateManagerService;
@@ -110,12 +113,20 @@ public class ModulesComponentStateProbe extends AbstractProbe {
     @Override
     public ProbeStatus getStatus() {
         try {
-            return toStatus(collectIssues());
+            List<String> issues = collectIssues();
+            lastFailure = "";
+            return toStatus(issues);
         } catch (Exception e) {
             // GqlProbe turns anything that escapes a probe into RED, and the servlet answers 503 on RED. A bug
             // in this probe must not take the node out of the load balancer pool. An Error is not caught here,
             // so GqlProbe reports it as RED, which is the right answer for a JVM in trouble.
-            LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
+            // A load balancer polls this path, so a runtime that keeps failing is reported when the failure
+            // changes and not on every call, as the unreadable components below already are.
+            String failure = e.toString();
+            if (!failure.equals(lastFailure)) {
+                lastFailure = failure;
+                LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
+            }
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
                     + e.getMessage(), ProbeStatus.Health.YELLOW);
         }

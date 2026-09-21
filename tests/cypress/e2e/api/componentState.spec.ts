@@ -78,10 +78,12 @@ describe('Modules component state probe test', () => {
         waitUntilHealth('GREEN');
     });
 
-    // The blacklist is shared with every other spec of the run, so this spec clears it when it is done. The
-    // afterEach below already clears it, and it does not run when the test that set it failed in its hook.
+    // The blacklist and the fixture modules are both shared with every other spec of the run, so this spec
+    // removes them when it is done. The hooks inside each describe already do, and they do not run when the
+    // test that installed a fixture failed in one of them.
     after(() => {
         cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
+        removeLeftoverFixtures();
     });
 
     it('Check that the probe exists and is green by default', () => {

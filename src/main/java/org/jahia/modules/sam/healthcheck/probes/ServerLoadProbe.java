@@ -1,6 +1,5 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
-import org.apache.commons.lang.StringUtils;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
@@ -15,6 +14,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -23,14 +23,26 @@ public class ServerLoadProbe extends AbstractProbe {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerLoadProbe.class);
 
-    private volatile int requestLoadYellowThreshold = 40;
-    private volatile int requestLoadRedThreshold = 70;
-    private volatile int sessionLoadYellowThreshold = 40;
-    private volatile int sessionLoadRedThreshold = 70;
-    private volatile int nodeCacheLoadYellowThreshold = 1000;
-    private volatile int nodeCacheLoadRedThreshold = 2000;
-    private volatile int threadLoadYellowThreshold = 1000;
-    private volatile int threadLoadRedThreshold = 1500;
+    /** The threshold each configuration key falls back to when the operator has not set it. */
+    private static final Map<String, Integer> configDefaults = Map.of(
+            "requestLoadYellowThreshold", 40,
+            "requestLoadRedThreshold", 70,
+            "sessionLoadYellowThreshold", 40,
+            "sessionLoadRedThreshold", 70,
+            "nodeCacheLoadYellowThreshold", 1000,
+            "nodeCacheLoadRedThreshold", 2000,
+            "threadLoadYellowThreshold", 1000,
+            "threadLoadRedThreshold", 1500
+    );
+
+    private volatile int requestLoadYellowThreshold = configDefaults.get("requestLoadYellowThreshold");
+    private volatile int requestLoadRedThreshold = configDefaults.get("requestLoadRedThreshold");
+    private volatile int sessionLoadYellowThreshold = configDefaults.get("sessionLoadYellowThreshold");
+    private volatile int sessionLoadRedThreshold = configDefaults.get("sessionLoadRedThreshold");
+    private volatile int nodeCacheLoadYellowThreshold = configDefaults.get("nodeCacheLoadYellowThreshold");
+    private volatile int nodeCacheLoadRedThreshold = configDefaults.get("nodeCacheLoadRedThreshold");
+    private volatile int threadLoadYellowThreshold = configDefaults.get("threadLoadYellowThreshold");
+    private volatile int threadLoadRedThreshold = configDefaults.get("threadLoadRedThreshold");
 
     /**
      * Maps configuration keys to their corresponding setter methods.
@@ -89,11 +101,10 @@ public class ServerLoadProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        configSetters.forEach((key, setter) -> {
-            if (config.containsKey(key) && !StringUtils.isEmpty(String.valueOf(config.get(key)))) {
-                setter.accept(Integer.parseInt(String.valueOf(config.get(key))));
-            }
-        });
-
+        // Every value is read before any is assigned, so one unusable value cannot leave half of this
+        // configuration applied. A property the operator removed returns its threshold to the default.
+        Map<String, Integer> values = new HashMap<>();
+        configDefaults.forEach((key, defaultValue) -> values.put(key, parseNumber(config, key, defaultValue)));
+        configSetters.forEach((key, setter) -> setter.accept(values.get(key)));
     }
 }
