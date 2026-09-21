@@ -16,9 +16,10 @@ describe('Modules component state probe test', () => {
     const waitUntilHealth = (health: string) => {
         cy.waitUntil(() =>
             healthCheck({includes: PROBE, severity: 'LOW'}).then(result => {
-                // The probe can be missing for a moment while a bundle is refreshed, and that counts as a
-                // failed poll rather than as an error.
-                return result.probes.find(probe => probe.name === PROBE)?.status.health === health;
+                // A bundle refresh can take the GraphQL provider down for a moment. The whole result is then
+                // undefined, and the probe can also be missing from a result that arrived. Both count as a
+                // failed poll, because a throw here would fail the hook instead of retrying.
+                return result?.probes?.find(probe => probe.name === PROBE)?.status?.health === health;
             }), waitUntilOptions);
     };
 
@@ -35,9 +36,9 @@ describe('Modules component state probe test', () => {
         waitUntilHealth('GREEN');
     };
 
-    // The provisioning API answers 500 for a bundle it cannot find, so a fixture is uninstalled only once the
-    // instance is known to carry it. The bundle list is read over ssh, which reports the real state whatever
-    // the probe configuration says.
+    // The provisioning API answers 500 for a bundle it cannot find.
+    // A fixture is therefore uninstalled only once the instance is known to carry it. The bundle list is read
+    // over ssh, which reports the real state whatever the probe configuration says.
     const removeLeftoverFixtures = () => {
         cy.task('sshCommand', ['bundle:list -s']).then((bundles: string) => {
             const leftovers = [ACTIVATION_MODULE, BIND_MODULE]
@@ -49,11 +50,11 @@ describe('Modules component state probe test', () => {
         });
     };
 
-    // A run interrupted before the after() hooks leaves two kinds of residue. An installed fixture module is
-    // the worse one: the probe scans every started module, so the next run fails on every global GREEN
-    // assertion of the whole suite, starting before this spec is even reached. A configured blacklist is the
-    // other, and removing the fixtures already makes it harmless here, because the describe hooks below install
-    // a fixture and wait for YELLOW, which a stale blacklist would prevent.
+    // A run interrupted before the after() hooks leaves two kinds of residue.
+    // An installed fixture module is the worse one. The probe scans every started module, so the next run
+    // fails on every global GREEN assertion of the suite, before this spec is even reached.
+    // A configured blacklist is the other one. Removing the fixtures already makes it harmless here, because
+    // the describe hooks below install a fixture and wait for YELLOW, which a stale blacklist would prevent.
     before(() => {
         removeLeftoverFixtures();
         cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
@@ -74,10 +75,11 @@ describe('Modules component state probe test', () => {
             installFixture(ACTIVATION_MODULE, 'broken-activation-module-8.2.0.0.jar');
         });
 
-        // The blacklist tests edit a shared configuration, and a test that fails must not leave it applied to
-        // the tests that follow. The clear reaches the probe through ConfigurationAdmin and the @Modified
-        // callback, so the hook waits for the probe to report the fixture again. Without that wait a following
-        // test reads the residue of this one and passes on it.
+        // The blacklist tests edit a shared configuration, and a failing test must not leave it applied to the
+        // tests that follow.
+        // The clear reaches the probe through ConfigurationAdmin and the @Modified callback, so the hook waits
+        // for the probe to report the fixture again. Without that wait, a following test reads the residue of
+        // this one and passes on it.
         afterEach(() => {
             cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
             waitUntilHealth('YELLOW');

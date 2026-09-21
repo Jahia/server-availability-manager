@@ -31,7 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>Two component states are reported, and each one means the component is dead:
  * <ul>
- *     <li>FAILED_ACTIVATION: the activate method or the constructor threw.</li>
+ *     <li>FAILED_ACTIVATION: the activate method or the constructor threw. This state is reported for an
+ *     immediate and for a delayed component alike.</li>
  *     <li>An immediate component left in SATISFIED. SCR activates an immediate component as soon as that component
  *     is satisfied, so this state means the activation was attempted and it failed. A bind method that cannot be
  *     invoked produces this state, because SCR records no failure reason for a bind failure.</li>
@@ -42,8 +43,10 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>Two component failures stay invisible to this probe, so a GREEN answer does not rule them out:
  * <ul>
- *     <li>A delayed component is never reported. The check reads an immediate component only, so a component that
- *     publishes a service and waits to be requested stays unreported however broken its bind method is.</li>
+ *     <li>A delayed component that was never requested is not reported. SCR attempts no activation until a
+ *     caller asks for the service, so such a component has no failure to show, however broken its bind method
+ *     is. A delayed component that SCR did attempt and that threw carries FAILED_ACTIVATION, and the first
+ *     state above reports it.</li>
  *     <li>A component that SCR refused at registration produces no DTO at all. SCR catches anything the component
  *     metadata validation throws, logs "Cannot register component" and moves on, so the component is never
  *     registered and the runtime cannot describe it. The module still starts and Jahia still marks it STARTED.</li>
@@ -57,10 +60,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * started module can therefore make the probe report that component once. The probe is read on demand, and it
  * decides no routing at MEDIUM severity, so a transient report costs nothing.
  *
- * <p>Known limit: SCR sets a component to SATISFIED before it runs the activate method, and to ACTIVE only once
- * that method returns. A healthy immediate component is therefore reported for the duration of its own activation.
- * This is not limited to a module start: a component satisfied late, once the service it awaited appears, activates
- * while its module has been STARTED for a while.
+ * <p>Known limit: SCR sets a component to SATISFIED before it runs the activate method, and to ACTIVE only
+ * once that method returns. A healthy immediate component is therefore reported while it activates.
+ * This is not limited to a module start. A component satisfied late activates when the service it awaited
+ * appears, and its module has then been STARTED for a while.
  *
  * <p>Known limit: the probe calls SCR on the request thread. A component whose activate method blocks holds its
  * component manager lock, so a health check that reads that component waits for the same lock.
@@ -119,14 +122,15 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
     private static ProbeStatus toStatus(List<ComponentIssue> issues) {
         if (issues.isEmpty()) {
-            // The probe leaves a delayed component and a component waiting for a service or a configuration
-            // alone, so it reports what it looked for and not that every component is active.
+            // The probe leaves a component waiting for a service or a configuration alone, and it cannot see a
+            // component SCR never attempted. It therefore reports what it looked for, and not that every
+            // component is active.
             return new ProbeStatus("No component failed to activate in a started module", ProbeStatus.Health.GREEN);
         }
 
         // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the
         // same components, and an operator can diff two health check responses.
-        issues.sort(Comparator.comparing(ComponentIssue::toString));
+        issues.sort(Comparator.comparing(ComponentIssue::render));
 
         StringBuilder message = new StringBuilder();
         message.append(issues.size()).append(" component(s) failed to activate in a started module:");
@@ -180,8 +184,11 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         try {
             return serviceComponentRuntime.getComponentConfigurationDTOs(description);
         } catch (RuntimeException e) {
-            LOGGER.debug("Could not read the configurations of component {}, its module is going away",
-                    description.name, e);
+            // The probe answers GREEN when it finds nothing, so a component it could not read must leave a
+            // trace. WARN is the level, because a module going away mid-scan is expected and any other cause
+            // is a defect this message is the only evidence of.
+            LOGGER.warn("Could not read the configurations of component {}, so this component is not reported."
+                    + " Its module is going away, or the Declarative Services runtime failed.", description.name, e);
             return Collections.emptyList();
         }
     }
@@ -192,19 +199,10 @@ public class ModulesComponentStateProbe extends AbstractProbe {
      *         reported by the ModuleState probe.
      */
     private Bundle[] getStartedModuleBundles(Set<String> silenced) {
-        List<Bundle> bundles = new ArrayList<>();
-
-        for (Map.Entry<Bundle, ModuleState> entry : templateManagerService.getModuleStates().entrySet()) {
-            Bundle bundle = entry.getKey();
-            if (silenced.contains(bundle.getSymbolicName())) {
-                continue;
-            }
-            if (entry.getValue() != null && entry.getValue().getState() == ModuleState.State.STARTED) {
-                bundles.add(bundle);
-            }
-        }
-
-        return bundles.toArray(new Bundle[0]);
+        return selectModules(templateManagerService.getModuleStates(), silenced, Collections.emptySet())
+                .filter(entry -> entry.getValue() != null && entry.getValue().getState() == ModuleState.State.STARTED)
+                .map(Map.Entry::getKey)
+                .toArray(Bundle[]::new);
     }
 
     /**
@@ -228,26 +226,28 @@ public class ModulesComponentStateProbe extends AbstractProbe {
     }
 
     private static final class ComponentIssue {
-        private final String module;
-        private final String component;
-        private final long configurationId;
-        private final String reason;
-
-        ComponentIssue(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration, String reason) {
-            this.module = description.bundle.symbolicName + " - " + description.bundle.version;
-            this.component = description.name;
-            this.configurationId = configuration.id;
-            this.reason = reason;
-        }
 
         /**
-         * The component name is printed on its own, because it is also the value the operator puts in the
-         * blacklist. The configuration id is printed apart, because it tells two configurations of one component
-         * from each other and it changes on every restart.
+         * The line is built once, so the sort key and the printed text are the same string. The component name
+         * is printed on its own, because it is also the value the operator puts in the blacklist. The
+         * configuration id is printed apart, because it tells two configurations of one component from each
+         * other and it changes on every restart.
          */
+        private final String rendered;
+
+        ComponentIssue(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration, String reason) {
+            this.rendered = "module[" + description.bundle.symbolicName + " - " + description.bundle.version
+                    + "] component[" + description.name
+                    + "] configuration[" + configuration.id + "] " + reason;
+        }
+
+        String render() {
+            return rendered;
+        }
+
         @Override
         public String toString() {
-            return "module[" + module + "] component[" + component + "] configuration[" + configurationId + "] " + reason;
+            return rendered;
         }
     }
 }

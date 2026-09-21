@@ -14,6 +14,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
@@ -30,8 +31,10 @@ public class ModuleStateProbe extends AbstractProbe {
     private static final int EXPECTED_START_LEVEL = 80;
 
     private JahiaTemplateManagerService templateManagerService;
-    private Set<String> blacklist = Collections.emptySet();
-    private Set<String> whitelist = Collections.emptySet();
+    // The configuration admin thread writes these, and a request thread reads them. One reference each
+    // publishes the whole set, so a reader never sees a set half built.
+    private final AtomicReference<Set<String>> blacklist = new AtomicReference<>(Collections.emptySet());
+    private final AtomicReference<Set<String>> whitelist = new AtomicReference<>(Collections.emptySet());
 
     public ModuleStateProbe() {
         super("ModuleState", "Checks if any of the modules on Jahia instance are in an inactive/invalid state",
@@ -94,11 +97,7 @@ public class ModuleStateProbe extends AbstractProbe {
     }
 
     private Stream<Map.Entry<Bundle, ModuleState>> getBundlesToCheck() {
-        return templateManagerService.getModuleStates()
-                .entrySet()
-                .stream()
-                .filter(entry -> !(blacklist.contains(entry.getKey().getSymbolicName())
-                        || (!whitelist.isEmpty() && !whitelist.contains(entry.getKey().getSymbolicName()))));
+        return selectModules(templateManagerService.getModuleStates(), blacklist.get(), whitelist.get());
     }
 
     private boolean hasAnotherVersionStarted(Bundle bundle) {
@@ -109,8 +108,8 @@ public class ModuleStateProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        blacklist = parseNameList(config, BLACKLIST_CONFIG_PROPERTY);
-        whitelist = parseNameList(config, WHITELIST_CONFIG_PROPERTY);
+        blacklist.set(parseNameList(config, BLACKLIST_CONFIG_PROPERTY));
+        whitelist.set(parseNameList(config, WHITELIST_CONFIG_PROPERTY));
     }
 
     private Map<String, SortedMap<ModuleVersion, JahiaTemplatesPackage>> getAllModuleVersions() {
