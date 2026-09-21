@@ -97,8 +97,8 @@ public class ModuleStateProbe extends AbstractProbe {
     }
 
     /**
-     * @return the modules this probe reports on. A null state is dropped here rather than in each reader,
-     *         because getModuleState inserts an entry with no state when it is asked about an unknown bundle.
+     * @return the modules this probe reports on. A null state is dropped here rather than in each reader.
+     *         getModuleState inserts an entry with no state when it is asked about an unknown bundle.
      */
     private Stream<Map.Entry<Bundle, ModuleState>> getBundlesToCheck() {
         return selectModules(templateManagerService.getModuleStates(), blacklist.get(), whitelist.get())

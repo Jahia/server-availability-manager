@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Reports a Declarative Services component that failed to activate, in a Jahia module that Jahia reports as
@@ -34,8 +35,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *     <li>FAILED_ACTIVATION: the activate method or the constructor threw. This state is reported for an
  *     immediate and for a delayed component alike.</li>
  *     <li>An immediate component left in SATISFIED. SCR activates an immediate component as soon as that component
- *     is satisfied, so this state means the activation was attempted and it failed. A bind method that cannot be
- *     invoked produces this state, because SCR records no failure reason for a bind failure.</li>
+ *     is satisfied, so this state means the activation was attempted and it failed. A bind method that
+ *     cannot be invoked produces this state, because SCR records no reason for a bind failure.</li>
  * </ul>
  *
  * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
@@ -53,7 +54,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *     STARTED.</li>
  * </ul>
  *
- * <p>The probe reads the component states on every call and holds no state between calls. A measurement on
+ * <p>The probe reads the component states on every call, and no answer it gives depends on a previous call.
+ * It keeps one field between calls, which records what the last scan could not read. The same failure is
+ * therefore logged once rather than on every poll. A measurement on
  * Jahia 8 gives 0.4 ms for one read of 127 components. The GraphQL layer reads every probe twice per request,
  * once for the aggregate status and once for the probe list. A health check therefore pays that cost twice.
  *
@@ -158,7 +161,7 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         }
 
         // Asking SCR for these bundles only avoids building a DTO for the components this probe never
-        // reports, which are those of the Karaf, Felix and Jahia core bundles.
+        // reports. Those are the components of the Karaf, Felix and Jahia core bundles.
         // A bundle uninstalled between the two calls yields fewer descriptions, because SCR skips a holder whose
         // bundle is gone. A failure here is therefore a real one, and it reaches the caller.
         Collection<ComponentDescriptionDTO> descriptions = serviceComponentRuntime.getComponentDescriptionDTOs(bundles);
@@ -188,7 +191,9 @@ public class ModulesComponentStateProbe extends AbstractProbe {
      * at the polling rate. A scan that reads everything clears the record, so the next failure is reported.
      */
     private void reportUnreadable(List<String> unreadable) {
-        String signature = unreadable.isEmpty() ? "" : String.join(",", unreadable);
+        // SCR returns the descriptions in no specified order, so the same failing set must give the same
+        // signature whatever order this scan saw it in.
+        String signature = unreadable.isEmpty() ? "" : unreadable.stream().sorted().collect(Collectors.joining(","));
         if (signature.equals(lastUnreadable)) {
             return;
         }

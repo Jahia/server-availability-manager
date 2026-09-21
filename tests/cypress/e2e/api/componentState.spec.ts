@@ -78,6 +78,12 @@ describe('Modules component state probe test', () => {
         waitUntilHealth('GREEN');
     });
 
+    // The blacklist is shared with every other spec of the run, so this spec clears it when it is done. The
+    // afterEach below already clears it, and it does not run when the test that set it failed in its hook.
+    after(() => {
+        cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});
+    });
+
     it('Check that the probe exists and is green by default', () => {
         healthCheck({includes: PROBE, severity: 'LOW'}).should(r => {
             expect(r.status.health).to.eq('GREEN');

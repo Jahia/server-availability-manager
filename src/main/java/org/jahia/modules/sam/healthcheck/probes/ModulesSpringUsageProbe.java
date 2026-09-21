@@ -63,12 +63,12 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
 
     @Override
     public ProbeStatus getStatus() {
-        this.searchForSpringUsageInBundles();
+        List<SpringUsageInfo> usages = this.searchForSpringUsageInBundles();
         String configMessage = "(Jahia modules " + (excludeJahiaModules ? "not " : "") + "checked) ";
-        if (springUsages.isEmpty()) {
+        if (usages.isEmpty()) {
             return new ProbeStatus(configMessage.concat("No modules using spring found "), ProbeStatus.Health.GREEN);
         }
-        String springUsageMessage = springUsages.stream().map(SpringUsageInfo::toString).collect(Collectors.joining(", "));
+        String springUsageMessage = usages.stream().map(SpringUsageInfo::toString).collect(Collectors.joining(", "));
         return new ProbeStatus(configMessage.concat("Found modules that are using spring, that jahia doesn't support anymore. Details:   ").concat(springUsageMessage), ProbeStatus.Health.YELLOW);
     }
 
@@ -100,7 +100,11 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
         }
     }
 
-    protected synchronized void searchForSpringUsageInBundles() {
+    /**
+     * @return what the shared list holds, as a copy. The caller reads the result outside this lock, and a
+     *         refresh on another thread clears that list, which would break an iteration already running.
+     */
+    protected synchronized List<SpringUsageInfo> searchForSpringUsageInBundles() {
         if (needRefresh) {
             springUsages.clear();
 
@@ -109,6 +113,8 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
             }
             needRefresh = false;
         }
+
+        return new ArrayList<>(springUsages);
     }
 
     private void searchInBundle(Bundle bundle) {
