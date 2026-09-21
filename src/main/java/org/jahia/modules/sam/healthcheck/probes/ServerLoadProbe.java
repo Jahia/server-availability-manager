@@ -43,7 +43,7 @@ public class ServerLoadProbe extends AbstractProbe {
             "nodeCacheLoadYellowThreshold", value -> nodeCacheLoadYellowThreshold = value,
             "nodeCacheLoadRedThreshold", value -> nodeCacheLoadRedThreshold = value,
             "threadLoadYellowThreshold", value -> threadLoadYellowThreshold = value,
-            "theadLoadRedThreshold", value -> threadLoadRedThreshold = value
+            "threadLoadRedThreshold", value -> threadLoadRedThreshold = value
     );
 
     public ServerLoadProbe() {

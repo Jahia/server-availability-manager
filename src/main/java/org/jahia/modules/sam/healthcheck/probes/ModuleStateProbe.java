@@ -86,7 +86,7 @@ public class ModuleStateProbe extends AbstractProbe {
     private Map<Bundle, ModuleState> getNotStartedModules() {
         return getBundlesToCheck()
                 .filter(entry -> !BundleUtils.isFragment(entry.getKey())
-                        && entry.getValue() != null && entry.getValue().getState() != ModuleState.State.STARTED)
+                        && entry.getValue().getState() != ModuleState.State.STARTED)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -96,8 +96,13 @@ public class ModuleStateProbe extends AbstractProbe {
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    /**
+     * @return the modules this probe reports on. A null state is dropped here rather than in each reader,
+     *         because getModuleState inserts an entry with no state when it is asked about an unknown bundle.
+     */
     private Stream<Map.Entry<Bundle, ModuleState>> getBundlesToCheck() {
-        return selectModules(templateManagerService.getModuleStates(), blacklist.get(), whitelist.get());
+        return selectModules(templateManagerService.getModuleStates(), blacklist.get(), whitelist.get())
+                .filter(entry -> entry.getValue() != null);
     }
 
     private boolean hasAnotherVersionStarted(Bundle bundle) {

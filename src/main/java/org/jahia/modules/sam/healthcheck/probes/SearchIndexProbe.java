@@ -1,6 +1,5 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.stats.RepositoryStatistics;
 import org.apache.jackrabbit.core.JahiaRepositoryImpl;
 import org.jahia.modules.sam.Probe;
@@ -50,10 +49,10 @@ public class SearchIndexProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)))) {
+        if (config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)) {
             queryAVGLastMinuteYellowThreshold = Integer.parseInt(String.valueOf(config.get(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)));
         }
-        if (config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)))) {
+        if (config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)) {
             queryAVGLastMinuteRedThreshold = Integer.parseInt(String.valueOf(config.get(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)));
         }
     }

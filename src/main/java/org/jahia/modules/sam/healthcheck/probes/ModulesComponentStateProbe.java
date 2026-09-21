@@ -81,6 +81,9 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
     private final AtomicReference<Set<String>> blacklist = new AtomicReference<>(Collections.emptySet());
 
+    /** What the last scan could not read. Read and written by request threads, so it is published safely. */
+    private volatile String lastUnreadable = "";
+
     private ServiceComponentRuntime serviceComponentRuntime;
 
     private JahiaTemplateManagerService templateManagerService;
@@ -174,14 +177,27 @@ public class ModulesComponentStateProbe extends AbstractProbe {
             }
         }
 
+        reportUnreadable(unreadable);
+
+        return issues;
+    }
+
+    /**
+     * Writes one line for the components this scan could not read, and only when that set changed since the
+     * last scan. A load balancer polls this path, so a runtime that keeps failing would otherwise fill the log
+     * at the polling rate. A scan that reads everything clears the record, so the next failure is reported.
+     */
+    private void reportUnreadable(List<String> unreadable) {
+        String signature = unreadable.isEmpty() ? "" : String.join(",", unreadable);
+        if (signature.equals(lastUnreadable)) {
+            return;
+        }
+
+        lastUnreadable = signature;
         if (!unreadable.isEmpty()) {
-            // One line per scan, and not one per component. A load balancer polls this path, so a runtime that
-            // keeps failing would otherwise fill the log at the polling rate times the component count.
             LOGGER.warn("Could not read the configurations of {} component(s), so they are not reported: {}."
                     + " A module going away during the scan is the expected cause.", unreadable.size(), unreadable);
         }
-
-        return issues;
     }
 
     /**
@@ -211,6 +227,8 @@ public class ModulesComponentStateProbe extends AbstractProbe {
      *         reported by the ModuleState probe.
      */
     private Bundle[] getStartedModuleBundles(Set<String> silenced) {
+        // The whitelist is empty because this probe has none. An operator silences a module or a component by
+        // name, through the blacklist that getStatus already applied to produce the silenced set.
         return selectModules(templateManagerService.getModuleStates(), silenced, Collections.emptySet())
                 .filter(entry -> entry.getValue() != null && entry.getValue().getState() == ModuleState.State.STARTED)
                 .map(Map.Entry::getKey)

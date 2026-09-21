@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -74,9 +75,10 @@ public abstract class AbstractProbe implements Probe {
         if (value.getClass().isArray()) {
             // Array.get reads an array of any component type, a primitive one included, which
             // Arrays.stream(Object[]) cannot.
-            entries = IntStream.range(0, Array.getLength(value)).mapToObj(i -> String.valueOf(Array.get(value, i)));
+            entries = IntStream.range(0, Array.getLength(value)).mapToObj(i -> Array.get(value, i))
+                    .filter(Objects::nonNull).map(String::valueOf);
         } else if (value instanceof Collection) {
-            entries = ((Collection<?>) value).stream().map(String::valueOf);
+            entries = ((Collection<?>) value).stream().filter(Objects::nonNull).map(String::valueOf);
         } else {
             entries = Stream.of(String.valueOf(value));
         }

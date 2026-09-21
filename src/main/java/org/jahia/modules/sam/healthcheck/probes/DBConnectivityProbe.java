@@ -5,6 +5,7 @@ import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.jahia.utils.DatabaseUtils;
 import org.osgi.service.component.annotations.Component;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,8 @@ public class DBConnectivityProbe extends AbstractProbe {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBConnectivityProbe.class);
 
     // The timeout value is defined in seconds.
+    private static final String TIMEOUT_CONFIG_PROPERTY = "timeout";
+
     private volatile int timeout = 20;
 
     public DBConnectivityProbe() {
@@ -41,8 +44,15 @@ public class DBConnectivityProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey("timeout")) {
-            timeout = Integer.parseInt("timeout");
+        // This read the key name rather than its value, so it threw on every update that carried the property.
+        String configured = String.valueOf(config.get(TIMEOUT_CONFIG_PROPERTY));
+        if (config.containsKey(TIMEOUT_CONFIG_PROPERTY) && StringUtils.isNotEmpty(configured)) {
+            try {
+                timeout = Integer.parseInt(configured);
+            } catch (NumberFormatException e) {
+                LOGGER.warn("The {} property of this probe is not a number, so the probe keeps {} seconds: {}",
+                        TIMEOUT_CONFIG_PROPERTY, timeout, configured);
+            }
         }
     }
 }
