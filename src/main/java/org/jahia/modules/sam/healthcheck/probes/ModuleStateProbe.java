@@ -1,5 +1,6 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
+import org.apache.commons.lang.StringUtils;
 import org.jahia.data.templates.JahiaTemplatesPackage;
 import org.jahia.data.templates.ModuleState;
 import org.jahia.modules.sam.Probe;
@@ -14,45 +15,39 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 /**
- * Reports the modules that are not active. The operator adds a module to the blacklist to leave it
- * unreported, and to the whitelist to report that module only. An empty whitelist reports every module.
+ * Module state probe to find out modules that are not active, specific modules can be added to blacklist to
+ * ignore them and to whitelist to check only specific ones, by default all modules are whitelisted
  */
 @Component(service = Probe.class, immediate = true)
-public class ModuleStateProbe extends AbstractProbe {
+public class ModuleStateProbe implements Probe {
 
+    private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
     private static final String WHITELIST_CONFIG_PROPERTY = "whitelist";
     private static final int EXPECTED_START_LEVEL = 80;
 
     private JahiaTemplateManagerService templateManagerService;
-    // The configuration admin thread writes these, and a request thread reads them. One reference publishes
-    // both sets together, so a reader never sees the new blacklist beside the old whitelist.
-    private final AtomicReference<NameLists> nameLists = new AtomicReference<>(new NameLists(Collections.emptySet(), Collections.emptySet()));
-
-    /** The two name lists of this probe, published as one value. */
-    private static final class NameLists {
-        private final Set<String> blacklist;
-        private final Set<String> whitelist;
-
-        NameLists(Set<String> blacklist, Set<String> whitelist) {
-            this.blacklist = blacklist;
-            this.whitelist = whitelist;
-        }
-    }
-
-    public ModuleStateProbe() {
-        super("ModuleState", "Checks if any of the modules on Jahia instance are in an inactive/invalid state",
-                ProbeSeverity.MEDIUM);
-    }
+    private List<String> blacklist;
+    private List<String> whitelist;
 
     @Reference
     public void setTemplateManagerService(JahiaTemplateManagerService templateManagerService) {
         this.templateManagerService = templateManagerService;
+    }
+
+    @Override
+    public String getName() {
+        return "ModuleState";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Checks if any of the modules on Jahia instance are in an inactive/invalid state";
     }
 
     @Override
@@ -93,10 +88,14 @@ public class ModuleStateProbe extends AbstractProbe {
         return new ProbeStatus("All modules are started", ProbeStatus.Health.GREEN);
     }
 
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
+    }
+
     private Map<Bundle, ModuleState> getNotStartedModules() {
         return getBundlesToCheck()
-                .filter(entry -> !BundleUtils.isFragment(entry.getKey())
-                        && entry.getValue().getState() != ModuleState.State.STARTED)
+                .filter(entry -> !BundleUtils.isFragment(entry.getKey()) && entry.getValue().getState() != ModuleState.State.STARTED)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -106,14 +105,13 @@ public class ModuleStateProbe extends AbstractProbe {
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    /**
-     * @return the modules this probe reports on. A null state is dropped here rather than in each reader.
-     *         getModuleState inserts an entry with no state when it is asked about an unknown bundle.
-     */
     private Stream<Map.Entry<Bundle, ModuleState>> getBundlesToCheck() {
-        NameLists lists = nameLists.get();
-        return selectModules(templateManagerService.getModuleStates(), lists.blacklist, lists.whitelist)
-                .filter(entry -> entry.getValue() != null);
+        return templateManagerService.getModuleStates()
+                .entrySet()
+                .stream()
+                .filter(entry -> !(blacklist.contains(entry.getKey().getSymbolicName()) || (!whitelist.isEmpty()
+                        && !StringUtils.isEmpty(whitelist.get(0))
+                        && !whitelist.contains(entry.getKey().getSymbolicName()))));
     }
 
     private boolean hasAnotherVersionStarted(Bundle bundle) {
@@ -124,8 +122,17 @@ public class ModuleStateProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        nameLists.set(new NameLists(parseNameList(config, BLACKLIST_CONFIG_PROPERTY),
-                parseNameList(config, WHITELIST_CONFIG_PROPERTY)));
+        if (config.containsKey(BLACKLIST_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(BLACKLIST_CONFIG_PROPERTY)))) {
+            blacklist = Arrays.stream(String.valueOf(config.get(BLACKLIST_CONFIG_PROPERTY)).split(",")).collect(toList());
+        } else {
+            blacklist = Collections.emptyList();
+        }
+
+        if (config.containsKey(WHITELIST_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(WHITELIST_CONFIG_PROPERTY)))) {
+            whitelist = Arrays.stream(String.valueOf(config.get(WHITELIST_CONFIG_PROPERTY)).split(",")).collect(toList());
+        } else {
+            whitelist = Collections.emptyList();
+        }
     }
 
     private Map<String, SortedMap<ModuleVersion, JahiaTemplatesPackage>> getAllModuleVersions() {

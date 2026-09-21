@@ -44,17 +44,8 @@ public class ProbesRegistry {
     }
 
     private void activateProbe(Probe probe) {
-        if (config.get() == null) {
-            return;
-        }
-
-        try {
+        if (config.get() != null) {
             probe.setConfig(getProbeConfig(probe.getName()));
-        } catch (RuntimeException e) {
-            // The caller applies the configuration to every probe in turn. One probe that rejects its own
-            // configuration, for a value an operator mistyped, would otherwise leave every probe after it in
-            // the list with the configuration it had before.
-            logger.warn("The {} probe rejected its configuration, so it keeps the one it had", probe.getName(), e);
         }
     }
 

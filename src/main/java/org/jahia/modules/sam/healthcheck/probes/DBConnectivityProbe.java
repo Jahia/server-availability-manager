@@ -13,19 +13,12 @@ import java.sql.SQLException;
 import java.util.Map;
 
 @Component(service = Probe.class, immediate = true)
-public class DBConnectivityProbe extends AbstractProbe {
+public class DBConnectivityProbe implements Probe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBConnectivityProbe.class);
 
     // The timeout value is defined in seconds.
-    private static final String TIMEOUT_CONFIG_PROPERTY = "timeout";
-    private static final int DEFAULT_TIMEOUT = 20;
-
-    private volatile int timeout = DEFAULT_TIMEOUT;
-
-    public DBConnectivityProbe() {
-        super("DBConnectivity", "Check DB connectivity", ProbeSeverity.CRITICAL);
-    }
+    private int timeout = 20;
 
     @Override
     public ProbeStatus getStatus() {
@@ -43,15 +36,24 @@ public class DBConnectivityProbe extends AbstractProbe {
     }
 
     @Override
+    public String getDescription() {
+        return "Check DB connectivity";
+    }
+
+    @Override
+    public String getName() {
+        return "DBConnectivity";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.CRITICAL;
+    }
+
+    @Override
     public void setConfig(Map<String, Object> config) {
-        int configured = parseNumber(config, TIMEOUT_CONFIG_PROPERTY, DEFAULT_TIMEOUT);
-        if (configured < 0) {
-            // Connection.isValid rejects a negative timeout, and this probe is CRITICAL, so a mistyped value
-            // would take the node out of the load balancer pool.
-            LOGGER.warn("The {} property of this probe cannot be negative, so {} seconds is used instead: {}",
-                    TIMEOUT_CONFIG_PROPERTY, DEFAULT_TIMEOUT, configured);
-            configured = DEFAULT_TIMEOUT;
+        if (config.containsKey("timeout")) {
+            timeout = Integer.parseInt("timeout");
         }
-        timeout = configured;
     }
 }

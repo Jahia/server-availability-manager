@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -74,10 +75,12 @@ import java.util.stream.Collectors;
  * component manager lock, so a health check that reads that component waits for the same lock.
  */
 @Component(service = Probe.class, immediate = true)
-public class ModulesComponentStateProbe extends AbstractProbe {
+public class ModulesComponentStateProbe implements Probe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesComponentStateProbe.class);
 
+
+    private static final String BLACKLIST_CONFIG_PROPERTY = "blacklist";
 
     /** A health check answers a load balancer, so the message stays bounded. */
     private static final int MAX_REPORTED_ISSUES = 10;
@@ -94,12 +97,6 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
     private JahiaTemplateManagerService templateManagerService;
 
-    public ModulesComponentStateProbe() {
-        super("ModulesComponentState",
-                "Checks if a started module ships a Declarative Services component that failed to activate",
-                ProbeSeverity.MEDIUM);
-    }
-
     @Reference
     public void setServiceComponentRuntime(ServiceComponentRuntime serviceComponentRuntime) {
         this.serviceComponentRuntime = serviceComponentRuntime;
@@ -108,6 +105,21 @@ public class ModulesComponentStateProbe extends AbstractProbe {
     @Reference
     public void setTemplateManagerService(JahiaTemplateManagerService templateManagerService) {
         this.templateManagerService = templateManagerService;
+    }
+
+    @Override
+    public String getName() {
+        return "ModulesComponentState";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Checks if a started module ships a Declarative Services component that failed to activate";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
     }
 
     @Override
@@ -130,8 +142,17 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
+        Set<String> names = Collections.emptySet();
+        Object configured = config.get(BLACKLIST_CONFIG_PROPERTY);
+        if (configured != null) {
+            names = Arrays.stream(String.valueOf(configured).split(","))
+                    .map(String::trim)
+                    .filter(StringUtils::isNotEmpty)
+                    .collect(Collectors.toSet());
+        }
+
         // One write publishes the whole set, so a reader never sees it half updated.
-        blacklist.set(parseNameList(config, BLACKLIST_CONFIG_PROPERTY));
+        blacklist.set(Collections.unmodifiableSet(names));
     }
 
     private static ProbeStatus toStatus(List<String> issues) {
@@ -256,12 +277,19 @@ public class ModulesComponentStateProbe extends AbstractProbe {
      *         reported by the ModuleState probe.
      */
     private Bundle[] getStartedModuleBundles(Set<String> silenced) {
-        // The whitelist is empty because this probe has none. An operator silences a module or a component by
-        // name, through the blacklist that getStatus already applied to produce the silenced set.
-        return selectModules(templateManagerService.getModuleStates(), silenced, Collections.emptySet())
-                .filter(entry -> entry.getValue() != null && entry.getValue().getState() == ModuleState.State.STARTED)
-                .map(Map.Entry::getKey)
-                .toArray(Bundle[]::new);
+        List<Bundle> bundles = new ArrayList<>();
+
+        for (Map.Entry<Bundle, ModuleState> entry : templateManagerService.getModuleStates().entrySet()) {
+            Bundle bundle = entry.getKey();
+            if (silenced.contains(bundle.getSymbolicName())) {
+                continue;
+            }
+            if (entry.getValue() != null && entry.getValue().getState() == ModuleState.State.STARTED) {
+                bundles.add(bundle);
+            }
+        }
+
+        return bundles.toArray(new Bundle[0]);
     }
 
     /**

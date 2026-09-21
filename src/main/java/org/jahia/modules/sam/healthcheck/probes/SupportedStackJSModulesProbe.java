@@ -9,12 +9,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
 
 @Component(service = Probe.class, immediate = true)
-public class SupportedStackJSModulesProbe extends AbstractProbe {
-
-    public SupportedStackJSModulesProbe() {
-        super("SupportedStackJSModules", "Validates the capacity of the Jahia environment to run JS modules.",
-                ProbeSeverity.MEDIUM);
-    }
+public class SupportedStackJSModulesProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
@@ -28,4 +23,18 @@ public class SupportedStackJSModulesProbe extends AbstractProbe {
         return status;
     }
 
+    @Override
+    public String getDescription() {
+        return "Validates the capacity of the Jahia environment to run JS modules.";
+    }
+
+    @Override
+    public String getName() {
+        return "SupportedStackJSModules";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
+    }
 }

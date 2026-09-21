@@ -20,13 +20,9 @@ import org.apache.jackrabbit.core.data.DataStore;
 import org.apache.jackrabbit.core.data.db.DbDataStore;
 
 @Component(service = Probe.class, immediate = true)
-public class FileDatastoreProbe extends AbstractProbe {
+public class FileDatastoreProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(FileDatastoreProbe.class);
-
-    public FileDatastoreProbe() {
-        super("FileDatastore", "Checks the connectivity with the JCR Datastore", ProbeSeverity.CRITICAL);
-    }
 
     @Reference(service=Probe.class, target="(component.name=org.jahia.modules.sam.healthcheck.probes.DBConnectivityProbe)")
     private Probe dbConnectivityProbe;
@@ -66,4 +62,18 @@ public class FileDatastoreProbe extends AbstractProbe {
         }
     }
 
+    @Override
+    public String getDescription() {
+        return "Checks the connectivity with the JCR Datastore";
+    }
+
+    @Override
+    public String getName() {
+        return "FileDatastore";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.CRITICAL;
+    }
 }

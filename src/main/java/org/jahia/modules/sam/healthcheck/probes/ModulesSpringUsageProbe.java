@@ -23,6 +23,7 @@
  */
 package org.jahia.modules.sam.healthcheck.probes;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.gemini.blueprint.extender.support.ApplicationContextConfiguration;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
@@ -46,39 +47,47 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
-public class ModulesSpringUsageProbe extends AbstractProbe implements BundleListener {
+public class ModulesSpringUsageProbe implements Probe, BundleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesSpringUsageProbe.class);
     private static final String EXCLUDE_JAHIA_MODULES_PROPERTY = "excludeJahiaModules";
     private static final List<SpringUsageInfo> springUsages = new ArrayList<>();
     private static final Set<Integer> refreshEvents = Set.of(BundleEvent.INSTALLED, BundleEvent.UNINSTALLED);
-    private static volatile boolean needRefresh = true;
+    private static boolean needRefresh = true;
 
-    private volatile boolean excludeJahiaModules = true;
+    private boolean excludeJahiaModules = true;
 
-    public ModulesSpringUsageProbe() {
-        super("ModulesSpringUsage", "Checks if some modules are using Spring on the Jahia instance",
-                ProbeSeverity.MEDIUM);
+    @Override
+    public String getName() {
+        return "ModulesSpringUsage";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Checks if some modules are using Spring on the Jahia instance";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
     }
 
     @Override
     public ProbeStatus getStatus() {
-        List<SpringUsageInfo> usages = this.searchForSpringUsageInBundles();
+        this.searchForSpringUsageInBundles();
         String configMessage = "(Jahia modules " + (excludeJahiaModules ? "not " : "") + "checked) ";
-        if (usages.isEmpty()) {
+        if (springUsages.isEmpty()) {
             return new ProbeStatus(configMessage.concat("No modules using spring found "), ProbeStatus.Health.GREEN);
         }
-        String springUsageMessage = usages.stream().map(SpringUsageInfo::toString).collect(Collectors.joining(", "));
+        String springUsageMessage = springUsages.stream().map(SpringUsageInfo::toString).collect(Collectors.joining(", "));
         return new ProbeStatus(configMessage.concat("Found modules that are using spring, that jahia doesn't support anymore. Details:   ").concat(springUsageMessage), ProbeStatus.Health.YELLOW);
     }
 
     @Override
-    public synchronized void setConfig(Map<String, Object> config) {
-        // Synchronized on the same monitor as the scan, so an update that lands while a scan runs is not
-        // lost. The scan that follows sees both the new value and the request to refresh.
-        // A property the operator removed must restore the default, so the value is assigned either way.
-        excludeJahiaModules = !config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)
-                || Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
+    public void setConfig(Map<String, Object> config) {
+        if (config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)))) {
+            excludeJahiaModules = Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
+        }
         needRefresh = true;
     }
 
@@ -102,23 +111,15 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
         }
     }
 
-    /**
-     * @return what the shared list holds, as a copy. The caller reads the result outside this lock, and a
-     *         refresh on another thread clears that list, which would break an iteration already running.
-     */
-    protected synchronized List<SpringUsageInfo> searchForSpringUsageInBundles() {
+    protected synchronized void searchForSpringUsageInBundles() {
         if (needRefresh) {
-            // Cleared before the scan rather than after it. A bundle event that arrives while this scan runs
-            // therefore asks for another one, where it used to be overwritten when this one ended.
-            needRefresh = false;
             springUsages.clear();
 
             for (Bundle bundle : FrameworkService.getBundleContext().getBundles()) {
                 searchInBundle(bundle);
             }
+            needRefresh = false;
         }
-
-        return new ArrayList<>(springUsages);
     }
 
     private void searchInBundle(Bundle bundle) {

@@ -1,5 +1,6 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
+import org.apache.commons.lang.StringUtils;
 import org.jahia.modules.sam.Probe;
 import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
@@ -18,57 +19,32 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 @Component(service = Probe.class, immediate = true)
-public class ServerLoadProbe extends AbstractProbe {
+public class ServerLoadProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerLoadProbe.class);
 
-    private static final int DEFAULT_REQUEST_LOAD_YELLOW = 40;
-    private static final int DEFAULT_REQUEST_LOAD_RED = 70;
-    private static final int DEFAULT_SESSION_LOAD_YELLOW = 40;
-    private static final int DEFAULT_SESSION_LOAD_RED = 70;
-    private static final int DEFAULT_NODE_CACHE_LOAD_YELLOW = 1000;
-    private static final int DEFAULT_NODE_CACHE_LOAD_RED = 2000;
-    private static final int DEFAULT_THREAD_LOAD_YELLOW = 1000;
-    private static final int DEFAULT_THREAD_LOAD_RED = 1500;
-
-    private volatile int requestLoadYellowThreshold = DEFAULT_REQUEST_LOAD_YELLOW;
-    private volatile int requestLoadRedThreshold = DEFAULT_REQUEST_LOAD_RED;
-    private volatile int sessionLoadYellowThreshold = DEFAULT_SESSION_LOAD_YELLOW;
-    private volatile int sessionLoadRedThreshold = DEFAULT_SESSION_LOAD_RED;
-    private volatile int nodeCacheLoadYellowThreshold = DEFAULT_NODE_CACHE_LOAD_YELLOW;
-    private volatile int nodeCacheLoadRedThreshold = DEFAULT_NODE_CACHE_LOAD_RED;
-    private volatile int threadLoadYellowThreshold = DEFAULT_THREAD_LOAD_YELLOW;
-    private volatile int threadLoadRedThreshold = DEFAULT_THREAD_LOAD_RED;
+    private int requestLoadYellowThreshold = 40;
+    private int requestLoadRedThreshold = 70;
+    private int sessionLoadYellowThreshold = 40;
+    private int sessionLoadRedThreshold = 70;
+    private int nodeCacheLoadYellowThreshold = 1000;
+    private int nodeCacheLoadRedThreshold = 2000;
+    private int threadLoadYellowThreshold = 1000;
+    private int threadLoadRedThreshold = 1500;
 
     /**
-     * What each configuration key defaults to, and what it sets. One entry per key, so a key cannot appear in
-     * a list of defaults without appearing in a list of setters.
+     * Maps configuration keys to their corresponding setter methods.
      */
-    private final Map<String, Threshold> thresholds = Map.of(
-            "requestLoadYellowThreshold", new Threshold(DEFAULT_REQUEST_LOAD_YELLOW, v -> requestLoadYellowThreshold = v),
-            "requestLoadRedThreshold", new Threshold(DEFAULT_REQUEST_LOAD_RED, v -> requestLoadRedThreshold = v),
-            "sessionLoadYellowThreshold", new Threshold(DEFAULT_SESSION_LOAD_YELLOW, v -> sessionLoadYellowThreshold = v),
-            "sessionLoadRedThreshold", new Threshold(DEFAULT_SESSION_LOAD_RED, v -> sessionLoadRedThreshold = v),
-            "nodeCacheLoadYellowThreshold", new Threshold(DEFAULT_NODE_CACHE_LOAD_YELLOW, v -> nodeCacheLoadYellowThreshold = v),
-            "nodeCacheLoadRedThreshold", new Threshold(DEFAULT_NODE_CACHE_LOAD_RED, v -> nodeCacheLoadRedThreshold = v),
-            "threadLoadYellowThreshold", new Threshold(DEFAULT_THREAD_LOAD_YELLOW, v -> threadLoadYellowThreshold = v),
-            "threadLoadRedThreshold", new Threshold(DEFAULT_THREAD_LOAD_RED, v -> threadLoadRedThreshold = v)
+    private final Map<String, Consumer<Integer>> configSetters = Map.of(
+            "requestLoadYellowThreshold", value -> requestLoadYellowThreshold = value,
+            "requestLoadRedThreshold", value -> requestLoadRedThreshold = value,
+            "sessionLoadYellowThreshold", value -> sessionLoadYellowThreshold = value,
+            "sessionLoadRedThreshold", value -> sessionLoadRedThreshold = value,
+            "nodeCacheLoadYellowThreshold", value -> nodeCacheLoadYellowThreshold = value,
+            "nodeCacheLoadRedThreshold", value -> nodeCacheLoadRedThreshold = value,
+            "threadLoadYellowThreshold", value -> threadLoadYellowThreshold = value,
+            "theadLoadRedThreshold", value -> threadLoadRedThreshold = value
     );
-
-    /** One configurable threshold: what it falls back to, and where its value goes. */
-    private static final class Threshold {
-        private final int defaultValue;
-        private final Consumer<Integer> setter;
-
-        Threshold(int defaultValue, Consumer<Integer> setter) {
-            this.defaultValue = defaultValue;
-            this.setter = setter;
-        }
-    }
-
-    public ServerLoadProbe() {
-        super("ServerLoad", "Checks if system load is operating within limits", ProbeSeverity.HIGH);
-    }
 
     @Reference
     private LoadAverageService loadAverageService;
@@ -108,9 +84,27 @@ public class ServerLoadProbe extends AbstractProbe {
     }
 
     @Override
+    public String getDescription() {
+        return "Checks if system load is operating within limits";
+    }
+
+    @Override
+    public String getName() {
+        return "ServerLoad";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.HIGH;
+    }
+
+    @Override
     public void setConfig(Map<String, Object> config) {
-        // Every threshold is assigned on every update. A property the operator removed therefore returns to
-        // its default, rather than keeping the last value that was set.
-        thresholds.forEach((key, threshold) -> threshold.setter.accept(parseNumber(config, key, threshold.defaultValue)));
+        configSetters.forEach((key, setter) -> {
+            if (config.containsKey(key) && !StringUtils.isEmpty(String.valueOf(config.get(key)))) {
+                setter.accept(Integer.parseInt(String.valueOf(config.get(key))));
+            }
+        });
+
     }
 }

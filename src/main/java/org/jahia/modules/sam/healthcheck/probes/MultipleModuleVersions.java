@@ -17,15 +17,20 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component(immediate = true, service = Probe.class)
-public class MultipleModuleVersions extends AbstractProbe {
-
-    public MultipleModuleVersions() {
-        this("MultipleModuleVersions", "Checks if multiple versions of the same module are present on the Jahia instance",
-                ProbeSeverity.MEDIUM);
+public class MultipleModuleVersions implements Probe {
+    @Override
+    public String getName() {
+        return "MultipleModuleVersions";
     }
 
-    protected MultipleModuleVersions(String name, String description, ProbeSeverity defaultSeverity) {
-        super(name, description, defaultSeverity);
+    @Override
+    public String getDescription() {
+        return "Checks if multiple versions of the same module are present on the Jahia instance";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
     }
 
     @Override

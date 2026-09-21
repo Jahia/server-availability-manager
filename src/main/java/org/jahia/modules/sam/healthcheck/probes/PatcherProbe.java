@@ -17,13 +17,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
-public class PatcherProbe extends AbstractProbe {
+public class PatcherProbe implements Probe {
 
     private static final Logger logger = LoggerFactory.getLogger(PatcherProbe.class);
 
-    public PatcherProbe() {
-        super("PatchFailures", "Check if any patch failed", ProbeSeverity.CRITICAL);
-    }
 
     @Override
     public ProbeStatus getStatus() {
@@ -51,4 +48,18 @@ public class PatcherProbe extends AbstractProbe {
         return new ProbeStatus("Patch applied successfully", ProbeStatus.Health.GREEN);
     }
 
+    @Override
+    public String getDescription() {
+        return "Check if any patch failed";
+    }
+
+    @Override
+    public String getName() {
+        return "PatchFailures";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.CRITICAL;
+    }
 }

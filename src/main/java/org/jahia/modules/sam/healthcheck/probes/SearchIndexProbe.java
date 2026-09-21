@@ -1,5 +1,6 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.stats.RepositoryStatistics;
 import org.apache.jackrabbit.core.JahiaRepositoryImpl;
 import org.jahia.modules.sam.Probe;
@@ -16,15 +17,27 @@ import java.util.Arrays;
 import java.util.Map;
 
 @Component(service = Probe.class, immediate = true)
-public class SearchIndexProbe extends AbstractProbe {
-
+public class SearchIndexProbe implements Probe {
     private static final Logger logger = LoggerFactory.getLogger(SearchIndexProbe.class);
 
-    private static final int DEFAULT_YELLOW_THRESHOLD = 10;
-    private static final int DEFAULT_RED_THRESHOLD = 50;
+    @Override
+    public String getName() {
+        return "SearchIndex";
+    }
 
-    private volatile int queryAVGLastMinuteYellowThreshold = DEFAULT_YELLOW_THRESHOLD;
-    private volatile int queryAVGLastMinuteRedThreshold = DEFAULT_RED_THRESHOLD;
+    @Override
+    public String getDescription() {
+        return "Checks if search indices are too fragmented for performance";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.HIGH;
+    }
+
+
+    private int queryAVGLastMinuteYellowThreshold = 10;
+    private int queryAVGLastMinuteRedThreshold = 50;
 
     private static final String QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteYellowThreshold";
     private static final String QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteRedThreshold";
@@ -32,10 +45,6 @@ public class SearchIndexProbe extends AbstractProbe {
     private static MessageFormat greenStatus = new MessageFormat("Query AVG ({0}ms) is lower than {1}ms over the last minute. All good here.");
     private static MessageFormat yellowStatus = new MessageFormat("Query AVG ({0}ms) is greater than {1}ms over the last minute.");
     private static MessageFormat redStatus = new MessageFormat("Query AVG ({0}ms) is greater than {1}ms over the last minute. It might be time to reindex.");
-
-    public SearchIndexProbe() {
-        super("SearchIndex", "Checks if search indices are too fragmented for performance", ProbeSeverity.HIGH);
-    }
 
     @Override
     public ProbeStatus getStatus() {
@@ -52,11 +61,11 @@ public class SearchIndexProbe extends AbstractProbe {
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        // Both values are read before either is assigned, so a second value that is not a number cannot leave
-        // half of this configuration applied. A property the operator removed restores the default.
-        int yellow = parseNumber(config, QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY, DEFAULT_YELLOW_THRESHOLD);
-        int red = parseNumber(config, QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY, DEFAULT_RED_THRESHOLD);
-        queryAVGLastMinuteYellowThreshold = yellow;
-        queryAVGLastMinuteRedThreshold = red;
+        if (config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)))) {
+            queryAVGLastMinuteYellowThreshold = Integer.parseInt(String.valueOf(config.get(QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY)));
+        }
+        if (config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY) && !StringUtils.isEmpty(String.valueOf(config.containsKey(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)))) {
+            queryAVGLastMinuteRedThreshold = Integer.parseInt(String.valueOf(config.get(QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY)));
+        }
     }
 }

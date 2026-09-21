@@ -8,12 +8,7 @@ import org.jahia.modules.sam.core.ProbeStatusUtils;
 import org.osgi.service.component.annotations.Component;
 
 @Component(service = Probe.class, immediate = true)
-public class SupportedStackJVMProbe extends AbstractProbe {
-
-    public SupportedStackJVMProbe() {
-        super("SupportedStackJVM",
-                "Checks if Jahia is running on a platform with a supported JVM version installed.", ProbeSeverity.MEDIUM);
-    }
+public class SupportedStackJVMProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
@@ -30,4 +25,18 @@ public class SupportedStackJVMProbe extends AbstractProbe {
         return status;
     }
 
+    @Override
+    public String getDescription() {
+        return "Checks if Jahia is running on a platform with a supported JVM version installed.";
+    }
+
+    @Override
+    public String getName() {
+        return "SupportedStackJVM";
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
+    }
 }

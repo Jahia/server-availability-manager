@@ -26,16 +26,11 @@ import java.util.*;
  * Snapshots probe works only in PRODUCTION mode and allows to see if there are any modules that are versioned as snapshots on the system.
  */
 @Component(service = ProbeActivator.class, immediate = true)
-public class SnapshotInProductionProbe extends AbstractProbe implements ProbeActivator {
+public class SnapshotInProductionProbe implements Probe, ProbeActivator {
 
     public static final String PROBE_NAME = "Snapshot";
     private JahiaTemplateManagerService templateManagerService;
     private ServiceRegistration<Probe> serviceRegistration = null;
-
-    public SnapshotInProductionProbe() {
-        super(PROBE_NAME, "Checks if any of the modules on a Jahia instance are versioned as snapshot",
-                ProbeSeverity.MEDIUM);
-    }
 
     @Activate
     public void activate(BundleContext ctx) {
@@ -62,6 +57,16 @@ public class SnapshotInProductionProbe extends AbstractProbe implements ProbeAct
     }
 
     @Override
+    public String getName() {
+        return PROBE_NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Checks if any of the modules on a Jahia instance are versioned as snapshot";
+    }
+
+    @Override
     public ProbeStatus getStatus() {
         String report = getJsonReport();
 
@@ -70,6 +75,11 @@ public class SnapshotInProductionProbe extends AbstractProbe implements ProbeAct
         }
 
         return new ProbeStatus("There are no snapshots", ProbeStatus.Health.GREEN);
+    }
+
+    @Override
+    public ProbeSeverity getDefaultSeverity() {
+        return ProbeSeverity.MEDIUM;
     }
 
     @Override
