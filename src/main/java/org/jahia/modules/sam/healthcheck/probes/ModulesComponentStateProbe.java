@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  *     immediate and for a delayed component alike.</li>
  *     <li>An immediate component left in SATISFIED. SCR activates an immediate component as soon as that component
  *     is satisfied, so this state means the activation was attempted and it failed. A bind method that
- *     cannot be invoked produces this state, because SCR records no reason for a bind failure.</li>
+ *     cannot be invoked produces this state. SCR records no reason for a bind failure.</li>
  * </ul>
  *
  * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
@@ -84,11 +84,11 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
     private final AtomicReference<Set<String>> blacklist = new AtomicReference<>(Collections.emptySet());
 
-    /** What the last scan could not read. Read and written by request threads, so it is published safely. */
-    private volatile String lastUnreadable = "";
+    /** What the last scan could not read, so the same set is not written on every poll. */
+    private final RepeatedLog lastUnreadable = new RepeatedLog();
 
     /** The failure the last call reported, so the same one is not written on every poll. */
-    private volatile String lastFailure = "";
+    private final RepeatedLog lastFailure = new RepeatedLog();
 
     private ServiceComponentRuntime serviceComponentRuntime;
 
@@ -114,17 +114,13 @@ public class ModulesComponentStateProbe extends AbstractProbe {
     public ProbeStatus getStatus() {
         try {
             List<String> issues = collectIssues();
-            lastFailure = "";
+            lastFailure.report("");
             return toStatus(issues);
         } catch (Exception e) {
             // GqlProbe turns anything that escapes a probe into RED, and the servlet answers 503 on RED. A bug
             // in this probe must not take the node out of the load balancer pool. An Error is not caught here,
             // so GqlProbe reports it as RED, which is the right answer for a JVM in trouble.
-            // A load balancer polls this path, so a runtime that keeps failing is reported when the failure
-            // changes and not on every call, as the unreadable components below already are.
-            String failure = e.toString();
-            if (!failure.equals(lastFailure)) {
-                lastFailure = failure;
+            if (lastFailure.report(e.toString())) {
                 LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
             }
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
@@ -205,14 +201,23 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         // SCR returns the descriptions in no specified order, so the same failing set must give the same
         // signature whatever order this scan saw it in.
         String signature = unreadable.isEmpty() ? "" : unreadable.stream().sorted().collect(Collectors.joining(","));
-        if (signature.equals(lastUnreadable)) {
-            return;
-        }
-
-        lastUnreadable = signature;
-        if (!unreadable.isEmpty()) {
+        if (lastUnreadable.report(signature) && !unreadable.isEmpty()) {
             LOGGER.warn("Could not read the configurations of {} component(s), so they are not reported: {}."
                     + " A module going away during the scan is the expected cause.", unreadable.size(), unreadable);
+        }
+    }
+
+    /**
+     * Writes a line only when what it describes changed. A load balancer polls this probe, so a failure that
+     * stays would otherwise be written at the polling rate. Request threads read and write it, and one
+     * reference publishes each value.
+     */
+    private static final class RepeatedLog {
+        private final AtomicReference<String> last = new AtomicReference<>("");
+
+        /** @return true when this is not what was reported last, which clears with an empty signature */
+        boolean report(String signature) {
+            return !signature.equals(last.getAndSet(signature));
         }
     }
 
