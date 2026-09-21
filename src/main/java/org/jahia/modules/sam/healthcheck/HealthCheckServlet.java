@@ -140,11 +140,9 @@ public class HealthCheckServlet extends HttpServlet {
             result = finalWriter.getBuffer().toString();
         }
 
-        // The body is encoded once, and the declared length counts those same bytes. A probe message can carry a
-        // non-ASCII character from a third party exception, and such a character takes two bytes for one
-        // character. Writing through the stream keeps the length and the bytes from one source.
-        // The content type carries the charset, and it is set before getWriter(), so the writer encodes in UTF-8.
-        // Content-Length counts bytes, and a probe message can carry a character that takes two of them.
+        // Content-Length counts bytes, and a probe message can carry a non-ASCII character from a third party
+        // exception, which takes more than one byte. The content type carries the charset and it is set before
+        // getWriter(), so the writer encodes in UTF-8 and the declared length counts those same bytes.
         resp.setContentType("application/json;charset=UTF-8");
         resp.setContentLength(result.getBytes(StandardCharsets.UTF_8).length);
 
@@ -239,9 +237,14 @@ public class HealthCheckServlet extends HttpServlet {
             }
         }
 
-        /** @return what the internal call wrote, through the stream, the writer, or both */
+        /**
+         * Closes the encoder rather than flushing it, because a flush never emits a character left pending as
+         * half of a surrogate pair, and only a close does. This ends the capture, so it is called once.
+         *
+         * @return what the internal call wrote, through the stream, the writer, or both
+         */
         public String getContent() throws IOException {
-            flushEncoder();
+            encoder.close();
             return buffer.toString(StandardCharsets.UTF_8.name());
         }
 
