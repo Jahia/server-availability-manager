@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 @Component(service = Probe.class, immediate = true)
-public class ServerLoadProbe implements Probe {
+public class ServerLoadProbe extends AbstractProbe {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerLoadProbe.class);
 
@@ -45,6 +45,10 @@ public class ServerLoadProbe implements Probe {
             "threadLoadYellowThreshold", value -> threadLoadYellowThreshold = value,
             "theadLoadRedThreshold", value -> threadLoadRedThreshold = value
     );
+
+    public ServerLoadProbe() {
+        super("ServerLoad", "Checks if system load is operating within limits", ProbeSeverity.HIGH);
+    }
 
     @Reference
     private LoadAverageService loadAverageService;
@@ -81,21 +85,6 @@ public class ServerLoadProbe implements Probe {
         }
 
         return new ProbeStatus("Serverload is very high", ProbeStatus.Health.RED);
-    }
-
-    @Override
-    public String getDescription() {
-        return "Checks if system load is operating within limits";
-    }
-
-    @Override
-    public String getName() {
-        return "ServerLoad";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.HIGH;
     }
 
     @Override

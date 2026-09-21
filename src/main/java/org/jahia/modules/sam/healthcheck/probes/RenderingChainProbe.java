@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.text.MessageFormat;
 
 @Component(service = Probe.class, immediate = true)
-public class RenderingChainProbe implements Probe {
+public class RenderingChainProbe extends AbstractProbe {
 
     private final Logger logger = LoggerFactory.getLogger(RenderingChainProbe.class);
     private JournalEventReader journalEventReader;
@@ -46,6 +46,9 @@ public class RenderingChainProbe implements Probe {
     private String nodeName;
     private String nodePath;
 
+    public RenderingChainProbe() {
+        super("RenderingChain", "Validate that the rendering chain is working properly.", ProbeSeverity.CRITICAL);
+    }
 
     /**
      * Create the rendering chain test node in LIVE workspace
@@ -129,16 +132,6 @@ public class RenderingChainProbe implements Probe {
     }
 
     @Override
-    public String getName() {
-        return "RenderingChain";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Validate that the rendering chain is working properly.";
-    }
-
-    @Override
     public ProbeStatus getStatus(HttpServletRequest request, HttpServletResponse response) {
         RenderService renderService = (RenderService) SpringContextSingleton.getBean("RenderService");
         JahiaSitesService jahiaSitesService = (JahiaSitesService) SpringContextSingleton.getBean("JahiaSitesService");
@@ -181,11 +174,6 @@ public class RenderingChainProbe implements Probe {
         logger.debug("Rendering result: {}", renderingResult);
 
         return new ProbeStatus(MessageFormat.format("Rendering Chain works properly: {0}", renderingResult), ProbeStatus.Health.GREEN);
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.CRITICAL;
     }
 
     @Override

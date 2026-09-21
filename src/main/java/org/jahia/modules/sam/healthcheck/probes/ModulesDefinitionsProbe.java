@@ -17,11 +17,17 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
-public class ModulesDefinitionsProbe implements Probe {
+public class ModulesDefinitionsProbe extends AbstractProbe {
+
     private static final Logger logger = LoggerFactory.getLogger(ModulesDefinitionsProbe.class);
 
     private DefinitionsManagerService definitionsManagerService;
     private JahiaTemplateManagerService templateManagerService;
+
+    public ModulesDefinitionsProbe() {
+        super("ModuleDefinitions", "Checks if modules are compatibles with the current deployed definitions",
+                ProbeSeverity.HIGH);
+    }
 
     @Reference
     public void setDefinitionsManagerService(DefinitionsManagerService definitionsManagerService) {
@@ -32,22 +38,6 @@ public class ModulesDefinitionsProbe implements Probe {
     public void setTemplateManagerService(JahiaTemplateManagerService templateManagerService) {
         this.templateManagerService = templateManagerService;
     }
-
-    @Override
-    public String getName() {
-        return "ModuleDefinitions";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Checks if modules are compatibles with the current deployed definitions";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.HIGH;
-    }
-
 
     @Override
     public ProbeStatus getStatus() {

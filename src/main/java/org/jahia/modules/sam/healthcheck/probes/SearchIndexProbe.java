@@ -17,24 +17,9 @@ import java.util.Arrays;
 import java.util.Map;
 
 @Component(service = Probe.class, immediate = true)
-public class SearchIndexProbe implements Probe {
+public class SearchIndexProbe extends AbstractProbe {
+
     private static final Logger logger = LoggerFactory.getLogger(SearchIndexProbe.class);
-
-    @Override
-    public String getName() {
-        return "SearchIndex";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Checks if search indices are too fragmented for performance";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.HIGH;
-    }
-
 
     private int queryAVGLastMinuteYellowThreshold = 10;
     private int queryAVGLastMinuteRedThreshold = 50;
@@ -45,6 +30,10 @@ public class SearchIndexProbe implements Probe {
     private static MessageFormat greenStatus = new MessageFormat("Query AVG ({0}ms) is lower than {1}ms over the last minute. All good here.");
     private static MessageFormat yellowStatus = new MessageFormat("Query AVG ({0}ms) is greater than {1}ms over the last minute.");
     private static MessageFormat redStatus = new MessageFormat("Query AVG ({0}ms) is greater than {1}ms over the last minute. It might be time to reindex.");
+
+    public SearchIndexProbe() {
+        super("SearchIndex", "Checks if search indices are too fragmented for performance", ProbeSeverity.HIGH);
+    }
 
     @Override
     public ProbeStatus getStatus() {

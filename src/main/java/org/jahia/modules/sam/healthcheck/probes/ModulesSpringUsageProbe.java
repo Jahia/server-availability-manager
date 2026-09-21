@@ -47,7 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component(service = Probe.class, immediate = true)
-public class ModulesSpringUsageProbe implements Probe, BundleListener {
+public class ModulesSpringUsageProbe extends AbstractProbe implements BundleListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModulesSpringUsageProbe.class);
     private static final String EXCLUDE_JAHIA_MODULES_PROPERTY = "excludeJahiaModules";
@@ -57,19 +57,9 @@ public class ModulesSpringUsageProbe implements Probe, BundleListener {
 
     private boolean excludeJahiaModules = true;
 
-    @Override
-    public String getName() {
-        return "ModulesSpringUsage";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Checks if some modules are using Spring on the Jahia instance";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.MEDIUM;
+    public ModulesSpringUsageProbe() {
+        super("ModulesSpringUsage", "Checks if some modules are using Spring on the Jahia instance",
+                ProbeSeverity.MEDIUM);
     }
 
     @Override

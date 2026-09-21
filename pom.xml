@@ -65,10 +65,6 @@
     </scm>
 
     <properties>
-        <!-- Every probe implements the same Probe methods, so a new probe repeats the setter and the three
-             accessors of the ones already here. SonarQube counts that as duplicated code, and the count grows
-             with each probe added. -->
-        <sonar.cpd.exclusions>src/main/java/org/jahia/modules/sam/healthcheck/probes/**</sonar.cpd.exclusions>
         <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>

@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * By default the log file which is used is located to System.getProperty("jahia.log.dir") + "jahia.log"
  */
 @Component(immediate = true, service = Probe.class)
-public class JahiaErrorsProbe implements Probe {
+public class JahiaErrorsProbe extends AbstractProbe {
 
     private static final Logger logger = LoggerFactory.getLogger(JahiaErrorsProbe.class);
 
@@ -32,21 +32,16 @@ public class JahiaErrorsProbe implements Probe {
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
-    @Override
-    public String getName() {
-        return "JahiaErrors";
+    public JahiaErrorsProbe() {
+        super("JahiaErrors",
+                "Count the number of errors faced by Jahia. This probe is useful in a CI/CD context during the startup and provisioning phase of Jahia to detect errors triggered during the installation of modules. ",
+                ProbeSeverity.DEBUG);
     }
 
     @Activate
     protected void activate() {
         jahiaLogFilepath = System.getProperty("jahia.log.dir") + "jahia.log";
     }
-
-    @Override
-    public String getDescription() {
-        return "Count the number of errors faced by Jahia. This probe is useful in a CI/CD context during the startup and provisioning phase of Jahia to detect errors triggered during the installation of modules. ";
-    }
-
 
     @Override
     public ProbeStatus getStatus() {
@@ -75,11 +70,6 @@ public class JahiaErrorsProbe implements Probe {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
         }
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.DEBUG;
     }
 
 }

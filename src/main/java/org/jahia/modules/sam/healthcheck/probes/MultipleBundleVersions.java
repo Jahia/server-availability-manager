@@ -10,20 +10,11 @@ import java.util.Collection;
 import java.util.Map;
 
 @Component(immediate = true, service = Probe.class)
-public class MultipleBundleVersions extends MultipleModuleVersions implements Probe {
-    @Override
-    public String getName() {
-        return "MultipleBundleVersions";
-    }
+public class MultipleBundleVersions extends MultipleModuleVersions {
 
-    @Override
-    public String getDescription() {
-        return "Checks if multiple versions of the same bundle are present on the Jahia instance";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.HIGH;
+    public MultipleBundleVersions() {
+        super("MultipleBundleVersions", "Checks if multiple versions of the same bundle are present on the Jahia instance",
+                ProbeSeverity.HIGH);
     }
 
     @Override

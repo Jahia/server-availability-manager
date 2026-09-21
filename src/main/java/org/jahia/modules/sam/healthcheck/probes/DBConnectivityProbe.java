@@ -13,12 +13,16 @@ import java.sql.SQLException;
 import java.util.Map;
 
 @Component(service = Probe.class, immediate = true)
-public class DBConnectivityProbe implements Probe {
+public class DBConnectivityProbe extends AbstractProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DBConnectivityProbe.class);
 
     // The timeout value is defined in seconds.
     private int timeout = 20;
+
+    public DBConnectivityProbe() {
+        super("DBConnectivity", "Check DB connectivity", ProbeSeverity.CRITICAL);
+    }
 
     @Override
     public ProbeStatus getStatus() {
@@ -33,21 +37,6 @@ public class DBConnectivityProbe implements Probe {
             return new ProbeStatus("Encountered exception while connecting", ProbeStatus.Health.RED);
         }
 
-    }
-
-    @Override
-    public String getDescription() {
-        return "Check DB connectivity";
-    }
-
-    @Override
-    public String getName() {
-        return "DBConnectivity";
-    }
-
-    @Override
-    public ProbeSeverity getDefaultSeverity() {
-        return ProbeSeverity.CRITICAL;
     }
 
     @Override

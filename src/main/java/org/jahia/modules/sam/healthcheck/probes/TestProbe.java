@@ -1,25 +1,20 @@
 package org.jahia.modules.sam.healthcheck.probes;
 
 import org.jahia.modules.sam.Probe;
+import org.jahia.modules.sam.ProbeSeverity;
 import org.jahia.modules.sam.ProbeStatus;
 import org.osgi.service.component.annotations.Component;
 
 import java.util.Map;
 
 @Component(immediate = true, service = Probe.class)
-public class TestProbe implements Probe {
+public class TestProbe extends AbstractProbe {
+
     private ProbeStatus status = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
 
-    @Override
-    public String getName() {
-        return "testProbe";
+    public TestProbe() {
+        super("testProbe", "This is a simple configurable test probe", ProbeSeverity.IGNORED);
     }
-
-    @Override
-    public String getDescription() {
-        return "This is a simple configurable test probe";
-    }
-
 
     @Override
     public ProbeStatus getStatus() {
