@@ -41,12 +41,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
  * a supported design, and so is a component that waits for a configuration.
  *
- * <p>Two component failures stay invisible to this probe, so a GREEN answer does not rule them out:
+ * <p>Two component failures stay invisible to this probe. A GREEN answer does not rule them out:
  * <ul>
  *     <li>A delayed component that was never requested is not reported. SCR attempts no activation until a
  *     caller asks for the service, so such a component has no failure to show. Its bind method can be broken
- *     and nothing shows it. A delayed component that SCR did attempt and that threw carries FAILED_ACTIVATION,
- *     and the first state above reports it.</li>
+ *     and nothing shows it. A delayed component that SCR did attempt and that threw carries
+ *     FAILED_ACTIVATION. The first state above reports it.</li>
  *     <li>A component that SCR refused at registration produces no DTO at all. SCR catches anything the
  *     component metadata validation throws, logs "Cannot register component" and moves on. The component is
  *     never registered, so the runtime cannot describe it. The module still starts, and Jahia still marks it
@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>The probe reads the component states on every call and holds no state between calls. A measurement on
  * Jahia 8 gives 0.4 ms for one read of 127 components. The GraphQL layer reads every probe twice per request,
- * once for the aggregate status and once for the probe list, so a health check pays that cost twice.
+ * once for the aggregate status and once for the probe list. A health check therefore pays that cost twice.
  *
  * <p>Known limit: a component that SCR is re-activating passes through SATISFIED. A configuration update on a
  * started module can therefore make the probe report that component once. The probe is read on demand, and at
@@ -121,7 +121,7 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         blacklist.set(parseNameList(config, BLACKLIST_CONFIG_PROPERTY));
     }
 
-    private static ProbeStatus toStatus(List<ComponentIssue> issues) {
+    private static ProbeStatus toStatus(List<String> issues) {
         if (issues.isEmpty()) {
             // The probe leaves a component waiting for a service or a configuration alone, and it cannot see a
             // component SCR never attempted. It therefore reports what it looked for, and not that every
@@ -131,7 +131,7 @@ public class ModulesComponentStateProbe extends AbstractProbe {
 
         // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the
         // same components, and an operator can diff two health check responses.
-        issues.sort(Comparator.comparing(ComponentIssue::toString));
+        issues.sort(Comparator.naturalOrder());
 
         StringBuilder message = new StringBuilder();
         // One component declaring several configurations contributes one line per configuration, so the count
@@ -145,8 +145,8 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         return new ProbeStatus(message.toString(), ProbeStatus.Health.YELLOW);
     }
 
-    private List<ComponentIssue> collectIssues() {
-        List<ComponentIssue> issues = new ArrayList<>();
+    private List<String> collectIssues() {
+        List<String> issues = new ArrayList<>();
         Set<String> silenced = blacklist.get();
 
         Bundle[] bundles = getStartedModuleBundles(silenced);
@@ -154,23 +154,31 @@ public class ModulesComponentStateProbe extends AbstractProbe {
             return issues;
         }
 
-        // Asking SCR for these bundles only avoids building a DTO for every component of the Karaf, Felix and
-        // Jahia core bundles, which this probe never reports.
+        // Asking SCR for these bundles only avoids building a DTO for the components this probe never
+        // reports, which are those of the Karaf, Felix and Jahia core bundles.
         // A bundle uninstalled between the two calls yields fewer descriptions, because SCR skips a holder whose
         // bundle is gone. A failure here is therefore a real one, and it reaches the caller.
         Collection<ComponentDescriptionDTO> descriptions = serviceComponentRuntime.getComponentDescriptionDTOs(bundles);
 
+        List<String> unreadable = new ArrayList<>();
         for (ComponentDescriptionDTO description : descriptions) {
             if (silenced.contains(description.name)) {
                 continue;
             }
 
-            for (ComponentConfigurationDTO configuration : getConfigurations(description)) {
+            for (ComponentConfigurationDTO configuration : getConfigurations(description, unreadable)) {
                 String reason = getFailureReason(description, configuration);
                 if (reason != null) {
-                    issues.add(new ComponentIssue(description, configuration, reason));
+                    issues.add(describe(description, configuration, reason));
                 }
             }
+        }
+
+        if (!unreadable.isEmpty()) {
+            // One line per scan, and not one per component. A load balancer polls this path, so a runtime that
+            // keeps failing would otherwise fill the log at the polling rate times the component count.
+            LOGGER.warn("Could not read the configurations of {} component(s), so they are not reported: {}."
+                    + " A module going away during the scan is the expected cause.", unreadable.size(), unreadable);
         }
 
         return issues;
@@ -181,18 +189,17 @@ public class ModulesComponentStateProbe extends AbstractProbe {
      * gone. SCR catches only IllegalStateException on that path, so the holder lookup returns null and the call
      * throws. Reading each description on its own costs that module its components, and it keeps the report.
      *
+     * @param unreadable collects the name of a component this call could not read. The caller reports it once.
      * @return the configurations of this description, or none when its module is going away
      */
-    private Collection<ComponentConfigurationDTO> getConfigurations(ComponentDescriptionDTO description) {
+    private Collection<ComponentConfigurationDTO> getConfigurations(ComponentDescriptionDTO description,
+            List<String> unreadable) {
         try {
             return serviceComponentRuntime.getComponentConfigurationDTOs(description);
         } catch (RuntimeException e) {
             // The probe answers GREEN when it finds nothing, so a component it could not read must leave a
-            // trace at a level the default configuration prints. A load balancer polls this path, and a module
-            // going away mid-scan is an expected cause, so the stack trace stays at DEBUG.
-            LOGGER.warn("Could not read the configurations of component {}, so this component is not reported."
-                    + " Its module is going away, or the Declarative Services runtime failed: {}",
-                    description.name, e.toString());
+            // trace. The caller writes that trace once per scan, and the cause belongs to this component.
+            unreadable.add(description.name);
             LOGGER.debug("Reading the configurations of component {} failed", description.name, e);
             return Collections.emptyList();
         }
@@ -230,25 +237,16 @@ public class ModulesComponentStateProbe extends AbstractProbe {
         return null;
     }
 
-    private static final class ComponentIssue {
-
-        /**
-         * The line is built once, so the sort key and the printed text are the same string. The component name
-         * is printed on its own, because it is also the value the operator puts in the blacklist. The
-         * configuration id is printed apart, because it tells two configurations of one component from each
-         * other and it changes on every restart.
-         */
-        private final String rendered;
-
-        ComponentIssue(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration, String reason) {
-            this.rendered = "module[" + description.bundle.symbolicName + " - " + description.bundle.version
-                    + "] component[" + description.name
-                    + "] configuration[" + configuration.id + "] " + reason;
-        }
-
-        @Override
-        public String toString() {
-            return rendered;
-        }
+    /**
+     * Builds the line this probe reports for one failed component configuration. The component name is printed
+     * on its own, because it is also the value the operator puts in the blacklist. The configuration id is
+     * printed apart, because it tells two configurations of one component from each other and it changes on
+     * every restart.
+     */
+    private static String describe(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration,
+            String reason) {
+        return "module[" + description.bundle.symbolicName + " - " + description.bundle.version
+                + "] component[" + description.name
+                + "] configuration[" + configuration.id + "] " + reason;
     }
 }

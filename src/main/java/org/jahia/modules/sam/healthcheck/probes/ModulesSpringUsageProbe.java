@@ -52,9 +52,9 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
     private static final String EXCLUDE_JAHIA_MODULES_PROPERTY = "excludeJahiaModules";
     private static final List<SpringUsageInfo> springUsages = new ArrayList<>();
     private static final Set<Integer> refreshEvents = Set.of(BundleEvent.INSTALLED, BundleEvent.UNINSTALLED);
-    private static boolean needRefresh = true;
+    private static volatile boolean needRefresh = true;
 
-    private boolean excludeJahiaModules = true;
+    private volatile boolean excludeJahiaModules = true;
 
     public ModulesSpringUsageProbe() {
         super("ModulesSpringUsage", "Checks if some modules are using Spring on the Jahia instance",
@@ -74,9 +74,9 @@ public class ModulesSpringUsageProbe extends AbstractProbe implements BundleList
 
     @Override
     public void setConfig(Map<String, Object> config) {
-        if (config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)) {
-            excludeJahiaModules = Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
-        }
+        // A property the operator removed must restore the default, so the value is assigned either way.
+        excludeJahiaModules = !config.containsKey(EXCLUDE_JAHIA_MODULES_PROPERTY)
+                || Boolean.parseBoolean(String.valueOf(config.get(EXCLUDE_JAHIA_MODULES_PROPERTY)));
         needRefresh = true;
     }
 

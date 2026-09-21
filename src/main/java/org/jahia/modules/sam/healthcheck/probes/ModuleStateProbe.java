@@ -85,7 +85,8 @@ public class ModuleStateProbe extends AbstractProbe {
 
     private Map<Bundle, ModuleState> getNotStartedModules() {
         return getBundlesToCheck()
-                .filter(entry -> !BundleUtils.isFragment(entry.getKey()) && entry.getValue().getState() != ModuleState.State.STARTED)
+                .filter(entry -> !BundleUtils.isFragment(entry.getKey())
+                        && entry.getValue() != null && entry.getValue().getState() != ModuleState.State.STARTED)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 

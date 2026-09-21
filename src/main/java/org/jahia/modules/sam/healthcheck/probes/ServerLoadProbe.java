@@ -23,14 +23,14 @@ public class ServerLoadProbe extends AbstractProbe {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerLoadProbe.class);
 
-    private int requestLoadYellowThreshold = 40;
-    private int requestLoadRedThreshold = 70;
-    private int sessionLoadYellowThreshold = 40;
-    private int sessionLoadRedThreshold = 70;
-    private int nodeCacheLoadYellowThreshold = 1000;
-    private int nodeCacheLoadRedThreshold = 2000;
-    private int threadLoadYellowThreshold = 1000;
-    private int threadLoadRedThreshold = 1500;
+    private volatile int requestLoadYellowThreshold = 40;
+    private volatile int requestLoadRedThreshold = 70;
+    private volatile int sessionLoadYellowThreshold = 40;
+    private volatile int sessionLoadRedThreshold = 70;
+    private volatile int nodeCacheLoadYellowThreshold = 1000;
+    private volatile int nodeCacheLoadRedThreshold = 2000;
+    private volatile int threadLoadYellowThreshold = 1000;
+    private volatile int threadLoadRedThreshold = 1500;
 
     /**
      * Maps configuration keys to their corresponding setter methods.

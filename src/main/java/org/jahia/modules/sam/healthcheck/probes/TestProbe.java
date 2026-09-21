@@ -10,7 +10,7 @@ import java.util.Map;
 @Component(immediate = true, service = Probe.class)
 public class TestProbe extends AbstractProbe {
 
-    private ProbeStatus status = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
+    private volatile ProbeStatus status = new ProbeStatus("Test probe status", ProbeStatus.Health.GREEN);
 
     public TestProbe() {
         super("testProbe", "This is a simple configurable test probe", ProbeSeverity.IGNORED);

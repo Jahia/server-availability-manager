@@ -18,7 +18,7 @@ public class DBConnectivityProbe extends AbstractProbe {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBConnectivityProbe.class);
 
     // The timeout value is defined in seconds.
-    private int timeout = 20;
+    private volatile int timeout = 20;
 
     public DBConnectivityProbe() {
         super("DBConnectivity", "Check DB connectivity", ProbeSeverity.CRITICAL);

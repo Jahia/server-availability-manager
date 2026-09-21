@@ -40,11 +40,11 @@ describe('Modules component state probe test', () => {
 
     /**
      * Reads `bundle:list -s`, whose columns are the id, the state, the start level, the version and the
-     * symbolic name. A fixture is matched on the symbolic name column rather than on the raw text, and it is
-     * returned at the version the instance carries, which is not always the version this spec installs.
+     * symbolic name. A fixture is matched on the symbolic name column rather than on the raw text.
+     * It is returned at the version the instance carries, which is not always the version this spec installs.
      *
-     * Karaf separates the columns with an ASCII pipe here, and it draws a box-drawing pipe on a terminal that
-     * takes one, so the split accepts both.
+     * Karaf separates the columns with an ASCII pipe here. It draws a box-drawing pipe on a terminal that takes
+     * one, so the split accepts both.
      */
     const findLeftoverFixtures = (bundles: string): string[] => bundles
         // eslint-disable-next-line no-control-regex
@@ -70,8 +70,8 @@ describe('Modules component state probe test', () => {
     // A run interrupted before the after() hooks leaves two kinds of residue.
     // An installed fixture module is the worse one. The probe scans every started module, so the next run
     // fails on every global GREEN assertion of the suite, before this spec is even reached.
-    // A configured blacklist is the other one. Removing the fixtures already makes it harmless here, because
-    // the describe hooks below install a fixture and wait for YELLOW, which a stale blacklist would prevent.
+    // A configured blacklist is the other one, and removing the fixtures already makes it harmless here.
+    // The describe hooks below install a fixture and wait for YELLOW, which a stale blacklist would prevent.
     before(() => {
         removeLeftoverFixtures();
         cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-clear.json'});

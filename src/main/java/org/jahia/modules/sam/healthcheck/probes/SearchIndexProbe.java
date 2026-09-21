@@ -21,8 +21,8 @@ public class SearchIndexProbe extends AbstractProbe {
 
     private static final Logger logger = LoggerFactory.getLogger(SearchIndexProbe.class);
 
-    private int queryAVGLastMinuteYellowThreshold = 10;
-    private int queryAVGLastMinuteRedThreshold = 50;
+    private volatile int queryAVGLastMinuteYellowThreshold = 10;
+    private volatile int queryAVGLastMinuteRedThreshold = 50;
 
     private static final String QUERY_AVG_LAST_MINUTE_YELLOW_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteYellowThreshold";
     private static final String QUERY_AVG_LAST_MINUTE_RED_THRESHOLD_CONFIG_PROPERTY = "queryAVGLastMinuteRedThreshold";
