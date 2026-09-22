@@ -199,9 +199,9 @@ public class ModulesComponentStateProbe implements Probe {
 
         Bundle[] bundles = getStartedModuleBundles(silenced);
         if (bundles.length == 0) {
-            // Nothing was read, so nothing stayed unreadable. Clearing here keeps the next real failure
-            // loggable, which an early return used to prevent for good.
-            lastUnreadable.clear();
+            // Nothing was read, so nothing stayed unreadable. Reporting the empty list clears the record, and
+            // an early return that skipped this call used to keep the next real failure from being logged.
+            reportUnreadable(unreadable);
             return issues;
         }
 

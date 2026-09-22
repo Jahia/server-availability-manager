@@ -34,8 +34,9 @@ describe('Modules component state probe test', () => {
     };
 
     const uninstallFixture = (module: string) => {
-        cy.runProvisioningScript([{uninstallBundle: module}]);
-        waitUntilHealth('GREEN');
+        // Through the guarded path, because the provisioning API answers 500 for a bundle it cannot find. An
+        // after() hook that ran on a failing test would otherwise add its own failure on top of the real one.
+        removeLeftoverFixtures([module.split('/')[0]]);
     };
 
     const FIXTURE_NAMES = [ACTIVATION_MODULE, BIND_MODULE].map(module => module.split('/')[0]);
@@ -48,20 +49,20 @@ describe('Modules component state probe test', () => {
      * Karaf separates the columns with an ASCII pipe here. It draws a box-drawing pipe on a terminal that takes
      * one, so the split accepts both.
      */
-    const findLeftoverFixtures = (bundles: string): string[] => bundles
+    const findLeftoverFixtures = (bundles: string, wanted: string[]): string[] => bundles
         // eslint-disable-next-line no-control-regex
         .replace(/\u001b\[[0-9;]*m/g, '')
         .split('\n')
         .map(line => line.split(/[|\u2502]/).map(column => column.trim()))
-        .filter(columns => columns.length >= 5 && FIXTURE_NAMES.includes(columns[4]))
+        .filter(columns => columns.length >= 5 && wanted.includes(columns[4]))
         .map(columns => `${columns[4]}/${columns[3]}`);
 
     // The provisioning API answers 500 for a bundle it cannot find.
     // A fixture is therefore uninstalled only once the instance is known to carry it. The bundle list is read
     // over ssh, which reports the real state whatever the probe configuration says.
-    const removeLeftoverFixtures = () => {
+    const removeLeftoverFixtures = (wanted: string[] = FIXTURE_NAMES) => {
         cy.task('sshCommand', ['bundle:list -s']).then((bundles: string) => {
-            const leftovers = findLeftoverFixtures(bundles);
+            const leftovers = findLeftoverFixtures(bundles, wanted);
             if (leftovers.length > 0) {
                 cy.runProvisioningScript(leftovers.map(module => ({uninstallBundle: module})));
                 waitUntilHealth('GREEN');
