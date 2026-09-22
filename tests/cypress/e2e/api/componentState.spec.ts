@@ -16,9 +16,11 @@ describe('Modules component state probe test', () => {
     const waitUntilHealth = (health: string) => {
         cy.waitUntil(() =>
             healthCheck({includes: PROBE, severity: 'LOW'}).then(result => {
-                // A bundle refresh can take the GraphQL provider down for a moment. The whole result is then
+                // A bundle refresh can take the GraphQL provider down for a moment. The result is then
                 // undefined, and the probe can also be missing from a result that arrived. Both count as a
-                // failed poll, because a throw here would fail the hook instead of retrying.
+                // failed poll here, because a throw would fail the hook instead of retrying.
+                // A query that rejects still fails the hook. cy.waitUntil retries what this function returns,
+                // and not the command inside it.
                 return result?.probes?.find(probe => probe.name === PROBE)?.status?.health === health;
             }), waitUntilOptions);
     };

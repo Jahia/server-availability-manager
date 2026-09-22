@@ -135,8 +135,10 @@ public class ModulesComponentStateProbe implements Probe {
             if (lastFailure.report(e.toString())) {
                 LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
             }
+            // toString rather than getMessage, which is null for a NullPointerException, and that is the
+            // exception this path is most likely to see.
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
-                    + e.getMessage(), ProbeStatus.Health.YELLOW);
+                    + e, ProbeStatus.Health.YELLOW);
         }
     }
 
@@ -320,7 +322,13 @@ public class ModulesComponentStateProbe implements Probe {
      */
     private static String describe(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration,
             String reason) {
-        return "module[" + description.bundle.symbolicName + " - " + description.bundle.version
+        // SCR fills the bundle of every description it hands out. Reading it defensively anyway, because this
+        // line is built inside the scan, and a throw here would cost the whole report rather than one line.
+        String module = description.bundle == null
+                ? "unknown"
+                : description.bundle.symbolicName + " - " + description.bundle.version;
+
+        return "module[" + module
                 + "] component[" + description.name
                 + "] configuration[" + configuration.id + "] " + reason;
     }

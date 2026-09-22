@@ -92,12 +92,11 @@ public class HealthCheckServlet extends HttpServlet {
         permissionService.addScopes(Collections.singleton("healthcheck"), req);
         gql.service(requestWrapper, responseWrapper);
 
-        // The block below answers a body that does not parse. Reading the capture can fail with an
-        // IOException, which is a different failure, so that read happens here and reaches the container.
+        // Read outside the block below, because that block answers a body that does not parse. A capture that
+        // cannot be read is not that, and it reaches the container as the IOException it is.
         String result = responseWrapper.getContent();
 
         try {
-            String result = responseWrapper.getContent();
             JSONObject obj = new JSONObject(result);
             if (obj.has(ERRORS_FIELD) && !obj.getJSONArray(ERRORS_FIELD).isEmpty()) {
                 handleErrorResponse(resp, obj);
