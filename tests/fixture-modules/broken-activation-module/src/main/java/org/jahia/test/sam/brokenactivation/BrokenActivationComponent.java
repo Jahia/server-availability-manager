@@ -12,8 +12,9 @@ public class BrokenActivationComponent {
 
     @Activate
     public void start() {
-        // The non-ASCII character is deliberate. The probe copies this message into the health check response,
-        // and the character proves that the response declares its length in bytes.
+        // The probe reports that this component failed and points at the log, so this message reaches the log
+        // and not the health check response. The non-ASCII character is kept because it is what a reader
+        // greps for when checking that the log carries the cause the probe promised.
         throw new IllegalStateException("Deliberate activation failure (\u00e9), used by the ModulesComponentState probe test");
     }
 }

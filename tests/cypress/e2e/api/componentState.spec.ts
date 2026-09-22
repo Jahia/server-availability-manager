@@ -138,8 +138,10 @@ describe('Modules component state probe test', () => {
             waitUntilHealth('GREEN');
         });
 
-        // The REST endpoint declares a Content-Length, and a body cut short by it no longer parses. This probe
-        // reports one line per failed component, so its message is the longest this endpoint serves.
+        // This probe reports one line per failed component, so its message is the longest this endpoint serves.
+        // The endpoint declares a Content-Length, and a body cut short by it does not parse.
+        // This does not cover a message that carries a multi-byte character, because no message here does.
+        // server-availability-manager#266 owns that fix and states the test it still needs.
         it('serves the whole response through the REST endpoint', {retries: 5}, () => {
             healthCheckAPI({severity: 'LOW', includes: PROBE}).should(response => {
                 // A truncated body does not parse, so response.body stays a string. Naming that first makes the

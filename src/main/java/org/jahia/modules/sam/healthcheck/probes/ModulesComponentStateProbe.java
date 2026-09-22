@@ -164,7 +164,7 @@ public class ModulesComponentStateProbe implements Probe {
         // check consumer reading a clean result over an incomplete scan.
         String scope = unreadable.isEmpty()
                 ? ""
-                : " (" + unreadable.size() + " component(s) could not be read and are not counted)";
+                : ". " + unreadable.size() + " component(s) could not be read, and this count leaves them out";
 
         if (issues.isEmpty()) {
             // The probe leaves a component waiting for a service or a configuration alone, and it cannot see a
@@ -236,7 +236,8 @@ public class ModulesComponentStateProbe implements Probe {
         // SCR returns the descriptions in no specified order, so the same failing set must give the same
         // signature whatever order this scan saw it in.
         String signature = unreadable.isEmpty() ? "" : unreadable.stream().sorted().collect(Collectors.joining(","));
-        if (lastUnreadable.report(signature) && !unreadable.isEmpty()) {
+        boolean changed = lastUnreadable.report(signature);
+        if (changed && !unreadable.isEmpty()) {
             LOGGER.warn("Could not read the configurations of {} component(s), so they are not reported: {}."
                     + " A module going away during the scan is the expected cause.", unreadable.size(), unreadable);
         }
