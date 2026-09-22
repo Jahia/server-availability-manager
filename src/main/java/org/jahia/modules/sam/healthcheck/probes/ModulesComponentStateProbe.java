@@ -85,6 +85,9 @@ public class ModulesComponentStateProbe implements Probe {
     /** A health check answers a load balancer, so the message stays bounded. */
     private static final int MAX_REPORTED_ISSUES = 10;
 
+    /** The same reason, applied to a third party failure text that this probe does not write. */
+    private static final int MAX_REPORTED_FAILURE_LENGTH = 200;
+
     private final AtomicReference<Set<String>> blacklist = new AtomicReference<>(Collections.emptySet());
 
     /** What the last scan could not read, so the same set is not written on every poll. */
@@ -125,9 +128,10 @@ public class ModulesComponentStateProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
         try {
-            List<String> issues = collectIssues();
+            List<String> unreadable = new ArrayList<>();
+            List<String> issues = collectIssues(unreadable);
             lastFailure.clear();
-            return toStatus(issues);
+            return toStatus(issues, unreadable);
         } catch (Exception e) {
             // GqlProbe turns anything that escapes a probe into RED, and the servlet answers 503 on RED. A bug
             // in this probe must not take the node out of the load balancer pool. An Error is not caught here,
@@ -138,7 +142,7 @@ public class ModulesComponentStateProbe implements Probe {
             // toString rather than getMessage, which is null for a NullPointerException, and that is the
             // exception this path is most likely to see.
             return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
-                    + e, ProbeStatus.Health.YELLOW);
+                    + StringUtils.abbreviate(e.toString(), MAX_REPORTED_FAILURE_LENGTH), ProbeStatus.Health.YELLOW);
         }
     }
 
@@ -157,12 +161,19 @@ public class ModulesComponentStateProbe implements Probe {
         blacklist.set(Collections.unmodifiableSet(names));
     }
 
-    private static ProbeStatus toStatus(List<String> issues) {
+    private static ProbeStatus toStatus(List<String> issues, List<String> unreadable) {
+        // A scan that skipped a component says so on the answer itself. The log alone would leave a health
+        // check consumer reading a clean result over an incomplete scan.
+        String scope = unreadable.isEmpty()
+                ? ""
+                : " (" + unreadable.size() + " component(s) could not be read and are not counted)";
+
         if (issues.isEmpty()) {
             // The probe leaves a component waiting for a service or a configuration alone, and it cannot see a
             // component SCR never attempted. It therefore reports what it looked for, and not that every
             // component is active.
-            return new ProbeStatus("No component failed to activate in a started module", ProbeStatus.Health.GREEN);
+            return new ProbeStatus("No component failed to activate in a started module" + scope,
+                    ProbeStatus.Health.GREEN);
         }
 
         // SCR returns the descriptions in no specified order, so the report is sorted. Two calls then name the
@@ -172,7 +183,8 @@ public class ModulesComponentStateProbe implements Probe {
         StringBuilder message = new StringBuilder();
         // One component declaring several configurations contributes one line per configuration, so the count
         // names configurations rather than components.
-        message.append(issues.size()).append(" component configuration(s) failed to activate in a started module:");
+        message.append(issues.size()).append(" component configuration(s) failed to activate in a started module")
+                .append(scope).append(':');
         issues.stream().limit(MAX_REPORTED_ISSUES).forEach(issue -> message.append('\n').append(issue));
         if (issues.size() > MAX_REPORTED_ISSUES) {
             message.append('\n').append("and ").append(issues.size() - MAX_REPORTED_ISSUES).append(" more");
@@ -181,7 +193,7 @@ public class ModulesComponentStateProbe implements Probe {
         return new ProbeStatus(message.toString(), ProbeStatus.Health.YELLOW);
     }
 
-    private List<String> collectIssues() {
+    private List<String> collectIssues(List<String> unreadable) {
         List<String> issues = new ArrayList<>();
         Set<String> silenced = blacklist.get();
 
@@ -199,7 +211,6 @@ public class ModulesComponentStateProbe implements Probe {
         // bundle is gone. A failure here is therefore a real one, and it reaches the caller.
         Collection<ComponentDescriptionDTO> descriptions = serviceComponentRuntime.getComponentDescriptionDTOs(bundles);
 
-        List<String> unreadable = new ArrayList<>();
         for (ComponentDescriptionDTO description : descriptions) {
             if (silenced.contains(description.name)) {
                 continue;
@@ -303,7 +314,7 @@ public class ModulesComponentStateProbe implements Probe {
             // stack trace is already in the logs.
             String firstLine = StringUtils.substringBefore(StringUtils.defaultString(configuration.failure), "\n").trim();
             return StringUtils.isNotEmpty(firstLine)
-                    ? "activation failed: " + StringUtils.abbreviate(firstLine, 200)
+                    ? "activation failed: " + StringUtils.abbreviate(firstLine, MAX_REPORTED_FAILURE_LENGTH)
                     : "activation failed";
         }
 
