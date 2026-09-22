@@ -85,9 +85,6 @@ public class ModulesComponentStateProbe implements Probe {
     /** A health check answers a load balancer, so the message stays bounded. */
     private static final int MAX_REPORTED_ISSUES = 10;
 
-    /** The same reason, applied to a third party failure text that this probe does not write. */
-    private static final int MAX_REPORTED_FAILURE_LENGTH = 200;
-
     private final AtomicReference<Set<String>> blacklist = new AtomicReference<>(Collections.emptySet());
 
     /** What the last scan could not read, so the same set is not written on every poll. */
@@ -139,10 +136,11 @@ public class ModulesComponentStateProbe implements Probe {
             if (lastFailure.report(e.toString())) {
                 LOGGER.warn("Could not read the component states from the Declarative Services runtime", e);
             }
-            // toString rather than getMessage, which is null for a NullPointerException, and that is the
-            // exception this path is most likely to see.
-            return new ProbeStatus("Could not read the component states from the Declarative Services runtime: "
-                    + StringUtils.abbreviate(e.toString(), MAX_REPORTED_FAILURE_LENGTH), ProbeStatus.Health.YELLOW);
+            // The exception is logged just above, and it stays out of this answer for the same reason a
+            // component's failure does.
+            return new ProbeStatus(
+                    "Could not read the component states from the Declarative Services runtime,"
+                            + " see the server log for the cause", ProbeStatus.Health.YELLOW);
         }
     }
 
@@ -310,12 +308,10 @@ public class ModulesComponentStateProbe implements Probe {
      */
     private static String getFailureReason(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration) {
         if (configuration.state == ComponentConfigurationDTO.FAILED_ACTIVATION) {
-            // SCR reports the whole stack trace. Only its first line belongs in a probe message, because the
-            // stack trace is already in the logs.
-            String firstLine = StringUtils.substringBefore(StringUtils.defaultString(configuration.failure), "\n").trim();
-            return StringUtils.isNotEmpty(firstLine)
-                    ? "activation failed: " + StringUtils.abbreviate(firstLine, MAX_REPORTED_FAILURE_LENGTH)
-                    : "activation failed";
+            // SCR records the whole stack trace, and it belongs in the log rather than in this answer. A
+            // health check is served to whoever polls the endpoint, so it names no text this module did not
+            // write. The component and its module are named, which is what a reader needs to find the trace.
+            return "activation failed, see the server log for the cause";
         }
 
         if (description.immediate && configuration.state == ComponentConfigurationDTO.SATISFIED) {

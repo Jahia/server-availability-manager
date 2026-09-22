@@ -124,7 +124,7 @@ describe('Modules component state probe test', () => {
                 const probe = r.probes.find(p => p.name === PROBE);
                 expect(probe.status.health).to.eq('YELLOW');
                 expect(probe.status.message).to.contains('broken-activation-module');
-                expect(probe.status.message).to.contains('activation failed');
+                expect(probe.status.message).to.contains('activation failed, see the server log');
             });
         });
 
@@ -138,16 +138,17 @@ describe('Modules component state probe test', () => {
             waitUntilHealth('GREEN');
         });
 
-        // The health check response declares a Content-Length. A non-ASCII character in a probe message takes two
-        // bytes and one character, so a response that counts characters is truncated and no longer parses.
-        it('serves the whole response although the message carries a non-ASCII character', {retries: 5}, () => {
+        // The REST endpoint declares a Content-Length, and a body cut short by it no longer parses. This probe
+        // reports one line per failed component, so its message is the longest this endpoint serves.
+        it('serves the whole response through the REST endpoint', {retries: 5}, () => {
             healthCheckAPI({severity: 'LOW', includes: PROBE}).should(response => {
                 // A truncated body does not parse, so response.body stays a string. Naming that first makes the
                 // regression report its own cause instead of a type error.
                 expect(response.status).to.eq(200);
                 expect(response.body.probes).to.be.an('array').and.not.be.empty;
                 const probe = response.body.probes.find(p => p.name === PROBE);
-                expect(probe.status.message).to.contains('Deliberate activation failure (é)');
+                expect(probe.status.message).to.contains('broken-activation-module');
+                expect(probe.status.message).to.contains('see the server log');
             });
         });
     });
