@@ -287,8 +287,8 @@ public class HealthCheckServlet extends HttpServlet {
          * so a caller that closes the writer loses nothing.
          *
          * <p>One case this wrapper cannot order is a caller that alternates this writer and the stream within
-         * one character, because a flush cannot emit a pending surrogate half. The servlet writes the body
-         * itself, and the internal call uses one route. That case therefore does not arise here.
+         * one character. A flush cannot emit a pending surrogate half. The servlet writes the body itself, and
+         * the internal call uses one route, so that case does not arise here.
          */
         @Override
         public PrintWriter getWriter() {
