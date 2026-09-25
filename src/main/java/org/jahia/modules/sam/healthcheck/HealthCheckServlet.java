@@ -14,13 +14,13 @@ import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
-import java.io.IOException;
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -210,8 +210,9 @@ public class HealthCheckServlet extends HttpServlet {
      * answers UTF-8, so a caller that builds its own encoder agrees with the buffer.
      *
      * <p>reset and resetBuffer discard what was captured, which is what a caller asking for a reset means.
-     * flushBuffer and sendError are not intercepted and reach the real response. The servlet writes the body
-     * itself, so a body committed behind its back would be a defect rather than a case to absorb here.
+     * flushBuffer does nothing, for the same reason setContentLength does nothing: the body lives in this
+     * buffer, and letting the inner call commit the real response would commit it empty, behind the servlet's
+     * back. sendError is not intercepted, because absorbing it would swallow a status the inner call chose.
      */
     private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -223,9 +224,10 @@ public class HealthCheckServlet extends HttpServlet {
         private OutputStreamWriter encoder = new OutputStreamWriter(buffer, StandardCharsets.UTF_8);
 
         /**
-         * One stream and one writer per response, because the servlet contract promises the same object. The
-         * stream flushes the encoder before each write, so bytes written through the two routes keep their
-         * order in the buffer.
+         * One stream and one writer per response, because the servlet contract promises the same object. Once
+         * the writer exists, the stream flushes the encoder before each write, so bytes written through the two
+         * routes keep their order in the buffer. Before that there is nothing to order, and
+         * ServletOutputStream.print(String) writes one byte at a time, so the flush is skipped.
          */
         private ServletOutputStream outputStream;
         private PrintWriter writer;
@@ -238,9 +240,10 @@ public class HealthCheckServlet extends HttpServlet {
         }
 
         /**
-         * Closes the encoder rather than flushing it. A flush never emits a character left pending as half of
-         * a surrogate pair, and only a close does. Closing ends the capture, so the answer is kept, and a
-         * second call returns the same string instead of writing to a closed encoder.
+         * Closes the encoder rather than flushing it. A flush drops a character left pending as half of a
+         * surrogate pair, while a close replaces it, so the byte count still matches the body. Closing ends the
+         * capture, so the answer is kept, and a second call returns the same string instead of writing to a
+         * closed encoder.
          *
          * @return what the internal call wrote, through the stream, the writer, or both
          */
@@ -252,19 +255,25 @@ public class HealthCheckServlet extends HttpServlet {
             return content;
         }
 
+        private void flushWriterRoute() throws IOException {
+            if (writer != null) {
+                encoder.flush();
+            }
+        }
+
         @Override
         public ServletOutputStream getOutputStream() {
             if (outputStream == null) {
                 outputStream = new ServletOutputStream() {
                     @Override
                     public void write(int b) throws IOException {
-                        encoder.flush();
+                        flushWriterRoute();
                         buffer.write(b);
                     }
 
                     @Override
                     public void write(byte[] b, int off, int len) throws IOException {
-                        encoder.flush();
+                        flushWriterRoute();
                         buffer.write(b, off, len);
                     }
 
@@ -331,6 +340,12 @@ public class HealthCheckServlet extends HttpServlet {
         @Override
         public void setCharacterEncoding(String charset) {
             // the capture is UTF-8, and getCharacterEncoding says so
+        }
+
+        /** Committing the real response is the servlet's decision, and the body is not there yet. */
+        @Override
+        public void flushBuffer() {
+            // the capture is flushed and committed once, by the servlet, after getContent()
         }
 
         @Override
