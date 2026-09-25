@@ -28,7 +28,11 @@ describe('healthcheck REST API test', () => {
             expect(response.body.probes).to.be.an('array').and.have.length(1);
             expect(response.body.probes[0].status.message).to.eq('multibyte-marker caf\u00e9');
         });
+    });
 
+    // In a hook rather than at the end of the test, so a failing assertion does not leave the message set for
+    // every spec that runs next. The after() of checkProbes.spec.ts resets severity and status, never message.
+    after(() => {
         cy.runProvisioningScript({fileName: 'test-multibyte-clear.json'});
         cy.waitUntil(() => cy.task('sshCommand', [probesConfig])
             .then((out: string) => !out.includes('multibyte-marker')), waitUntilOptions);
