@@ -214,7 +214,8 @@ public class HealthCheckServlet extends HttpServlet {
      * buffer, and letting the inner call commit the real response would commit it empty, behind the servlet's
      * back. sendError is not intercepted, because absorbing it would swallow a status the inner call chose.
      */
-    private static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
+    // Package-private so the test next to this class can reach it. Nothing outside the package needs it.
+    static class HealthCheckHttpServletResponseWrapper extends HttpServletResponseWrapper {
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
         /**
