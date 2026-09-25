@@ -1,0 +1,10 @@
+[
+  {
+    "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
+    "properties": {
+      "probes.testProbe.severity": "IGNORED",
+      "probes.testProbe.status": "GREEN",
+      "probes.testProbe.message": ""
+    }
+  }
+]

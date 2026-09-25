@@ -29,7 +29,12 @@ public class TestProbe implements Probe {
     @Override
     public void setConfig(Map<String, Object> config) {
         if (config.containsKey("status")) {
-            status = new ProbeStatus("Configured test probe status", ProbeStatus.Health.valueOf((String) config.get("status")));
+            // The message is configurable so a test can make this probe carry any text through the health check
+            // response, a character that takes more than one byte included, with no second bundle to install.
+            String message = config.containsKey("message") && !String.valueOf(config.get("message")).isEmpty()
+                    ? String.valueOf(config.get("message"))
+                    : "Configured test probe status";
+            status = new ProbeStatus(message, ProbeStatus.Health.valueOf((String) config.get("status")));
         }
     }
 }
