@@ -31,9 +31,12 @@ public class TestProbe implements Probe {
         if (config.containsKey("status")) {
             // The message is configurable so a test can make this probe carry any text through the health check
             // response, a character that takes more than one byte included, with no second bundle to install.
-            String message = config.containsKey("message") && !String.valueOf(config.get("message")).isEmpty()
-                    ? String.valueOf(config.get("message"))
-                    : "Configured test probe status";
+            // Read once, and tested as an object first: String.valueOf(null) is the four letters "null", so an
+            // explicit null used to become that message.
+            Object configured = config.get("message");
+            String message = configured == null || String.valueOf(configured).isEmpty()
+                    ? "Configured test probe status"
+                    : String.valueOf(configured);
             status = new ProbeStatus(message, ProbeStatus.Health.valueOf((String) config.get("status")));
         }
     }
