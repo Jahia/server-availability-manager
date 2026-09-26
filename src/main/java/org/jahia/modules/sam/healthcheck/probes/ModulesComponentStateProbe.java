@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * <p>UNSATISFIED_REFERENCE and UNSATISFIED_CONFIGURATION are not reported. A component that waits for a service is
  * a supported design, and so is a component that waits for a configuration.
  *
- * <p>Two component failures stay invisible to this probe. A GREEN answer does not rule them out:
+ * <p>Three component failures stay invisible to this probe. A GREEN answer does not rule them out:
  * <ul>
  *     <li>A delayed component that was never requested is not reported. SCR attempts no activation until a
  *     caller asks for the service, so such a component has no failure to show. Its bind method can be broken
@@ -53,6 +53,9 @@ import java.util.stream.Collectors;
  *     component metadata validation throws, logs "Cannot register component" and moves on. The component is
  *     never registered, so the runtime cannot describe it. The module still starts, and Jahia still marks it
  *     STARTED.</li>
+ *     <li>A component that threw an unexpected error when SCR first enabled it produces no configuration. A
+ *     missing implementation class is one example. SCR logs the error, disables the component and drops its
+ *     configurations. The probe cannot tell that component from one the operator disabled on purpose.</li>
  * </ul>
  *
  * <p>The probe reads the component states on every call, and no answer it gives depends on a previous call.
@@ -159,12 +162,12 @@ public class ModulesComponentStateProbe implements Probe {
         blacklist.set(Collections.unmodifiableSet(names));
     }
 
-    private static ProbeStatus toStatus(List<String> issues, List<String> unreadable) {
+    static ProbeStatus toStatus(List<String> issues, List<String> unreadable) {
         // A scan that skipped a component says so on the answer itself. The log alone would leave a health
         // check consumer reading a clean result over an incomplete scan.
         String scope = unreadable.isEmpty()
                 ? ""
-                : ". " + unreadable.size() + " component(s) could not be read, and this count leaves them out";
+                : ". " + unreadable.size() + " component(s) could not be read, and this answer leaves them out";
 
         if (issues.isEmpty()) {
             // The probe leaves a component waiting for a service or a configuration alone, and it cannot see a
