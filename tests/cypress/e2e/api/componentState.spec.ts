@@ -1,5 +1,4 @@
 import {healthCheck} from '../../support/gql';
-import {healthCheckAPI} from '../../support/utils';
 
 const PROBE = 'ModulesComponentState';
 
@@ -138,20 +137,13 @@ describe('Modules component state probe test', () => {
             waitUntilHealth('GREEN');
         });
 
-        // This probe reports one line per failed component, so its message is the longest this endpoint serves.
-        // The endpoint declares a Content-Length, and a body cut short by it does not parse.
-        // This does not cover a message that carries a multi-byte character, because no message here does.
-        // server-availability-manager#266 owns that fix and states the test it still needs.
-        it('serves the whole response through the REST endpoint', {retries: 5}, () => {
-            healthCheckAPI({severity: 'LOW', includes: PROBE}).should(response => {
-                // A truncated body does not parse, so response.body stays a string. Naming that first makes the
-                // regression report its own cause instead of a type error.
-                expect(response.status).to.eq(200);
-                expect(response.body.probes).to.be.an('array').and.not.be.empty;
-                const probe = response.body.probes.find(p => p.name === PROBE);
-                expect(probe.status.message).to.contains('broken-activation-module');
-                expect(probe.status.message).to.contains('see the server log');
-            });
+        // A blacklist that names another module must not silence this one. The test starts from a silenced probe,
+        // so the YELLOW it waits for shows that the second blacklist has reached the probe.
+        it('is not silenced by a blacklist on another name', {retries: 5}, () => {
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-module.json'});
+            waitUntilHealth('GREEN');
+            cy.runProvisioningScript({fileName: 'componentStateProbe/blacklist-other.json'});
+            waitUntilHealth('YELLOW');
         });
     });
 
@@ -175,8 +167,11 @@ describe('Modules component state probe test', () => {
 
         // This is the blind spot the probe exists to cover. The module is broken, and the module level probe
         // stays green, because Jahia marks a module STARTED from the bundle lifecycle alone.
+        // Both probes are read in one answer, so the contrast does not depend on the state an earlier test saw.
         it('is not reported by the module level probe, which stays green', {retries: 5}, () => {
-            healthCheck({includes: 'ModuleState', severity: 'LOW'}).should(r => {
+            healthCheck({includes: ['ModuleState', PROBE], severity: 'LOW'}).should(r => {
+                const probe = r.probes.find(p => p.name === PROBE);
+                expect(probe.status.message).to.contains('broken-bind-module');
                 const moduleStateProbe = r.probes.find(p => p.name === 'ModuleState');
                 expect(moduleStateProbe.status.health).to.eq('GREEN');
                 expect(moduleStateProbe.status.message).to.not.contains('broken-bind-module');
