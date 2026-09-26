@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.jahia.test.sam</groupId>
+    <artifactId>sam-fixture-modules</artifactId>
+    <version>8.2.0.0</version>
+    <packaging>pom</packaging>
+    <name>SAM fixture modules</name>
+    <description>
+        Jahia modules that are broken on purpose, so the ModulesComponentState probe can be tested against a real
+        symptom rather than a mock. Each module reproduces one way a Declarative Services component dies while the
+        module around it stays STARTED. The built jars are committed under tests/cypress/fixtures/componentStateProbe.
+    </description>
+
+    <modules>
+        <module>broken-activation-module</module>
+        <module>broken-bind-module</module>
+    </modules>
+</project>

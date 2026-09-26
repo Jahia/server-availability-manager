@@ -1,0 +1,8 @@
+[
+  {
+    "editConfiguration": "org.jahia.modules.sam.healthcheck.ProbesRegistry",
+    "properties": {
+      "probes.ModulesComponentState.blacklist": "broken-bind-module,org.jahia.test.sam.brokenbind.BrokenBindComponent"
+    }
+  }
+]

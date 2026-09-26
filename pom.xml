@@ -65,6 +65,10 @@
     </scm>
 
     <properties>
+        <!-- Every probe implements the same Probe methods, so a new probe repeats the setter and the three
+             accessors of the ones already here. SonarQube counts that as duplicated code, and the count grows
+             with each probe added. -->
+        <sonar.cpd.exclusions>src/main/java/org/jahia/modules/sam/healthcheck/probes/**</sonar.cpd.exclusions>
         <jahia-depends>graphql-dxm-provider</jahia-depends>
         <jahia-module-type>system</jahia-module-type>
         <jahia-deploy-on-site>system</jahia-deploy-on-site>
@@ -105,6 +109,8 @@
             org.joda.time,
             org.json,
             org.osgi.framework;version="[1.8,2)",
+            org.osgi.service.component.runtime;version="[1.4,2)",
+            org.osgi.service.component.runtime.dto;version="[1.4,2)",
             org.osgi.service.event;version="[1.3,2)",
             org.slf4j;version="[1.7,2)",
             org.apache.naming.java,
