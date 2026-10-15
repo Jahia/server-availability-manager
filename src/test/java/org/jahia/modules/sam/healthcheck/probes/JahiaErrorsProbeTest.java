@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -77,7 +78,15 @@ class JahiaErrorsProbeTest {
     }
 
     @Test
-    void fallsBackWhenTheDateFormatOfJahiaIsChanged() throws IOException {
+    void countsByLevelWhenTheDateFormatOfJahiaIsChanged() throws IOException {
+        ProbeStatus status = status("2026-10-15T01:39:43.904Z: INFO  [main] org.example.Filter: activated on [REQUEST, ERROR, FORWARD]",
+                "15/10/2026 01:41:13,660: ERROR [main] org.example.Service: failure");
+        assertErrors(1, status);
+        assertFalse(status.getMessage().contains("not the default one"), status.getMessage());
+    }
+
+    @Test
+    void fallsBackWhenTheLayoutHasNoColonAfterTheDate() throws IOException {
         ProbeStatus status = status("2026-10-15T01:39:43.904Z INFO  [main] org.example.Filter: activated on [REQUEST, ERROR, FORWARD]",
                 "2026-10-15T01:41:13.660Z ERROR [main] org.example.Service: failure");
         assertErrors(2, status);

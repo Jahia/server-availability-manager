@@ -34,14 +34,10 @@ public class JahiaErrorsProbe implements Probe {
     private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
     private static final String CUSTOM_LAYOUT_NOTE = " The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted.";
-    // The header of the default layouts: a log line starts with its date, and its level is the word just before
-    // the first '['. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat
-    // "15-Oct-2026 02:07:25.149 SEVERE [thread] ...". Group 1 is the level.
-    private static final Pattern headerPattern = Pattern.compile("\\d[^\\[]*\\s([A-Z]+)\\s+\\[.*");
-    // The header of the default layout of the jahia.log appender, "%d: %-5p [%t]". Only this header tells that the
-    // file has the default layout: Tomcat writes its lines into the same file in its own format, whatever the
-    // layout configured in log4j2.xml.
-    private static final Pattern jahiaHeaderPattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}: [A-Z]+\\s+\\[.*");
+    // The header of a log line: the date, then the level just before the first '['. Group 1 is the character that
+    // ends the date and group 2 the level. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message",
+    // whose date ends with ':' ("%d: %-5p [%t]"), and Tomcat "15-Oct-2026 02:07:25.149 SEVERE [thread] ...".
+    private static final Pattern headerPattern = Pattern.compile("\\d[^\\[]*(\\S)\\s+([A-Z]+)\\s+\\[.*");
     private static final Set<String> errorLevels = Set.of("ERROR", "SEVERE", "FATAL");
     // Used only when no line of the file has the header of Jahia, which means a custom layout.
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
@@ -81,12 +77,16 @@ public class JahiaErrorsProbe implements Probe {
         List<String> patternLines = new ArrayList<>();
         String currentLine;
         while ((currentLine = br.readLine()) != null) {
-            if (!defaultLayout && jahiaHeaderPattern.matcher(currentLine).matches()) {
-                defaultLayout = true;
-            }
             Matcher header = headerPattern.matcher(currentLine);
-            if (header.matches() && errorLevels.contains(header.group(1)) && byLevel++ < MAX_COLLECTED_LINES) {
-                levelLines.add(currentLine.trim());
+            if (header.matches()) {
+                // Only a line of Jahia tells the layout: Tomcat writes its lines into the same file in its own
+                // format, whatever the layout configured in log4j2.xml.
+                if (":".equals(header.group(1))) {
+                    defaultLayout = true;
+                }
+                if (errorLevels.contains(header.group(2)) && byLevel++ < MAX_COLLECTED_LINES) {
+                    levelLines.add(currentLine.trim());
+                }
             }
             // Once a line had the header of Jahia, the count by pattern is no longer used.
             if (!defaultLayout && logPattern.matcher(currentLine).matches() && byPattern++ < MAX_COLLECTED_LINES) {
