@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +33,13 @@ public class JahiaErrorsProbe implements Probe {
 
     private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
+    private static final String customLayoutNote = " The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted.";
     // The header of the default layouts: a log line starts with its date, and its level is the word just before
     // the first '['. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat
     // "15-Oct-2026 02:07:25.149 SEVERE [thread] ...". Group 1 is the level.
     private static final Pattern headerPattern = Pattern.compile("\\d[^\\[]*\\s([A-Z]+)\\s+\\[.*");
     private static final Set<String> errorLevels = Set.of("ERROR", "SEVERE", "FATAL");
-    // A line without that header, from a custom layout or a stack trace, counts when it names a level anywhere.
+    // Used only when no line of the file has that header, which means a custom layout.
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
     @Override
@@ -58,40 +60,45 @@ public class JahiaErrorsProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        int numberOfError = 0;
-        List<String> matchingLines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
-            String currentLine;
-            while ((currentLine = br.readLine()) != null) {
-                if (isErrorLine(currentLine)) {
-                    numberOfError++;
-                    if (matchingLines.size() < MAX_COLLECTED_LINES) {
-                        matchingLines.add(currentLine.trim());
-                    }
-                }
-            }
-
-            String matchingLinesStr = String.join("; ", matchingLines);
-            if (numberOfError > MAX_COLLECTED_LINES) {
-                matchingLinesStr += "; ... and " + (numberOfError - MAX_COLLECTED_LINES) + " more";
-            }
-
-            return numberOfError == 0 ?
-                    new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN) :
-                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError, matchingLinesStr}), ProbeStatus.Health.YELLOW);
+            return getStatus(br);
         } catch (Exception e) {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
         }
     }
 
-    // Lets a unit test check which lines count as errors, without exposing the pattern.
-    static boolean isErrorLine(String line) {
-        Matcher header = headerPattern.matcher(line);
-        if (header.matches()) {
-            return errorLevels.contains(header.group(1));
+    // One line with the header is enough to count the whole file by level; otherwise the previous pattern counts.
+    static ProbeStatus getStatus(BufferedReader br) throws IOException {
+        boolean defaultLayout = false;
+        int byLevel = 0;
+        int byPattern = 0;
+        List<String> levelLines = new ArrayList<>();
+        List<String> patternLines = new ArrayList<>();
+        String currentLine;
+        while ((currentLine = br.readLine()) != null) {
+            Matcher header = headerPattern.matcher(currentLine);
+            if (header.matches()) {
+                defaultLayout = true;
+                if (errorLevels.contains(header.group(1)) && byLevel++ < MAX_COLLECTED_LINES) {
+                    levelLines.add(currentLine.trim());
+                }
+            // Once a line had the header, the count by pattern is no longer used.
+            } else if (!defaultLayout && logPattern.matcher(currentLine).matches() && byPattern++ < MAX_COLLECTED_LINES) {
+                patternLines.add(currentLine.trim());
+            }
         }
-        return logPattern.matcher(line).matches();
+
+        int numberOfError = defaultLayout ? byLevel : byPattern;
+        if (numberOfError == 0) {
+            return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
+        }
+        String matchingLinesStr = String.join("; ", defaultLayout ? levelLines : patternLines);
+        if (numberOfError > MAX_COLLECTED_LINES) {
+            matchingLinesStr += "; ... and " + (numberOfError - MAX_COLLECTED_LINES) + " more";
+        }
+        String message = yellowMessage.format(new Object[]{numberOfError, matchingLinesStr});
+        return new ProbeStatus(defaultLayout ? message : message + customLayoutNote, ProbeStatus.Health.YELLOW);
     }
 
     @Override
