@@ -68,13 +68,23 @@ public class JahiaErrorsProbe implements Probe {
         }
     }
 
+    // A number of matching lines, and the first MAX_COLLECTED_LINES of them for the message.
+    private static final class Matches {
+        private int count;
+        private final List<String> lines = new ArrayList<>();
+
+        void add(String line) {
+            if (count++ < MAX_COLLECTED_LINES) {
+                lines.add(line.trim());
+            }
+        }
+    }
+
     // Separate from getStatus() for testability: a unit test passes the lines without a file on disk.
     static ProbeStatus statusOf(BufferedReader br) throws IOException {
         boolean defaultLayout = false;
-        int byLevel = 0;
-        int byPattern = 0;
-        List<String> levelLines = new ArrayList<>();
-        List<String> patternLines = new ArrayList<>();
+        Matches byLevel = new Matches();
+        Matches byPattern = new Matches();
         String currentLine;
         while ((currentLine = br.readLine()) != null) {
             Matcher header = headerPattern.matcher(currentLine);
@@ -84,27 +94,28 @@ public class JahiaErrorsProbe implements Probe {
                 if (":".equals(header.group(1))) {
                     defaultLayout = true;
                 }
-                if (errorLevels.contains(header.group(2)) && byLevel++ < MAX_COLLECTED_LINES) {
-                    levelLines.add(currentLine.trim());
+                if (errorLevels.contains(header.group(2))) {
+                    byLevel.add(currentLine);
                 }
             }
             // Once a line had the header of Jahia, the count by pattern is no longer used.
-            if (!defaultLayout && logPattern.matcher(currentLine).matches() && byPattern++ < MAX_COLLECTED_LINES) {
-                patternLines.add(currentLine.trim());
+            if (!defaultLayout && logPattern.matcher(currentLine).matches()) {
+                byPattern.add(currentLine);
             }
         }
-
         // One line with the header of Jahia is enough to count the whole file by level; otherwise the previous pattern counts.
-        int numberOfError = defaultLayout ? byLevel : byPattern;
-        if (numberOfError == 0) {
+        return defaultLayout ? statusOf(byLevel, "") : statusOf(byPattern, CUSTOM_LAYOUT_NOTE);
+    }
+
+    private static ProbeStatus statusOf(Matches errors, String note) {
+        if (errors.count == 0) {
             return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
         }
-        String matchingLinesStr = String.join("; ", defaultLayout ? levelLines : patternLines);
-        if (numberOfError > MAX_COLLECTED_LINES) {
-            matchingLinesStr += "; ... and " + (numberOfError - MAX_COLLECTED_LINES) + " more";
+        String matchingLinesStr = String.join("; ", errors.lines);
+        if (errors.count > MAX_COLLECTED_LINES) {
+            matchingLinesStr += "; ... and " + (errors.count - MAX_COLLECTED_LINES) + " more";
         }
-        String message = yellowMessage.format(new Object[]{numberOfError, matchingLinesStr});
-        return new ProbeStatus(defaultLayout ? message : message + CUSTOM_LAYOUT_NOTE, ProbeStatus.Health.YELLOW);
+        return new ProbeStatus(yellowMessage.format(new Object[]{errors.count, matchingLinesStr}) + note, ProbeStatus.Health.YELLOW);
     }
 
     @Override
