@@ -49,7 +49,39 @@ class JahiaErrorsProbeTest {
                 // The fallback cannot tell a level from a quoted word: a custom layout keeps the false positive of issue #269.
                 "{\"level\":\"INFO\",\"message\":\"AtmosphereRpcFilter activated on [REQUEST, ERROR, FORWARD]\"}");
         assertErrors(2, status);
-        assertTrue(status.getMessage().endsWith("The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted."));
+        assertCustomLayout(status);
+    }
+
+    @Test
+    void ignoresTheHeaderOfTomcatToTellTheLayout() throws IOException {
+        // Tomcat writes into jahia.log in its own format, whatever the layout configured in log4j2.xml.
+        ProbeStatus status = status("15-Oct-2026 01:32:12.625 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version name:   Apache Tomcat/9.0.123",
+                "{\"level\":\"ERROR\",\"message\":\"Repository error\"}");
+        assertErrors(1, status);
+        assertCustomLayout(status);
+    }
+
+    @Test
+    void countsALineOfTomcatWithThePreviousPatternInACustomLayout() throws IOException {
+        ProbeStatus status = status("{\"level\":\"INFO\",\"message\":\"Jahia started\"}",
+                "15-Oct-2026 02:07:25.149 SEVERE [http-nio-8080-exec-1] org.apache.catalina.core.StandardWrapperValve.invoke Servlet.service() threw exception");
+        assertErrors(1, status);
+        assertCustomLayout(status);
+    }
+
+    @Test
+    void countsALineOfTomcatByItsLevelInTheDefaultLayout() throws IOException {
+        assertErrors(1, status(INFO_LINE,
+                "15-Oct-2026 02:07:25.149 INFO [main] org.apache.catalina.core.ApplicationContext.log Filter mapped to dispatcher types [REQUEST, ERROR]",
+                "15-Oct-2026 02:07:25.149 SEVERE [http-nio-8080-exec-1] org.apache.catalina.core.StandardWrapperValve.invoke Servlet.service() threw exception"));
+    }
+
+    @Test
+    void fallsBackWhenTheDateFormatOfJahiaIsChanged() throws IOException {
+        ProbeStatus status = status("2026-10-15T01:39:43.904Z INFO  [main] org.example.Filter: activated on [REQUEST, ERROR, FORWARD]",
+                "2026-10-15T01:41:13.660Z ERROR [main] org.example.Service: failure");
+        assertErrors(2, status);
+        assertCustomLayout(status);
     }
 
     @Test
@@ -64,6 +96,10 @@ class JahiaErrorsProbeTest {
     private static void assertErrors(int expected, ProbeStatus status) {
         assertEquals(ProbeStatus.Health.YELLOW, status.getHealth());
         assertTrue(status.getMessage().startsWith("A total of " + expected + " errors"), status.getMessage());
+    }
+
+    private static void assertCustomLayout(ProbeStatus status) {
+        assertTrue(status.getMessage().endsWith("The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted."), status.getMessage());
     }
 
     private static void assertGreen(ProbeStatus status) {

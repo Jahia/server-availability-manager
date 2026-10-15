@@ -38,8 +38,12 @@ public class JahiaErrorsProbe implements Probe {
     // the first '['. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat
     // "15-Oct-2026 02:07:25.149 SEVERE [thread] ...". Group 1 is the level.
     private static final Pattern headerPattern = Pattern.compile("\\d[^\\[]*\\s([A-Z]+)\\s+\\[.*");
+    // The header of the default layout of the jahia.log appender, "%d: %-5p [%t]". Only this header tells that the
+    // file has the default layout: Tomcat writes its lines into the same file in its own format, whatever the
+    // layout configured in log4j2.xml.
+    private static final Pattern jahiaHeaderPattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}: [A-Z]+\\s+\\[.*");
     private static final Set<String> errorLevels = Set.of("ERROR", "SEVERE", "FATAL");
-    // Used only when no line of the file has that header, which means a custom layout.
+    // Used only when no line of the file has the header of Jahia, which means a custom layout.
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
     @Override
@@ -77,19 +81,20 @@ public class JahiaErrorsProbe implements Probe {
         List<String> patternLines = new ArrayList<>();
         String currentLine;
         while ((currentLine = br.readLine()) != null) {
-            Matcher header = headerPattern.matcher(currentLine);
-            if (header.matches()) {
+            if (!defaultLayout && jahiaHeaderPattern.matcher(currentLine).matches()) {
                 defaultLayout = true;
-                if (errorLevels.contains(header.group(1)) && byLevel++ < MAX_COLLECTED_LINES) {
-                    levelLines.add(currentLine.trim());
-                }
-            // Once a line had the header, the count by pattern is no longer used.
-            } else if (!defaultLayout && logPattern.matcher(currentLine).matches() && byPattern++ < MAX_COLLECTED_LINES) {
+            }
+            Matcher header = headerPattern.matcher(currentLine);
+            if (header.matches() && errorLevels.contains(header.group(1)) && byLevel++ < MAX_COLLECTED_LINES) {
+                levelLines.add(currentLine.trim());
+            }
+            // Once a line had the header of Jahia, the count by pattern is no longer used.
+            if (!defaultLayout && logPattern.matcher(currentLine).matches() && byPattern++ < MAX_COLLECTED_LINES) {
                 patternLines.add(currentLine.trim());
             }
         }
 
-        // One line with the header is enough to count the whole file by level; otherwise the previous pattern counts.
+        // One line with the header of Jahia is enough to count the whole file by level; otherwise the previous pattern counts.
         int numberOfError = defaultLayout ? byLevel : byPattern;
         if (numberOfError == 0) {
             return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
