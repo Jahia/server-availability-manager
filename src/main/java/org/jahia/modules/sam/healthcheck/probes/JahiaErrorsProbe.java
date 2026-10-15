@@ -30,7 +30,11 @@ public class JahiaErrorsProbe implements Probe {
 
     private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
-    private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
+    // A log line starts with its date, and its level is the word just before the first '[': Jahia writes
+    // "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat "15-Oct-2026 02:07:25.149 SEVERE [thread] ...".
+    // A level word that a message or a stack trace quotes, such as a filter's "[REQUEST, ERROR]" dispatcher types,
+    // does not count.
+    private static final Pattern logPattern = Pattern.compile("\\d[^\\[]*\\s(ERROR|SEVERE|FATAL)\\s+\\[.*");
 
     @Override
     public String getName() {
@@ -55,7 +59,7 @@ public class JahiaErrorsProbe implements Probe {
         try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
             String currentLine;
             while ((currentLine = br.readLine()) != null) {
-                if (logPattern.matcher(currentLine).matches()){
+                if (isErrorLine(currentLine)) {
                     numberOfError++;
                     if (matchingLines.size() < MAX_COLLECTED_LINES) {
                         matchingLines.add(currentLine.trim());
@@ -75,6 +79,10 @@ public class JahiaErrorsProbe implements Probe {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
         }
+    }
+
+    static boolean isErrorLine(String line) {
+        return logPattern.matcher(line).matches();
     }
 
     @Override
