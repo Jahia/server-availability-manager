@@ -81,6 +81,7 @@ public class JahiaErrorsProbe implements Probe {
         }
     }
 
+    // Lets a unit test check which lines count as errors, without exposing the pattern.
     static boolean isErrorLine(String line) {
         return logPattern.matcher(line).matches();
     }
