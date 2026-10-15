@@ -78,6 +78,17 @@ public class JahiaErrorsProbe implements Probe {
                 lines.add(line.trim());
             }
         }
+
+        ProbeStatus toStatus(String note) {
+            if (count == 0) {
+                return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
+            }
+            String matchingLinesStr = String.join("; ", lines);
+            if (count > MAX_COLLECTED_LINES) {
+                matchingLinesStr += "; ... and " + (count - MAX_COLLECTED_LINES) + " more";
+            }
+            return new ProbeStatus(yellowMessage.format(new Object[]{count, matchingLinesStr}) + note, ProbeStatus.Health.YELLOW);
+        }
     }
 
     // Separate from getStatus() for testability: a unit test passes the lines without a file on disk.
@@ -104,18 +115,7 @@ public class JahiaErrorsProbe implements Probe {
             }
         }
         // One line with the header of Jahia is enough to count the whole file by level; otherwise the previous pattern counts.
-        return defaultLayout ? statusOf(byLevel, "") : statusOf(byPattern, CUSTOM_LAYOUT_NOTE);
-    }
-
-    private static ProbeStatus statusOf(Matches errors, String note) {
-        if (errors.count == 0) {
-            return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
-        }
-        String matchingLinesStr = String.join("; ", errors.lines);
-        if (errors.count > MAX_COLLECTED_LINES) {
-            matchingLinesStr += "; ... and " + (errors.count - MAX_COLLECTED_LINES) + " more";
-        }
-        return new ProbeStatus(yellowMessage.format(new Object[]{errors.count, matchingLinesStr}) + note, ProbeStatus.Health.YELLOW);
+        return defaultLayout ? byLevel.toStatus("") : byPattern.toStatus(CUSTOM_LAYOUT_NOTE);
     }
 
     @Override
