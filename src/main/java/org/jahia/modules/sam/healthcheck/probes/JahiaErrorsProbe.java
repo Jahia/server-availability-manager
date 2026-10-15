@@ -61,15 +61,16 @@ public class JahiaErrorsProbe implements Probe {
     @Override
     public ProbeStatus getStatus() {
         try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
-            return getStatus(br);
+            return statusOf(br);
         } catch (Exception e) {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
         }
     }
 
+    // Separate from getStatus() for testability: a unit test passes the lines without a file on disk.
     // One line with the header is enough to count the whole file by level; otherwise the previous pattern counts.
-    static ProbeStatus getStatus(BufferedReader br) throws IOException {
+    static ProbeStatus statusOf(BufferedReader br) throws IOException {
         boolean defaultLayout = false;
         int byLevel = 0;
         int byPattern = 0;

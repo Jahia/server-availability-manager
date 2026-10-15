@@ -58,7 +58,7 @@ class JahiaErrorsProbeTest {
     }
 
     private static ProbeStatus status(String... lines) throws IOException {
-        return JahiaErrorsProbe.getStatus(new BufferedReader(new StringReader(String.join("\n", lines))));
+        return JahiaErrorsProbe.statusOf(new BufferedReader(new StringReader(String.join("\n", lines))));
     }
 
     private static void assertErrors(int expected, ProbeStatus status) {
