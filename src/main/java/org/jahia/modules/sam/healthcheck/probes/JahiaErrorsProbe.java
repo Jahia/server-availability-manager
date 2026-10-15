@@ -13,6 +13,8 @@ import java.io.FileReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -30,11 +32,13 @@ public class JahiaErrorsProbe implements Probe {
 
     private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
-    // A log line starts with its date, and its level is the word just before the first '[': Jahia writes
-    // "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat "15-Oct-2026 02:07:25.149 SEVERE [thread] ...".
-    // A level word that a message or a stack trace quotes, such as a filter's "[REQUEST, ERROR]" dispatcher types,
-    // does not count.
-    private static final Pattern logPattern = Pattern.compile("\\d[^\\[]*\\s(ERROR|SEVERE|FATAL)\\s+\\[.*");
+    // The header of the default layouts: a log line starts with its date, and its level is the word just before
+    // the first '['. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat
+    // "15-Oct-2026 02:07:25.149 SEVERE [thread] ...". Group 1 is the level.
+    private static final Pattern headerPattern = Pattern.compile("\\d[^\\[]*\\s([A-Z]+)\\s+\\[.*");
+    private static final Set<String> errorLevels = Set.of("ERROR", "SEVERE", "FATAL");
+    // A line without that header, from a custom layout or a stack trace, counts when it names a level anywhere.
+    private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
     @Override
     public String getName() {
@@ -83,6 +87,10 @@ public class JahiaErrorsProbe implements Probe {
 
     // Lets a unit test check which lines count as errors, without exposing the pattern.
     static boolean isErrorLine(String line) {
+        Matcher header = headerPattern.matcher(line);
+        if (header.matches()) {
+            return errorLevels.contains(header.group(1));
+        }
         return logPattern.matcher(line).matches();
     }
 

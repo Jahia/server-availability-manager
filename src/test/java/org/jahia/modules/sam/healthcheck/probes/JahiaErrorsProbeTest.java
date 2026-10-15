@@ -6,7 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The lines are written as the jahia.log appender of Jahia lays them out, "%d: %-5p [%t] %c: %m", and as Tomcat logs.
+ * The lines are written as the jahia.log appender of Jahia lays them out, "%d: %-5p [%t] %c: %m", as Tomcat logs,
+ * and in custom layouts that a customer may configure in log4j2.xml.
  */
 class JahiaErrorsProbeTest {
 
@@ -25,8 +26,17 @@ class JahiaErrorsProbeTest {
     }
 
     @Test
-    void ignoresALineWithoutALevel() {
-        assertFalse(JahiaErrorsProbe.isErrorLine("\tat org.example.ERROR.handle(ERROR.java:12)"));
-        assertFalse(JahiaErrorsProbe.isErrorLine("Caused by: java.lang.IllegalStateException: ERROR [code 42]"));
+    void countsALineWithoutTheDefaultHeaderWhenItNamesAnErrorLevel() {
+        assertTrue(JahiaErrorsProbe.isErrorLine("{\"timestamp\":\"2026-10-15T01:41:13.660Z\",\"level\":\"ERROR\",\"thread\":\"main\",\"message\":\"Repository error\"}"));
+        assertTrue(JahiaErrorsProbe.isErrorLine("ERROR 2026-10-15 01:41:13,660 [main] org.jahia.services.content.JCRNodeWrapperImpl: Repository error"));
+        assertTrue(JahiaErrorsProbe.isErrorLine("\tat org.example.ERROR.handle(ERROR.java:12)"));
+        // The fallback cannot tell a level from a quoted word: a custom layout keeps the false positive of issue #269.
+        assertTrue(JahiaErrorsProbe.isErrorLine("{\"level\":\"INFO\",\"message\":\"AtmosphereRpcFilter activated on [REQUEST, ERROR, FORWARD]\"}"));
+    }
+
+    @Test
+    void ignoresALineWithoutTheDefaultHeaderThatNamesNoErrorLevel() {
+        assertFalse(JahiaErrorsProbe.isErrorLine("{\"level\":\"INFO\",\"message\":\"Jahia started\"}"));
+        assertFalse(JahiaErrorsProbe.isErrorLine("\tat org.example.Service.handle(Service.java:12)"));
     }
 }
