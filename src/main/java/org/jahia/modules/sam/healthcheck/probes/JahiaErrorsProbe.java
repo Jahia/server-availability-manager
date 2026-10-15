@@ -33,7 +33,7 @@ public class JahiaErrorsProbe implements Probe {
 
     private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
-    private static final String customLayoutNote = " The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted.";
+    private static final String CUSTOM_LAYOUT_NOTE =" The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted.";
     // The header of the default layouts: a log line starts with its date, and its level is the word just before
     // the first '['. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message" and Tomcat
     // "15-Oct-2026 02:07:25.149 SEVERE [thread] ...". Group 1 is the level.
@@ -69,7 +69,6 @@ public class JahiaErrorsProbe implements Probe {
     }
 
     // Separate from getStatus() for testability: a unit test passes the lines without a file on disk.
-    // One line with the header is enough to count the whole file by level; otherwise the previous pattern counts.
     static ProbeStatus statusOf(BufferedReader br) throws IOException {
         boolean defaultLayout = false;
         int byLevel = 0;
@@ -90,6 +89,7 @@ public class JahiaErrorsProbe implements Probe {
             }
         }
 
+        // One line with the header is enough to count the whole file by level; otherwise the previous pattern counts.
         int numberOfError = defaultLayout ? byLevel : byPattern;
         if (numberOfError == 0) {
             return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
@@ -99,7 +99,7 @@ public class JahiaErrorsProbe implements Probe {
             matchingLinesStr += "; ... and " + (numberOfError - MAX_COLLECTED_LINES) + " more";
         }
         String message = yellowMessage.format(new Object[]{numberOfError, matchingLinesStr});
-        return new ProbeStatus(defaultLayout ? message : message + customLayoutNote, ProbeStatus.Health.YELLOW);
+        return new ProbeStatus(defaultLayout ? message : message + CUSTOM_LAYOUT_NOTE, ProbeStatus.Health.YELLOW);
     }
 
     @Override
