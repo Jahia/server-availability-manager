@@ -10,9 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -30,6 +33,13 @@ public class JahiaErrorsProbe implements Probe {
 
     private static final int MAX_COLLECTED_LINES = 10;
     private static final MessageFormat yellowMessage = new MessageFormat("A total of {0} errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these. Matching lines are: [{1}]");
+    private static final String CUSTOM_LAYOUT_NOTE = " The layout of jahia.log is not the default one, so every line that contains ERROR, SEVERE or FATAL is counted.";
+    // The header of a log line: the date, then the level just before the first '['. Group 1 is the character that
+    // ends the date and group 2 the level. Jahia writes "2026-10-15 01:41:13,660: ERROR [thread] logger: message",
+    // whose date ends with ':' ("%d: %-5p [%t]"), and Tomcat "15-Oct-2026 02:07:25.149 SEVERE [thread] ...".
+    private static final Pattern headerPattern = Pattern.compile("\\d[^\\[]*(\\S)\\s+([A-Z]+)\\s+\\[.*");
+    private static final Set<String> errorLevels = Set.of("ERROR", "SEVERE", "FATAL");
+    // Used only when no line of the file has the header of Jahia, which means a custom layout.
     private static Pattern logPattern = Pattern.compile(".*(ERROR|SEVERE|FATAL).*");
 
     @Override
@@ -50,31 +60,62 @@ public class JahiaErrorsProbe implements Probe {
 
     @Override
     public ProbeStatus getStatus() {
-        int numberOfError = 0;
-        List<String> matchingLines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(jahiaLogFilepath))) {
-            String currentLine;
-            while ((currentLine = br.readLine()) != null) {
-                if (logPattern.matcher(currentLine).matches()){
-                    numberOfError++;
-                    if (matchingLines.size() < MAX_COLLECTED_LINES) {
-                        matchingLines.add(currentLine.trim());
-                    }
-                }
-            }
-
-            String matchingLinesStr = String.join("; ", matchingLines);
-            if (numberOfError > MAX_COLLECTED_LINES) {
-                matchingLinesStr += "; ... and " + (numberOfError - MAX_COLLECTED_LINES) + " more";
-            }
-
-            return numberOfError == 0 ?
-                    new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN) :
-                    new ProbeStatus(yellowMessage.format(new Object[]{numberOfError, matchingLinesStr}), ProbeStatus.Health.YELLOW);
+            return statusOf(br);
         } catch (Exception e) {
             logger.debug("Jahia errors can not be checked as the probe is unable to read the log file", e);
             return new ProbeStatus("Jahia errors can not be checked", ProbeStatus.Health.YELLOW);
         }
+    }
+
+    // A number of matching lines, and the first MAX_COLLECTED_LINES of them for the message.
+    private static final class Matches {
+        private int count;
+        private final List<String> lines = new ArrayList<>();
+
+        void add(String line) {
+            if (count++ < MAX_COLLECTED_LINES) {
+                lines.add(line.trim());
+            }
+        }
+
+        ProbeStatus toStatus(String note) {
+            if (count == 0) {
+                return new ProbeStatus("No errors are present on the platform", ProbeStatus.Health.GREEN);
+            }
+            String matchingLinesStr = String.join("; ", lines);
+            if (count > MAX_COLLECTED_LINES) {
+                matchingLinesStr += "; ... and " + (count - MAX_COLLECTED_LINES) + " more";
+            }
+            return new ProbeStatus(yellowMessage.format(new Object[]{count, matchingLinesStr}) + note, ProbeStatus.Health.YELLOW);
+        }
+    }
+
+    // Separate from getStatus() for testability: a unit test passes the lines without a file on disk.
+    static ProbeStatus statusOf(BufferedReader br) throws IOException {
+        boolean defaultLayout = false;
+        Matches byLevel = new Matches();
+        Matches byPattern = new Matches();
+        String currentLine;
+        while ((currentLine = br.readLine()) != null) {
+            Matcher header = headerPattern.matcher(currentLine);
+            if (header.matches()) {
+                // Only a line of Jahia tells the layout: Tomcat writes its lines into the same file in its own
+                // format, whatever the layout configured in log4j2.xml.
+                if (":".equals(header.group(1))) {
+                    defaultLayout = true;
+                }
+                if (errorLevels.contains(header.group(2))) {
+                    byLevel.add(currentLine);
+                }
+            }
+            // Once a line had the header of Jahia, the count by pattern is no longer used.
+            if (!defaultLayout && logPattern.matcher(currentLine).matches()) {
+                byPattern.add(currentLine);
+            }
+        }
+        // One line with the header of Jahia is enough to count the whole file by level; otherwise the previous pattern counts.
+        return defaultLayout ? byLevel.toStatus("") : byPattern.toStatus(CUSTOM_LAYOUT_NOTE);
     }
 
     @Override

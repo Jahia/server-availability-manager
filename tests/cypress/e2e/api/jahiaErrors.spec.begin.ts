@@ -27,6 +27,9 @@ describe('Jahia errors probe test', () => {
                 expect(jahiaErrorsProbe.severity).to.eq('DEBUG');
                 // Hard to predict exact number of errors
                 expect(jahiaErrorsProbe.status.message).to.contain('errors are present on the platform, errors are not expected in a production environment and we recommend reviewing these.');
+                // The probe recognises the default layout of jahia.log, so it counts by level. The note appears
+                // if Jahia's log4j2 layout no longer matches the probe.
+                expect(jahiaErrorsProbe.status.message).not.to.contain('The layout of jahia.log is not the default one');
             });
         });
     });
