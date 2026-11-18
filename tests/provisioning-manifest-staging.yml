@@ -4,6 +4,11 @@
 - addMavenRepository: 'https://devtools.jahia.com/nexus/content/groups/public/@id=JahiaPublic'
 
 - installBundle:
+  - 'mvn:org.jahia.modules/jcontent/3.7.1'
+  autoStart: true
+  uninstallPreviousVersion: true
+
+- installBundle:
   - 'mvn:org.jahia.modules/server-availability-manager/3.7.0'
   - 'mvn:org.jahia.test/server-availability-manager-test-module/3.7.0'
   autoStart: true
