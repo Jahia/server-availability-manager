@@ -7,11 +7,7 @@ describe('Test for GraphQL schema description', () => {
     // These descriptions should be added in their respective codebases
     const noDescBlacklist = [
         // Currently missing but out of scope for SAM
-        'GqlBackgroundJob',
-        // The jcontent module describes these arguments from 3.7.0, and the jahia/jahia-ee:8 image ships jcontent 3.6.2.
-        // Remove this entry once that image ships jcontent 3.7.0 or later.
-        // The two slashes match the arguments of this field only, and not the field.
-        '/findAvailableNodeName/'
+        'GqlBackgroundJob'
     ];
 
     const entryNodes = ['JahiaAdminQuery'];
