@@ -32,14 +32,14 @@ describe('Test for GraphQL schema description', () => {
                 // "Deprecated" (in all its forms) is not considered a valid deprecationReason
                 // Remove the nodes that are in the blacklist
                 const noDeprecateReason = result
-                    .filter((graphqlType => (graphqlType.isDeprecated === true && (!graphqlType.deprecationReason || graphqlType.deprecationReason.length === 0 || (graphqlType.deprecationReason instanceof String && graphqlType.deprecationReason.toLowercase() === ('Deprecated').toLowerCase())))))
+                    .filter((graphqlType => (graphqlType.isDeprecated === true && (!graphqlType.deprecationReason || graphqlType.deprecationReason.length === 0 || (typeof graphqlType.deprecationReason === 'string' && graphqlType.deprecationReason.toLowerCase() === 'deprecated')))))
                     .filter((graphqlType => !noDescBlacklist.some(t => graphqlType.nodePath.join('/').includes(t))));
 
                 noDeprecateReason.forEach(description => {
                     cy.log(`Deprecated ${description.schemaType} missing explanation at path: ${description.nodePath.join('/')}`);
                     console.log(`Deprecated ${description.schemaType} missing explanation at path: ${description.nodePath.join('/')}`);
                 });
-                cy.then(() => expect(noDesc.length).to.equal(0));
+                cy.then(() => expect(noDeprecateReason.length).to.equal(0));
             });
         });
     });
