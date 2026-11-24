@@ -11,20 +11,21 @@ describe('Test for GraphQL schema description', () => {
     ];
 
     // The jcontent versions 3.6.0 to 3.6.2 leave these two arguments without a description, and jcontent 3.6.3 describes them.
+    // Each entry is the last two segments of a node path, because every type that implements JCRNode has the field.
     // Remove this exclusion once jahia/jahia-ee:8 ships jcontent 3.6.3: https://github.com/Jahia/server-availability-manager/issues/280
     const jcontentVersionsWithoutDescription = /^3\.6\.[0-2]$/;
     const jcontentArgumentsWithoutDescription = [
-        'JCRNode/findAvailableNodeName/nodeType',
-        'JCRNode/findAvailableNodeName/language'
+        'findAvailableNodeName/nodeType',
+        'findAvailableNodeName/language'
     ];
 
     const entryNodes = ['JahiaAdminQuery'];
     entryNodes.forEach(entryNode => {
         it(`Description for all nodes under ${entryNode}`, () => {
             let excludedArguments: string[] = [];
-            getStartedModuleVersion('jcontent').then(jcontentVersion => {
-                excludedArguments = jcontentVersionsWithoutDescription.test(jcontentVersion) ? jcontentArgumentsWithoutDescription : [];
-                cy.log(`jcontent ${jcontentVersion}: excluded arguments [${excludedArguments.join(', ')}]`);
+            getStartedModuleVersion('jcontent').then((jcontentVersion: string | undefined) => {
+                excludedArguments = jcontentVersion !== undefined && jcontentVersionsWithoutDescription.test(jcontentVersion) ? jcontentArgumentsWithoutDescription : [];
+                cy.log(`jcontent ${jcontentVersion ?? 'not started'}: excluded arguments [${excludedArguments.join(', ')}]`);
             });
 
             getDescriptions(entryNode).then(result => {
@@ -35,7 +36,7 @@ describe('Test for GraphQL schema description', () => {
                 const noDesc = result
                     .filter((graphqlType => graphqlType.description === null || graphqlType.description.length === 0))
                     .filter((graphqlType => !noDescBlacklist.some(t => graphqlType.nodePath.join('/').includes(t))))
-                    .filter((graphqlType => !excludedArguments.some(path => graphqlType.nodePath.join('/').endsWith(path))));
+                    .filter((graphqlType => !excludedArguments.includes(graphqlType.nodePath.slice(-2).join('/'))));
 
                 noDesc.forEach(description => {
                     cy.log(`Missing description for ${description.schemaType} at path: ${description.nodePath.join('/')}`);
