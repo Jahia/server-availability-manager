@@ -25,7 +25,7 @@ describe('Test for GraphQL schema description', () => {
             let excludedArguments: string[] = [];
             getStartedModuleVersion('jcontent').then((jcontentVersion: string | undefined) => {
                 excludedArguments = jcontentVersion !== undefined && jcontentVersionsWithoutDescription.test(jcontentVersion) ? jcontentArgumentsWithoutDescription : [];
-                cy.log(`jcontent ${jcontentVersion ?? 'not started'}: excluded arguments [${excludedArguments.join(', ')}]`);
+                cy.task('log', `jcontent ${jcontentVersion ?? 'not started'}: excluded arguments [${excludedArguments.join(', ')}]`);
             });
 
             getDescriptions(entryNode).then(result => {

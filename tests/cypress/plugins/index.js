@@ -34,6 +34,11 @@ module.exports = (on, config) => {
                 password: config.env.JAHIA_PASSWORD_TOOLS,
             })
         },
+        // Prints a message in the output of the Cypress process, for a passed test too, unlike cy.log
+        log(message) {
+            console.log(message);
+            return null;
+        },
     });
   
     return config;
